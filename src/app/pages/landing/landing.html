@@ -1,0 +1,43 @@
+<header class="landing-header">
+  <div class="container">
+    <h1>Budget Planner</h1>
+    <button class="btn-ghost">Se connecter</button>
+  </div>
+</header>
+
+<section class="landing-hero">
+  <div class="container">
+    <h2>Un outil simple pour planifier et suivre votre budget</h2>
+    <p>
+      Ajoutez vos revenus, planifiez vos charges et enregistrez vos dépenses au quotidien. Visualisez
+      votre situation mensuelle sans complexité inutile.
+    </p>
+    <button class="btn-primary">Commencer</button>
+  </div>
+</section>
+
+<section class="landing-features">
+  <div class="container">
+    @for (featureCard of features; track featureCard.title) {
+      <div class="feature-card">
+        <h3>{{ featureCard.title }}</h3>
+        <p>{{ featureCard.description }}</p>
+      </div>
+    }
+  </div>
+</section>
+
+<section class="landing-about">
+  <div class="container">
+    <h2>Une approche simple et personnelle</h2>
+    <p>
+      Budget Planner n’a pas vocation à remplacer un conseiller financier.
+      C’est un outil personnel conçu pour garder une vision claire de ses finances
+      et suivre ses habitudes de dépense sans se compliquer la vie.
+    </p>
+  </div>
+</section>
+
+<footer class="landing-footer">
+  <div class="container">© 2026 Budget Planner — Version initiale</div>
+</footer>

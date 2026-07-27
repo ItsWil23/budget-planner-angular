@@ -32,12 +32,15 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - 2026-07-27 : Exercice prérequis validé (interface + mocks typés, @for/track, @if/@else) dans test-component
 - 2026-07-27 : Structure de dossiers décidée : pages/ (écrans routés), components/ (réutilisables, subdiviser ui/+layout/ plus tard), models/ (interfaces), mocks/ (données phase A), services/ (phase B). Journal déplacé dans ce repo (source de vérité unique).
 - 2026-07-27 : Workflow Git acté (GitHub Flow, dev abandonné). Design tokens écrits par le mentor (exception acceptée : design system ≠ apprentissage Angular) dans styles.scss — à valider visuellement par l'utilisateur.
+- 2026-07-27 : Design tokens validés (test .dark OK), commités et pushés. Accès navigateur aux pages protégées de l'ancien site OK (utilisateur connecté).
 
 ## Décisions design (phase A)
 - Accent unique emerald (abandon du duo blue/emerald de l'ancien code) — à valider sur la nav.
 - Tokens sémantiques financiers séparés : --color-income / --color-expense (≠ accent/danger).
 - Dark mode par classe .dark sur <html> ; seuls couleurs + ombres redéfinies (jamais radius/spacing).
 - Signature visuelle conservée : arrondis généreux, ombres douces, palette slate.
+- Amélioration différée (fin phase A) : aperçu produit avec données fictives dans le hero de la landing (pattern « hero + product preview ») — attendre que le dashboard existe.
+- Landing : pattern « bandes pleine largeur + .container interne (max-width 72rem) + paragraphes 65ch ». Cartes features améliorées vs original (surface + ombre + hover lift) → base du futur composant Card.
 
 ## Compétences acquises
 - Bases Angular (cours OpenClassrooms « Débutez avec Angular »)
@@ -59,7 +62,9 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - (aucun)
 
 ## Prochaine étape
-Valider les tokens (test .dark manuel) + commit. Puis premier écran : landing page (reproduction fidèle de localhost:3000, visible sans auth). Note : pages protégées de l'ancien site accessibles seulement après login manuel de l'utilisateur dans le navigateur intégré.
+Finaliser landing (pattern container) → merge feat/landing-page dans main. Puis écran 2 : layout + navigation (Sidebar, routes, ThemeSwitch).
 
 ## Notes pédagogiques
 - Compris (avec aide) : MonthSelector = service + signal car source de vérité unique partagée entre écrans (équivalent du store Zustand).
+- Acquis : grid auto-fit/minmax (trouvé seul, mieux que la consigne), tokens, nesting SCSS, encapsulation des styles composant.
+- À surveiller : tendance YAGNI (propriétés CSS « au cas où » — footer relative conservé malgré avertissement) ; confusion initiale aération verticale vs largeur de ligne (résolu avec pattern container + 65ch).
