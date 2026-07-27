@@ -31,6 +31,13 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - 2026-07-22 : Cartographie de l'existant (écrans, routes, modèle de données, état global)
 - 2026-07-27 : Exercice prérequis validé (interface + mocks typés, @for/track, @if/@else) dans test-component
 - 2026-07-27 : Structure de dossiers décidée : pages/ (écrans routés), components/ (réutilisables, subdiviser ui/+layout/ plus tard), models/ (interfaces), mocks/ (données phase A), services/ (phase B). Journal déplacé dans ce repo (source de vérité unique).
+- 2026-07-27 : Workflow Git acté (GitHub Flow, dev abandonné). Design tokens écrits par le mentor (exception acceptée : design system ≠ apprentissage Angular) dans styles.scss — à valider visuellement par l'utilisateur.
+
+## Décisions design (phase A)
+- Accent unique emerald (abandon du duo blue/emerald de l'ancien code) — à valider sur la nav.
+- Tokens sémantiques financiers séparés : --color-income / --color-expense (≠ accent/danger).
+- Dark mode par classe .dark sur <html> ; seuls couleurs + ombres redéfinies (jamais radius/spacing).
+- Signature visuelle conservée : arrondis généreux, ombres douces, palette slate.
 
 ## Compétences acquises
 - Bases Angular (cours OpenClassrooms « Débutez avec Angular »)
@@ -52,7 +59,7 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - (aucun)
 
 ## Prochaine étape
-Poser le socle : structure de dossiers, design tokens SCSS à partir du tailwind.config.js, puis premier écran (landing page).
+Valider les tokens (test .dark manuel) + commit. Puis premier écran : landing page (reproduction fidèle de localhost:3000, visible sans auth). Note : pages protégées de l'ancien site accessibles seulement après login manuel de l'utilisateur dans le navigateur intégré.
 
 ## Notes pédagogiques
 - Compris (avec aide) : MonthSelector = service + signal car source de vérité unique partagée entre écrans (équivalent du store Zustand).
