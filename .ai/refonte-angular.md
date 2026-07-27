@@ -33,6 +33,7 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - 2026-07-27 : Structure de dossiers décidée : pages/ (écrans routés), components/ (réutilisables, subdiviser ui/+layout/ plus tard), models/ (interfaces), mocks/ (données phase A), services/ (phase B). Journal déplacé dans ce repo (source de vérité unique).
 - 2026-07-27 : Workflow Git acté (GitHub Flow, dev abandonné). Design tokens écrits par le mentor (exception acceptée : design system ≠ apprentissage Angular) dans styles.scss — à valider visuellement par l'utilisateur.
 - 2026-07-27 : Design tokens validés (test .dark OK), commités et pushés. Accès navigateur aux pages protégées de l'ancien site OK (utilisateur connecté).
+- 2026-07-27 : Écran 1 landing page terminé et mergé dans main (feat/landing-page). Revue visuelle faite : pattern container + 65ch, cartes améliorées, transitions corrigées (sur état de base, pas :hover).
 
 ## Décisions design (phase A)
 - Accent unique emerald (abandon du duo blue/emerald de l'ancien code) — à valider sur la nav.
@@ -62,7 +63,7 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - (aucun)
 
 ## Prochaine étape
-Finaliser landing (pattern container) → merge feat/landing-page dans main. Puis écran 2 : layout + navigation (Sidebar, routes, ThemeSwitch).
+Écran 2 : layout + navigation — branche feat/layout-navigation. Sidebar (liens vers futures pages), routes, ThemeSwitch fonctionnel, layout à deux zones (sidebar + router-outlet). Compétences nouvelles : routerLink/routerLinkActive, composants partagés (components/layout/), éventuellement premier signal (thème).
 
 ## Notes pédagogiques
 - Compris (avec aide) : MonthSelector = service + signal car source de vérité unique partagée entre écrans (équivalent du store Zustand).
