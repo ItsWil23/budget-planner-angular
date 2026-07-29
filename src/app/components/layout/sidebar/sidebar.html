@@ -1,0 +1,32 @@
+<aside class="sidebar">
+  <div class="sidebar-header">Budget Planner</div>
+
+  <div class="sidebar-content">
+    <nav>
+      <ul class="sidebar-nav-list">
+        @for (item of SIDEBAR_ITEMS; track item.label) {
+          <li>
+            <a
+              class="sidebar-item"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              [routerLink]="item.path"
+            >
+              {{ item.label }}
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </div>
+
+  <div class="footer">
+    <div class="user">
+      Connecté en tant que: <span class="user-name"> {{ user.name }} </span>
+    </div>
+
+    <button class="logout-button">Déconnecter</button>
+
+    <!-- Theme toggle could go here -->
+  </div>
+</aside>
