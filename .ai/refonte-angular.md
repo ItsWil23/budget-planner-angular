@@ -1,7 +1,7 @@
 # Journal de refonte Angular — budget-planner
 
 ## Phase actuelle
-Phase A (frontend statique) en cours. Écrans 1 (landing) et 2 (layout + navigation) terminés et mergés dans main.
+Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigation) et 3 (auth) terminés et mergés dans main.
 
 ## Stratégie de refonte (décision utilisateur, 2026-07-22)
 - **Phase A — Frontend statique** : reconstruire tous les écrans avec des données mockées typées (fichiers de mocks + interfaces calquées sur le modèle réel). Objectif : valider/améliorer le visuel.
@@ -9,7 +9,7 @@ Phase A (frontend statique) en cours. Écrans 1 (landing) et 2 (layout + navigat
 - Règle : jamais de données en dur dans les templates → mocks typés séparés pour faciliter la phase B.
 
 ## Cartographie (validée)
-- Routes : / (landing page), /auth, /dashboard, /transactions, /budget-mensuel, /categories, /accounts, /settings
+- Routes : / (landing page), /auth/login, /auth/register, /dashboard, /transactions, /budget-mensuel, /categories, /accounts, /settings
 - Transverse : Sidebar/Navigation, MonthSelector (état global), ThemeSwitch (dark mode), modales
 - Modèle : Account, Category→Subcategory, Transaction, BudgetMonth→BudgetLines
 - Agrégations côté Supabase (RPC) : get_budget_aggregation, get_dashboard_aggregation, get_real_expenses, get_category_aggregation, get_recent_expenses
@@ -35,6 +35,7 @@ Phase A (frontend statique) en cours. Écrans 1 (landing) et 2 (layout + navigat
 - 2026-07-27 : Design tokens validés (test .dark OK), commités et pushés. Accès navigateur aux pages protégées de l'ancien site OK (utilisateur connecté).
 - 2026-07-27 : Écran 1 landing page terminé et mergé dans main (feat/landing-page). Revue visuelle faite : pattern container + 65ch, cartes améliorées, transitions corrigées (sur état de base, pas :hover).
 - 2026-08-05 : Écran 2 layout + navigation terminé et mergé dans main (feat/layout-navigation). Contenu : routes squelettes (layout route pathless + children + wildcard), MainLayout (sidebar + main + router-outlet), Sidebar (nav sémantique, routerLink/routerLinkActive), Theme service (premier signal + effect + DOCUMENT), ThemeSwitch animé adapté d'Uiverse. Page /accounts volontairement reportée.
+- 2026-08-05 : Écran 3 auth terminé et mergé dans main (feat/auth). Deux routes (/auth/login, /auth/register) avec un seul composant + signal mode alimenté par ActivatedRoute. Formulaire statique (phase A) avec labels corrects, autocomplete, bouton OAuth placeholder désactivé. Zones de message mockées (signal mockState). Liens de bascule plutôt qu'onglets (décision UX). Correction boutons landing page (routerLink) + reset box-sizing global.
 
 ## Décisions design (phase A)
 - Accent unique emerald (abandon du duo blue/emerald de l'ancien code) — à valider sur la nav.
@@ -43,6 +44,7 @@ Phase A (frontend statique) en cours. Écrans 1 (landing) et 2 (layout + navigat
 - Signature visuelle conservée : arrondis généreux, ombres douces, palette slate.
 - Amélioration différée (fin phase A) : aperçu produit avec données fictives dans le hero de la landing (pattern « hero + product preview ») — attendre que le dashboard existe.
 - Landing : pattern « bandes pleine largeur + .container interne (max-width 72rem) + paragraphes 65ch ». Cartes features améliorées vs original (surface + ombre + hover lift) → base du futur composant Card.
+- Auth : inscription simplifiée (email + double mot de passe uniquement, pas de nom/prénom/date de naissance — décision RGPD/YAGNI). OAuth Google prévu (bouton désactivé en phase A, connexion Supabase en phase B). Lien de bascule login/register plutôt qu'onglets (action principale mise en avant).
 
 ## Compétences acquises
 - Bases Angular (cours OpenClassrooms « Débutez avec Angular »)
@@ -51,8 +53,9 @@ Phase A (frontend statique) en cours. Écrans 1 (landing) et 2 (layout + navigat
 - [ ] SCSS : variables CSS, Flexbox, Grid, nesting, dark mode, media queries
 - [x] TypeScript de base (interfaces, types) — pour les mocks typés
 - [x] Standalone components, control flow @if/@for (reste : @Input à pratiquer)
-- [x] Routing : routes enfants, layout route pathless, pathMatch, wildcard, routerLink/routerLinkActive
+- [x] Routing : routes enfants, layout route pathless, pathMatch, wildcard, routerLink/routerLinkActive, paramètres de route
 - [x] Premier signal + effect + inject(DOCUMENT) (service Theme)
+- [x] ActivatedRoute : lecture de segments d'URL (snapshot.url)
 - [ ] (Phase B) Signals avancés (computed), reactive forms, RxJS minimal
 - [ ] Lazy loading des routes (loadComponent) — à appliquer en fin de phase A
 
@@ -67,9 +70,9 @@ Phase A (frontend statique) en cours. Écrans 1 (landing) et 2 (layout + navigat
 - (aucun)
 
 ## Prochaine étape
-Écran 3 : Auth — branche feat/auth. Page hors layout (pas de sidebar). Phase A = formulaire statique. Compétences nouvelles : formulaires Angular, @Input/@Output, composant Button réutilisable si un 3e bouton apparaît (règle des trois).
+Écran 4 : Categories (CRUD hiérarchique). Compétences nouvelles : @Input/@Output, gestion d'une structure parent/enfant (Category→Subcategory), formulaires avec relations, affichage hiérarchique.
 
-En attente : restructuration de l'interface envisagée par l'utilisateur (idée à préciser) ; page /accounts à réintégrer.
+En attente : Accounts (reporté, nécessite discussion sur la structure des données et l'intégration avec Transactions).
 
 ## Notes pédagogiques
 - Compris (avec aide) : MonthSelector = service + signal car source de vérité unique partagée entre écrans (équivalent du store Zustand).
@@ -79,3 +82,5 @@ En attente : restructuration de l'interface envisagée par l'utilisateur (idée 
 - Erreurs répétées à surveiller : sémantique HTML dans les boucles (@for sur le conteneur au lieu de l'item, texte hors du <a>), classes CSS du template et du SCSS qui divergent, transitions sans durée, `gap` sur un élément non-flex, styles par défaut des listes/inputs non neutralisés.
 - Pièges rencontrés (mentor) : encapsulation Angular ajoute un attribut par compound selector → les spécificités égales d'un CSS externe sont rompues (combinateur `~` l'emporte sur `:nth-child`) ; les contrôles de formulaire n'héritent ni de `font-size` ni d'une marge nulle → `font: inherit; margin: 0` requis avant tout dimensionnement en `em`.
 - Décision design : ThemeSwitch dans le footer de la sidebar plutôt qu'en position fixed bas-droite (slot réservé à l'action principale).
+- Acquis écran 3 : ActivatedRoute.snapshot.url pour lire le segment de route, pattern lien de bascule vs onglets (UX moderne), <label for> + <input id> + autocomplete + name (accessibilité formulaires), box-sizing: border-box requis en global pour éviter débordement des inputs à width: 100%.
+- Décisions auth : email + double password seulement (pas de nom/prénom/date de naissance), OAuth Google en phase B, zones de message avec signal mockState pour tests visuels.
