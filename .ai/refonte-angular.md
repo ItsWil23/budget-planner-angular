@@ -1,7 +1,7 @@
 # Journal de refonte Angular — budget-planner
 
 ## Phase actuelle
-Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prérequis + socle du projet.
+Phase A (frontend statique) en cours. Écrans 1 (landing) et 2 (layout + navigation) terminés et mergés dans main.
 
 ## Stratégie de refonte (décision utilisateur, 2026-07-22)
 - **Phase A — Frontend statique** : reconstruire tous les écrans avec des données mockées typées (fichiers de mocks + interfaces calquées sur le modèle réel). Objectif : valider/améliorer le visuel.
@@ -34,6 +34,7 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - 2026-07-27 : Workflow Git acté (GitHub Flow, dev abandonné). Design tokens écrits par le mentor (exception acceptée : design system ≠ apprentissage Angular) dans styles.scss — à valider visuellement par l'utilisateur.
 - 2026-07-27 : Design tokens validés (test .dark OK), commités et pushés. Accès navigateur aux pages protégées de l'ancien site OK (utilisateur connecté).
 - 2026-07-27 : Écran 1 landing page terminé et mergé dans main (feat/landing-page). Revue visuelle faite : pattern container + 65ch, cartes améliorées, transitions corrigées (sur état de base, pas :hover).
+- 2026-08-05 : Écran 2 layout + navigation terminé et mergé dans main (feat/layout-navigation). Contenu : routes squelettes (layout route pathless + children + wildcard), MainLayout (sidebar + main + router-outlet), Sidebar (nav sémantique, routerLink/routerLinkActive), Theme service (premier signal + effect + DOCUMENT), ThemeSwitch animé adapté d'Uiverse. Page /accounts volontairement reportée.
 
 ## Décisions design (phase A)
 - Accent unique emerald (abandon du duo blue/emerald de l'ancien code) — à valider sur la nav.
@@ -50,7 +51,10 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - [ ] SCSS : variables CSS, Flexbox, Grid, nesting, dark mode, media queries
 - [x] TypeScript de base (interfaces, types) — pour les mocks typés
 - [x] Standalone components, control flow @if/@for (reste : @Input à pratiquer)
-- [ ] (Phase B) Signals, services injectables, reactive forms, RxJS minimal
+- [x] Routing : routes enfants, layout route pathless, pathMatch, wildcard, routerLink/routerLinkActive
+- [x] Premier signal + effect + inject(DOCUMENT) (service Theme)
+- [ ] (Phase B) Signals avancés (computed), reactive forms, RxJS minimal
+- [ ] Lazy loading des routes (loadComponent) — à appliquer en fin de phase A
 
 ## Workflow Git (à suivre par le mentor à chaque étape)
 - Stratégie : GitHub Flow — `main` toujours stable, une branche `feat/...` par implémentation, merge dans `main` après validation en revue. (`dev` abandonné tant qu'il n'y a pas de déploiement — à reconsidérer en phase déploiement.)
@@ -63,9 +67,15 @@ Phase 1 terminée (cartographie validée le 2026-07-22). Prochaine phase : prér
 - (aucun)
 
 ## Prochaine étape
-Écran 2 : layout + navigation — branche feat/layout-navigation. Sidebar (liens vers futures pages), routes, ThemeSwitch fonctionnel, layout à deux zones (sidebar + router-outlet). Compétences nouvelles : routerLink/routerLinkActive, composants partagés (components/layout/), éventuellement premier signal (thème).
+Écran 3 : Auth — branche feat/auth. Page hors layout (pas de sidebar). Phase A = formulaire statique. Compétences nouvelles : formulaires Angular, @Input/@Output, composant Button réutilisable si un 3e bouton apparaît (règle des trois).
+
+En attente : restructuration de l'interface envisagée par l'utilisateur (idée à préciser) ; page /accounts à réintégrer.
 
 ## Notes pédagogiques
 - Compris (avec aide) : MonthSelector = service + signal car source de vérité unique partagée entre écrans (équivalent du store Zustand).
 - Acquis : grid auto-fit/minmax (trouvé seul, mieux que la consigne), tokens, nesting SCSS, encapsulation des styles composant.
 - À surveiller : tendance YAGNI (propriétés CSS « au cas où » — footer relative conservé malgré avertissement) ; confusion initiale aération verticale vs largeur de ligne (résolu avec pattern container + 65ch).
+- Acquis écran 2 : layout route pathless vs condition sur l'URL, routerLinkActiveOptions exact, `.update()` vs `.set()` sur un signal, `protected readonly` pour tout ce que le template consomme, services jamais dans `imports:` d'un composant.
+- Erreurs répétées à surveiller : sémantique HTML dans les boucles (@for sur le conteneur au lieu de l'item, texte hors du <a>), classes CSS du template et du SCSS qui divergent, transitions sans durée, `gap` sur un élément non-flex, styles par défaut des listes/inputs non neutralisés.
+- Pièges rencontrés (mentor) : encapsulation Angular ajoute un attribut par compound selector → les spécificités égales d'un CSS externe sont rompues (combinateur `~` l'emporte sur `:nth-child`) ; les contrôles de formulaire n'héritent ni de `font-size` ni d'une marge nulle → `font: inherit; margin: 0` requis avant tout dimensionnement en `em`.
+- Décision design : ThemeSwitch dans le footer de la sidebar plutôt qu'en position fixed bas-droite (slot réservé à l'action principale).
