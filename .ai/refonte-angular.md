@@ -1,7 +1,7 @@
 # Journal de refonte Angular — budget-planner
 
 ## Phase actuelle
-Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigation) et 3 (auth) terminés et mergés dans main.
+Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigation), 3 (auth) et 4 (categories) terminés et mergés dans main.
 
 ## Stratégie de refonte (décision utilisateur, 2026-07-22)
 - **Phase A — Frontend statique** : reconstruire tous les écrans avec des données mockées typées (fichiers de mocks + interfaces calquées sur le modèle réel). Objectif : valider/améliorer le visuel.
@@ -36,6 +36,7 @@ Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigatio
 - 2026-07-27 : Écran 1 landing page terminé et mergé dans main (feat/landing-page). Revue visuelle faite : pattern container + 65ch, cartes améliorées, transitions corrigées (sur état de base, pas :hover).
 - 2026-08-05 : Écran 2 layout + navigation terminé et mergé dans main (feat/layout-navigation). Contenu : routes squelettes (layout route pathless + children + wildcard), MainLayout (sidebar + main + router-outlet), Sidebar (nav sémantique, routerLink/routerLinkActive), Theme service (premier signal + effect + DOCUMENT), ThemeSwitch animé adapté d'Uiverse. Page /accounts volontairement reportée.
 - 2026-08-05 : Écran 3 auth terminé et mergé dans main (feat/auth). Deux routes (/auth/login, /auth/register) avec un seul composant + signal mode alimenté par ActivatedRoute. Formulaire statique (phase A) avec labels corrects, autocomplete, bouton OAuth placeholder désactivé. Zones de message mockées (signal mockState). Liens de bascule plutôt qu'onglets (décision UX). Correction boutons landing page (routerLink) + reset box-sizing global.
+- 2026-08-05 : Écran 4 categories terminé et mergé dans main (feat/categories). CRUD hiérarchique Category→Subcategory. Composant CategoryCard réutilisable avec @Input (category, subcategories) + @Output (editCategory, deleteCategory, addSubcategory, editSubcategory, deleteSubcategory). Page Categories orchestratrice avec signals (categories, subcategories) et filtrage. Édition inline (catégories + sous-catégories). Icônes SVG (gris pour edit, rouge pour delete — convention UX moderne). Grille responsive 3 colonnes (auto-fill minmax). Gestion état vide ("Aucune sous-catégorie"). Premier composant avec communication parent-enfant.
 
 ## Décisions design (phase A)
 - Accent unique emerald (abandon du duo blue/emerald de l'ancien code) — à valider sur la nav.
@@ -51,7 +52,8 @@ Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigatio
 
 ## Compétences à travailler (prérequis immédiats — priorités phase A)
 - [ ] SCSS : variables CSS, Flexbox, Grid, nesting, dark mode, media queries
-- [x] TypeScript de base (interfaces, types) — pour les mocks typés
+- [x] TypeScript de base (interfaces, types) — pou
+- [x] @Input/@Output + EventEmitter (communication parent-enfant
 - [x] Standalone components, control flow @if/@for (reste : @Input à pratiquer)
 - [x] Routing : routes enfants, layout route pathless, pathMatch, wildcard, routerLink/routerLinkActive, paramètres de route
 - [x] Premier signal + effect + inject(DOCUMENT) (service Theme)
@@ -69,7 +71,7 @@ Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigatio
 ## Blocages
 - (aucun)
 
-## Prochaine étape
+## Pro5 : Transactions (liste avec filtres + formulaire CRUD). Compétences nouvelles : formulaires plus complexes (plusieurs champs, sélection catégorie/sous-catégorie liées), filtrage de données, formatage de dates/montants
 Écran 4 : Categories (CRUD hiérarchique). Compétences nouvelles : @Input/@Output, gestion d'une structure parent/enfant (Category→Subcategory), formulaires avec relations, affichage hiérarchique.
 
 En attente : Accounts (reporté, nécessite discussion sur la structure des données et l'intégration avec Transactions).
@@ -84,3 +86,4 @@ En attente : Accounts (reporté, nécessite discussion sur la structure des donn
 - Décision design : ThemeSwitch dans le footer de la sidebar plutôt qu'en position fixed bas-droite (slot réservé à l'action principale).
 - Acquis écran 3 : ActivatedRoute.snapshot.url pour lire le segment de route, pattern lien de bascule vs onglets (UX moderne), <label for> + <input id> + autocomplete + name (accessibilité formulaires), box-sizing: border-box requis en global pour éviter débordement des inputs à width: 100%.
 - Décisions auth : email + double password seulement (pas de nom/prénom/date de naissance), OAuth Google en phase B, zones de message avec signal mockState pour tests visuels.
+- Acquis écran 4 : @Input/@Output + EventEmitter pour communication parent-enfant, principe flux unidirectionnel (données descendent, événements remontent), édition inline (signal isEditing), filtrage de données (subcategories.filter), icônes SVG avec fill: currentColor, gestion état vide avec @empty. Décision UX : gris pour edit + rouge pour delete (convention moderne) plutôt que bleu + rouge (trop coloré). grid auto-fill minmax pour responsive sans media queries.
