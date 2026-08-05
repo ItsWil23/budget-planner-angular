@@ -10,7 +10,8 @@ import { Settings } from './pages/settings/settings';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', component: Landing },
-  { path: 'auth', component: Auth },
+  { path: 'auth/login', component: Auth },
+  { path: 'auth/register', component: Auth },
   {
     path: '',
     component: MainLayout,
