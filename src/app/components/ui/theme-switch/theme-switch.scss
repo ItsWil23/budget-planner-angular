@@ -1,0 +1,177 @@
+/* Switch adapté de Uiverse.io par JkHuger */
+:host {
+  display: block;
+}
+
+.theme {
+  --trans-dur: 0.3s;
+
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.625rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme__toggle-wrap {
+  position: relative;
+  /* bloc de confinement fiable pour les enfants en position absolue */
+  display: inline-block;
+  line-height: 0;
+  margin: 0;
+}
+
+.theme__toggle,
+.theme__icon {
+  z-index: 1;
+}
+
+.theme__toggle {
+  position: relative;
+  display: block;
+  appearance: none;
+  /* les contrôles de formulaire n'héritent pas de la taille de police : sans ça les `em` sont faux */
+  font: inherit;
+  margin: 0;
+  width: 6em;
+  height: 3em;
+  padding: 0.25em;
+  background-color: hsl(48, 90%, 85%);
+  border-radius: 25% / 50%;
+  box-shadow: 0 0 0 0.125em transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--trans-dur) ease-in-out,
+    box-shadow 0.15s ease-in-out;
+
+  &:before {
+    content: '';
+    display: block;
+    width: 2.5em;
+    height: 2.5em;
+    background-color: hsl(48, 90%, 55%);
+    border-radius: 50%;
+    transition: var(--trans-dur);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 0.125em var(--color-accent);
+    outline: transparent;
+  }
+}
+
+.theme__icon {
+  position: absolute;
+  display: block;
+  top: 0.75em;
+  left: 0.75em;
+  width: 1.5em;
+  height: 1.5em;
+  transition: var(--trans-dur);
+}
+
+.theme__icon-part {
+  position: absolute;
+  top: calc(50% - 0.5em);
+  left: calc(50% - 0.5em);
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  box-shadow: 0.4em -0.4em 0 0.5em hsl(0, 0%, 100%) inset;
+  transform: scale(0.5);
+  transition:
+    box-shadow var(--trans-dur) ease-in-out,
+    opacity var(--trans-dur) ease-in-out,
+    transform var(--trans-dur) ease-in-out;
+
+  /* le combinateur `~` gagne une pseudo-classe de spécificité via l'encapsulation Angular :
+     les variantes doivent donc le répéter pour l'emporter */
+  ~ .theme__icon-part {
+    top: 50%;
+    left: calc(50% - 0.05em);
+    width: 0.1em;
+    height: 0.2em;
+    background-color: hsl(0, 0%, 100%);
+    border-radius: 0.05em;
+    transform-origin: 50% 0;
+    transform: rotate(0deg) translateY(0.5em);
+
+    &:nth-child(3) {
+      transform: rotate(45deg) translateY(0.45em);
+    }
+    &:nth-child(4) {
+      transform: rotate(90deg) translateY(0.45em);
+    }
+    &:nth-child(5) {
+      transform: rotate(135deg) translateY(0.45em);
+    }
+    &:nth-child(6) {
+      transform: rotate(180deg) translateY(0.45em);
+    }
+    &:nth-child(7) {
+      transform: rotate(225deg) translateY(0.45em);
+    }
+    &:nth-child(8) {
+      transform: rotate(270deg) translateY(0.5em);
+    }
+    &:nth-child(9) {
+      transform: rotate(315deg) translateY(0.5em);
+    }
+  }
+}
+
+/* État coché — mode sombre */
+.theme__toggle:checked {
+  background-color: hsl(198, 90%, 15%);
+
+  &:before {
+    background-color: hsl(198, 90%, 55%);
+    transform: translateX(3em);
+  }
+
+  ~ .theme__icon {
+    transform: translateX(3em);
+
+    .theme__icon-part:nth-child(1) {
+      top: 0.25em;
+      left: 0.25em;
+      box-shadow: 0.2em -0.2em 0 0.2em hsl(0, 0%, 100%) inset;
+      transform: scale(1);
+    }
+
+    .theme__icon-part ~ .theme__icon-part {
+      opacity: 0;
+
+      &:nth-child(2) {
+        transform: rotate(45deg) translateY(0.8em);
+      }
+      &:nth-child(3) {
+        transform: rotate(90deg) translateY(0.8em);
+      }
+      &:nth-child(4) {
+        transform: rotate(135deg) translateY(0.8em);
+      }
+      &:nth-child(5) {
+        transform: rotate(180deg) translateY(0.8em);
+      }
+      &:nth-child(6) {
+        transform: rotate(225deg) translateY(0.8em);
+      }
+      &:nth-child(7) {
+        transform: rotate(270deg) translateY(0.8em);
+      }
+      &:nth-child(8) {
+        transform: rotate(315deg) translateY(0.8em);
+      }
+      &:nth-child(9) {
+        transform: rotate(360deg) translateY(0.8em);
+      }
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme {
+    --trans-dur: 0s;
+  }
+}

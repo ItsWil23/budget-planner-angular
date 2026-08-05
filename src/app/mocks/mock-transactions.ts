@@ -1,4 +1,4 @@
-import { Transaction } from "../models/transactions";
+import { Transaction } from '../models/transactions';
 
 export const MOCK_TRANSACTIONS: Transaction[] = [
   {
@@ -6,19 +6,22 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     date: '2023-01-01',
     description: 'Grocery Shopping',
     amount: 50.25,
-    category: 'Groceries'},
+    category: 'Groceries',
+  },
 
   {
     id: 2,
     date: '2023-01-02',
     description: 'Electricity Bill',
-    amount: 75.50,
-    category: 'Utilities'},
+    amount: 75.5,
+    category: 'Utilities',
+  },
 
   {
     id: 3,
     date: '2023-01-03',
     description: 'Dinner at Restaurant',
-    amount: 30.00,
-    category: 'Dining'}
+    amount: 30.0,
+    category: 'Dining',
+  },
 ];
