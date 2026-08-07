@@ -1,5 +1,13 @@
+@if (sidebar().isOpen()) {
+  <div class="backdrop" (click)="sidebar().closeSidebar()"></div>
+}
 <app-sidebar />
 <main class="main-content">
+  <button class="hamburger" [class.hidden]="sidebar().isOpen()" (click)="sidebar().toggleSidebar()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
   <div class="page-container">
     <router-outlet />
   </div>

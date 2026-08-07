@@ -5,11 +5,87 @@
 
 .main-content {
   flex: 1;
-  padding: var(--spacing-xl) var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-sm);
   overflow-y: auto;
+
+  @media (min-width: 768px) {
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
 }
 
 .page-container {
   max-width: 80rem;
   margin-inline: auto;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.hamburger {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1001;
+
+  width: 2.5rem;
+  height: 2.5rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: inherit; //var(--color-surface);
+  border: none; //1px solid var(--color-border);
+  //border-radius: var(--radius-sm);
+  cursor: pointer;
+
+  position: relative;
+
+  span {
+    position: absolute;
+    width: 1.5rem;
+    height: 2px;
+    background: var(--color-text);
+    transition:
+      transform 0.3s ease,
+      opacity 0.3s ease,
+      background-color 0.3s;
+
+    &:nth-child(1) {
+      transform: translateY(-0.5rem);
+    }
+    &:nth-child(2) {
+      transform: translateY(0);
+    }
+    &:nth-child(3) {
+      transform: translateY(0.5rem);
+    }
+  }
+
+  /*
+  &:hover span {
+    background: var(--color-accent);
+  }
+  */
+
+  opacity: 1;
+  transition: opacity 0s 0.3s;
+
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0s;
+  }
+
+  @media (min-width: 768px) {
+    display: none;
+  }
 }

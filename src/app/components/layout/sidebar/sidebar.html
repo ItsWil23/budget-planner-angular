@@ -1,5 +1,11 @@
-<aside class="sidebar">
-  <div class="sidebar-header">Budget Planner</div>
+<aside class="sidebar" [class.open]="isOpen()">
+  <div class="sidebar-header">
+    <span>Budget Planner</span>
+    <button class="close-button" (click)="closeSidebar()">
+    <span></span>
+    <span></span>
+  </button>
+  </div>
 
   <div class="sidebar-content">
     <nav>
@@ -11,6 +17,7 @@
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
               [routerLink]="item.path"
+              (click)="closeSidebar()"
             >
               {{ item.label }}
             </a>

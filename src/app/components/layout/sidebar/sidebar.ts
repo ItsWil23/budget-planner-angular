@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ThemeSwitch } from '../../ui/theme-switch/theme-switch';
 import { NavItem } from '../../../models/navitem';
@@ -12,6 +12,8 @@ import { MOCK_USER } from '../../../mocks/mock-user';
   styleUrl: './sidebar.scss',
 })
 export class Sidebar {
+  readonly isOpen = signal<boolean>(false);
+
   readonly SIDEBAR_ITEMS: NavItem[] = [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Transactions', path: '/transactions' },
@@ -21,4 +23,12 @@ export class Sidebar {
   ];
 
   user: User = MOCK_USER;
+
+  toggleSidebar(): void {
+    this.isOpen.update(isOpen => !isOpen);
+  }
+
+  closeSidebar(): void {
+    this.isOpen.set(false);
+  }
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar';
 
@@ -8,4 +8,6 @@ import { Sidebar } from '../sidebar/sidebar';
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.scss',
 })
-export class MainLayout {}
+export class MainLayout {
+  protected readonly sidebar = viewChild.required(Sidebar);
+}
