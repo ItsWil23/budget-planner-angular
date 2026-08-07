@@ -37,6 +37,7 @@ Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigatio
 - 2026-08-05 : Écran 2 layout + navigation terminé et mergé dans main (feat/layout-navigation). Contenu : routes squelettes (layout route pathless + children + wildcard), MainLayout (sidebar + main + router-outlet), Sidebar (nav sémantique, routerLink/routerLinkActive), Theme service (premier signal + effect + DOCUMENT), ThemeSwitch animé adapté d'Uiverse. Page /accounts volontairement reportée.
 - 2026-08-05 : Écran 3 auth terminé et mergé dans main (feat/auth). Deux routes (/auth/login, /auth/register) avec un seul composant + signal mode alimenté par ActivatedRoute. Formulaire statique (phase A) avec labels corrects, autocomplete, bouton OAuth placeholder désactivé. Zones de message mockées (signal mockState). Liens de bascule plutôt qu'onglets (décision UX). Correction boutons landing page (routerLink) + reset box-sizing global.
 - 2026-08-05 : Écran 4 categories terminé et mergé dans main (feat/categories). CRUD hiérarchique Category→Subcategory. Composant CategoryCard réutilisable avec @Input (category, subcategories) + @Output (editCategory, deleteCategory, addSubcategory, editSubcategory, deleteSubcategory). Page Categories orchestratrice avec signals (categories, subcategories) et filtrage. Édition inline (catégories + sous-catégories). Icônes SVG (gris pour edit, rouge pour delete — convention UX moderne). Grille responsive 3 colonnes (auto-fill minmax). Gestion état vide ("Aucune sous-catégorie"). Premier composant avec communication parent-enfant.
+- 2026-08-07 : Sidebar responsive terminée et mergée dans main (feat/responsive-sidebar). Mobile (< 768px) : sidebar en position fixed hors écran, bouton hamburger pour ouvrir, backdrop semi-transparent, bouton X dans header sidebar, fermeture auto au clic lien/backdrop, padding contenu réduit. Desktop (≥ 768px) : sidebar persistante, pas de hamburger/X. Animations : sidebar slide (transform 0.3s), hamburger fade avec timing différencié (disparition instantanée, réapparition après 0.3s). Compétences : media queries, viewChild (accès composant enfant), position fixed + absolute, transitions CSS conditionnelles, responsive design patterns modernes.
 
 ## Décisions design (phase A)
 - Accent unique emerald (abandon du duo blue/emerald de l'ancien code) — à valider sur la nav.
@@ -51,13 +52,15 @@ Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigatio
 - Bases Angular (cours OpenClassrooms « Débutez avec Angular »)
 
 ## Compétences à travailler (prérequis immédiats — priorités phase A)
-- [ ] SCSS : variables CSS, Flexbox, Grid, nesting, dark mode, media queries
-- [x] TypeScript de base (interfaces, types) — pou
-- [x] @Input/@Output + EventEmitter (communication parent-enfant
-- [x] Standalone components, control flow @if/@for (reste : @Input à pratiquer)
+- [x] SCSS : variables CSS, Flexbox, Grid, nesting, dark mode, media queries
+- [x] TypeScript de base (interfaces, types)
+- [x] @Input/@Output + EventEmitter (communication parent-enfant)
+- [x] Standalone components, control flow @if/@for
 - [x] Routing : routes enfants, layout route pathless, pathMatch, wildcard, routerLink/routerLinkActive, paramètres de route
 - [x] Premier signal + effect + inject(DOCUMENT) (service Theme)
 - [x] ActivatedRoute : lecture de segments d'URL (snapshot.url)
+- [x] viewChild : accès à un composant enfant depuis le parent
+- [x] Media queries : responsive design mobile/desktop
 - [ ] (Phase B) Signals avancés (computed), reactive forms, RxJS minimal
 - [ ] Lazy loading des routes (loadComponent) — à appliquer en fin de phase A
 
@@ -86,3 +89,6 @@ En attente : Accounts (reporté, nécessite discussion sur la structure des donn
 - Décision design : ThemeSwitch dans le footer de la sidebar plutôt qu'en position fixed bas-droite (slot réservé à l'action principale).
 - Acquis écran 3 : ActivatedRoute.snapshot.url pour lire le segment de route, pattern lien de bascule vs onglets (UX moderne), <label for> + <input id> + autocomplete + name (accessibilité formulaires), box-sizing: border-box requis en global pour éviter débordement des inputs à width: 100%.
 - Décisions auth : email + double password seulement (pas de nom/prénom/date de naissance), OAuth Google en phase B, zones de message avec signal mockState pour tests visuels.
+- Acquis écran 4 : @Input/@Output + EventEmitter pour communication parent-enfant, principe flux unidirectionnel (données descendent, événements remontent), édition inline (signal isEditing), filtrage de données (subcategories.filter), icônes SVG avec fill: currentColor, gestion état vide avec @empty. Décision UX : gris pour edit + rouge pour delete (convention moderne) plutôt que bleu + rouge (trop coloré). grid auto-fill minmax pour responsive sans media queries.
+- Acquis sidebar responsive : media queries (`@media (min-width: 768px)` pour desktop, `@media (max-width: 767px)` pour mobile), `viewChild.required()` pour accéder au composant enfant depuis le parent (vs template reference variable), position fixed + absolute pour overlay, backdrop pattern (position fixed + z-index + semi-transparent), transitions CSS conditionnelles (durée/délai différents selon état avec `&.classe`), pattern hamburger → X (deux approches testées : transformation CSS vs deux boutons séparés — choix final : deux boutons pour simplicité), :host sans display pour ne pas occuper d'espace en position fixed, pointer-events: none pour désactiver interactions sans retirer du DOM (permet transitions). Erreur corrigée : `&.open` vs `.open` en SCSS (avec & = même élément, sans & = enfant).
+
