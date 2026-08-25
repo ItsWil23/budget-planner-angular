@@ -1,7 +1,11 @@
+import { CategoryType } from "./category";
+
 export interface Transaction {
-  id: number;
+  id: string;
+  label: string;
+  categoryId: string;
+  subcategoryId: string;
   date: string;
-  description: string;
   amount: number;
-  category: string;
+  type: CategoryType;
 }

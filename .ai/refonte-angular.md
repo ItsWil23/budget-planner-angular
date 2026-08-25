@@ -74,8 +74,15 @@ Phase A (frontend statique) en cours. Écrans 1 (landing), 2 (layout + navigatio
 ## Blocages
 - (aucun)
 
-## Pro5 : Transactions (liste avec filtres + formulaire CRUD). Compétences nouvelles : formulaires plus complexes (plusieurs champs, sélection catégorie/sous-catégorie liées), filtrage de données, formatage de dates/montants
-Écran 4 : Categories (CRUD hiérarchique). Compétences nouvelles : @Input/@Output, gestion d'une structure parent/enfant (Category→Subcategory), formulaires avec relations, affichage hiérarchique.
+## Prochaine étape
+Écran 5 : Transactions (liste avec filtres + formulaire CRUD). Compétences nouvelles : formulaires plus complexes (plusieurs champs, sélection catégorie/sous-catégorie liées), filtrage de données, formatage de dates/montants, pagination.
+
+### Écran 5 Transactions — décisions UX (2026-08-24)
+- Référence d'inspiration validée par l'utilisateur : Sam's Finance App — https://sams-finance-app.onrender.com/transactions (repo : https://github.com/samabati/finance-app)
+- Structure retenue : card list des transactions du mois (colonnes d'infos), pagination avec nombre d'items par page ajustable, filtres/tri (par date, catégorie, sous-catégorie, type — combinaisons sauvegardables envisagées), bouton « Nouvelle Transaction » au-dessus de la liste ouvrant un modal/formulaire.
+- Modal assumé (même s'il cache la liste) — préféré au formulaire inline discuté précédemment.
+- Mobile-first : l'affichage doit rester propre en mobile comme en desktop.
+- Hors périmètre phase A : planification fine / transactions prévisionnelles (discussion reportée en phase B).
 
 En attente : Accounts (reporté, nécessite discussion sur la structure des données et l'intégration avec Transactions).
 
