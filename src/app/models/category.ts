@@ -9,7 +9,7 @@ export interface Category {
 
 export interface Subcategory {
   id: string;
-  label: string;
+  name: string;
   categoryId: string; // FK vers Category.id
   icon: string;
 }

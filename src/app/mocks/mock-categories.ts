@@ -9,16 +9,16 @@ export const MOCK_CATEGORIES: Category[] = [
 
 export const MOCK_SUBCATEGORIES: Subcategory[] = [
   // Revenus (1 sous-catégorie)
-  { id: 'sub-1', label: 'Salaire', categoryId: 'cat-1', icon: 'salary' },
+  { id: 'sub-1', name: 'Salaire', categoryId: 'cat-1', icon: 'salary' },
 
   // Charges fixes (3 sous-catégories)
-  { id: 'sub-2', label: 'Loyer', categoryId: 'cat-2', icon: 'home' },
-  { id: 'sub-3', label: 'Internet', categoryId: 'cat-2', icon: 'wifi' },
-  { id: 'sub-4', label: 'Électricité', categoryId: 'cat-2', icon: 'zap' },
+  { id: 'sub-2', name: 'Loyer', categoryId: 'cat-2', icon: 'home' },
+  { id: 'sub-3', name: 'Internet', categoryId: 'cat-2', icon: 'wifi' },
+  { id: 'sub-4', name: 'Électricité', categoryId: 'cat-2', icon: 'zap' },
 
   // Charges variables (2 sous-catégories)
-  { id: 'sub-5', label: 'Courses', categoryId: 'cat-3', icon: 'shopping-cart' },
-  { id: 'sub-6', label: 'Carburant', categoryId: 'cat-3', icon: 'fuel' },
+  { id: 'sub-5', name: 'Courses', categoryId: 'cat-3', icon: 'shopping-cart' },
+  { id: 'sub-6', name: 'Carburant', categoryId: 'cat-3', icon: 'fuel' },
 
   // Epargne (0 sous-catégorie - pour tester le cas vide)
 ];

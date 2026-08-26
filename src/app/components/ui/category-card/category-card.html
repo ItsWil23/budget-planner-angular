@@ -88,7 +88,7 @@
               <!-- Mode édition sous-catégorie -->
               <input
                 type="text"
-                [value]="sub.label"
+                [value]="sub.name"
                 (blur)="saveSubcategory(sub.id, $any($event.target).value)"
                 (keydown.enter)="saveSubcategory(sub.id, $any($event.target).value)"
                 (keydown.escape)="editingSubcategoryId.set(null)"
@@ -97,7 +97,7 @@
               />
             } @else {
               <!-- Mode affichage -->
-              <span class="subcategory-label">{{ sub.label }}</span>
+              <span class="subcategory-label">{{ sub.name }}</span>
               <div class="action-buttons">
                 <button
                   type="button"

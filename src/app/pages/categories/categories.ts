@@ -40,8 +40,9 @@ export class Categories {
 
     const newSubcategory: Subcategory = {
       id: `sub-${Date.now()}`, // ID temporaire pour la phase A
-      label: payload.label.trim(),
+      name: payload.label.trim(),
       categoryId: payload.categoryId,
+      icon: '',
     };
 
     this.subcategories.update(subs => [...subs, newSubcategory]);
@@ -52,7 +53,7 @@ export class Categories {
 
     this.subcategories.update(subs =>
       subs.map(sub =>
-        sub.id === payload.id ? { ...sub, label: payload.label.trim() } : sub
+        sub.id === payload.id ? { ...sub, name: payload.label.trim() } : sub
       )
     );
   }

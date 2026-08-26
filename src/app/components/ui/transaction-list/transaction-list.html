@@ -1,0 +1,27 @@
+<table>
+  <thead>
+    <tr>
+      <th>Libellé</th>
+      <th>Catégorie</th>
+      <th>Sous-catégorie</th>
+      <th>Date</th>
+      <th>Montant</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (tx of transactions; track tx.id) {
+      <tr>
+        <td>
+          <span [style.background-color]="getCategoryById(tx.categoryId).color"><span>{{ getSubcategoryById(tx.subcategoryId).icon }}</span></span>
+          <span>{{ tx.label }}</span>
+        </td>
+        <td>{{ getCategoryById(tx.categoryId).name }}</td>
+        <td>{{ getSubcategoryById(tx.subcategoryId).name }}</td>
+        <td>{{ tx.date | date:'dd/MM/yyyy' }}</td>
+        <td>{{ tx.amount | currency:'EUR':'symbol':'1.2-2':'fr-FR' }}</td>
+      </tr>
+    } @empty {
+      ...
+    }
+  </tbody>
+</table>
