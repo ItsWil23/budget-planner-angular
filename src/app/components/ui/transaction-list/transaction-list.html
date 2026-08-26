@@ -1,6 +1,6 @@
 <table>
   <thead>
-    <tr>
+    <tr class="header-row">
       <th>Libellé</th>
       <th>Catégorie</th>
       <th>Sous-catégorie</th>
@@ -10,15 +10,25 @@
   </thead>
   <tbody>
     @for (tx of transactions; track tx.id) {
-      <tr>
-        <td>
-          <span [style.background-color]="getCategoryById(tx.categoryId).color"><span>{{ getSubcategoryById(tx.subcategoryId).icon }}</span></span>
-          <span>{{ tx.label }}</span>
+      <tr class="transaction-row">
+        <td class="label-cell">
+          <span class="pastille" [style.background-color]="getCategoryById(tx.categoryId).color">
+            <span class="icon">
+              {{ getSubcategoryById(tx.subcategoryId).icon }}
+            </span>
+          </span>
+          <span class="label">{{ tx.label }}</span>
         </td>
-        <td>{{ getCategoryById(tx.categoryId).name }}</td>
-        <td>{{ getSubcategoryById(tx.subcategoryId).name }}</td>
-        <td>{{ tx.date | date:'dd/MM/yyyy' }}</td>
-        <td>{{ tx.amount | currency:'EUR':'symbol':'1.2-2':'fr-FR' }}</td>
+        <td class="category-cell">{{ getCategoryById(tx.categoryId).name }}</td>
+        <td class="subcategory-cell">{{ getSubcategoryById(tx.subcategoryId).name }}</td>
+        <td class="date-cell">{{ tx.date | date: 'dd/MM/yyyy' }}</td>
+        <td
+          class="amount-cell"
+          [class.amount-income]="tx.type === 'income'"
+          [class.amount-expense]="tx.type === 'expense'"
+        >
+          {{ tx.amount | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr-FR' }}
+        </td>
       </tr>
     } @empty {
       ...

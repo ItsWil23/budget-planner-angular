@@ -1,0 +1,57 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.header-row th{
+  font-size: var(--font5);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-align: left;
+  padding-bottom:  var(--spacing-md);
+}
+
+.header-row th:last-child {
+  text-align: right;
+}
+
+.transaction-row {
+  border-bottom: 1px solid var(--color-border);
+}
+
+tbody tr:last-child {
+  border-bottom: none;
+}
+
+.label-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.pastille {
+  display: inline-flex;
+
+  width: var(--spacing-xl);
+  height: var(--spacing-xl);
+  border-radius: var(--radius-full);
+
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  font-size: 0;
+}
+
+
+.amount-cell {
+  text-align: right;
+}
+
+.amount-income {
+  color: var(--color-income);
+}
+.amount-expense {
+  color: var(--color-expense);
+}

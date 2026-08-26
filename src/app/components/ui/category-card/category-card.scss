@@ -9,12 +9,12 @@
   padding: 1.5rem;
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  /*box-shadow: var(--shadow-card);
   transition: box-shadow 0.2s ease;
 
   &:hover {
-    box-shadow: var(--shadow-md);
-  }
+    box-shadow: var(--shadow-elevated);
+  }*/
 }
 
 // ===========================
