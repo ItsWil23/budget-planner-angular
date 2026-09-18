@@ -1,0 +1,41 @@
+<form [formGroup]="newTransactionForm" (ngSubmit)="onSubmitTransactionForm()">
+  <div class="form-group">
+    <label for="transactionCategory">Catégorie</label>
+    <select id="transactionCategory" formControlName="categoryId">
+      <option value="" disabled>— Choisir une catégorie —</option>
+      @for(category of formCategories; track category.id){
+        <option [value]="category.id">{{ category.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="transactionSubCategory">Sous-Catégorie</label>
+    <select id="transactionSubCategory" formControlName="subcategoryId">
+      <option value="" disabled>— Choisir une sous-catégorie —</option>
+      @for(subcategory of filteredSubcategories; track subcategory.id){
+        <option [value]="subcategory.id">{{ subcategory.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="transactionLabel">Libellé</label>
+    <input id="transactionLabel" formControlName="label" type="text"/>
+  </div>
+
+  <div class="form-group">
+    <label for="transactionAmount">Montant</label>
+    <input id="transactionAmount" formControlName="amount" type="number" step="0.01"/>
+  </div>
+
+  <div class="form-group">
+    <label for="transactionDate">Date</label>
+    <input id="transactionDate" formControlName="date" type="date"/>
+  </div>
+
+  <div class="form-action-buttons">
+    <button type="submit">Ajouter</button>
+    <button type="button" (click)="cancel.emit()">Annuler</button>
+  </div>
+</form>

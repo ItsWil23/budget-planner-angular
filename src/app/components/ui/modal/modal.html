@@ -1,1 +1,18 @@
-<p>modal works!</p>
+<div class="overlay" (click)="closed.emit()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <button class="close-btn" (click)="closed.emit()" title="Fermer">
+        <svg viewBox="0 0 32 32" class="close-icon">
+          <path
+            d="M10.722 9.969l-0.754 0.754 5.278 5.278-5.253 5.253 0.754
+                      0.754 5.253-5.253 5.253 5.253 0.754-0.754-5.253-5.253
+                      5.278-5.278-0.754-0.754-5.278 5.278z"
+          ></path>
+        </svg>
+      </button>
+    </header>
+    <div class="modal-body">
+      <ng-content />
+    </div>
+  </div>
+</div>

@@ -1,4 +1,19 @@
-<h1>Transactions</h1>
+<div class="page-header">
+  <h1 class="page-title">Transactions</h1>
+  <button
+    type="button"
+    class="btn new-transaction-btn"
+    (click)="isModalOpened.set(true)"
+    title="Ajouter une nouvelle transaction"
+  >
+    <svg viewBox="0 0 448 512" class="icon">
+      <path
+        d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"
+      />
+    </svg>
+    Nouvelle transaction
+  </button>
+</div>
 <div class="transactions-list-card">
   <app-transaction-list
     [transactions]="transactions()"
@@ -6,3 +21,15 @@
     [subcategories]="subcategories()"
   />
 </div>
+@if (isModalOpened()) {
+  <div>
+    <app-modal (closed)="isModalOpened.set(false)">
+      <app-transaction-form
+        [formCategories]="categories()"
+        [formSubcategories]="subcategories()"
+        (transactionSubmit)="onTransactionSubmit($event)"
+        (cancel)="onTransactionCancel()"
+      ></app-transaction-form>
+    </app-modal>
+  </div>
+}
