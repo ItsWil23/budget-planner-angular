@@ -1,0 +1,23 @@
+# Configuration Aider — Budget Planner v3
+# Documentation officielle (vérifier la compatibilité avec ta version d'Aider) :
+# https://aider.chat/docs/config/aider_conf.html
+# https://aider.chat/docs/llms/ollama.html
+
+# Modèle servi localement par Ollama. Le préfixe ollama_chat/ est celui recommandé
+# par Aider pour Ollama (meilleure gestion du contexte que le préfixe ollama/ nu).
+model: ollama_chat/qwen2.5-coder:7b
+
+# Fichiers toujours chargés en contexte, en lecture seule pour l'agent :
+# le contrat produit/archi/design qu'il doit respecter à chaque tâche.
+read:
+  - AGENTS.md
+  - PRD.md
+  - ARCHITECTURE.md
+  - DESIGN_SYSTEM.md
+
+# Un commit Git par modification appliquée, message généré automatiquement.
+auto-commits: true
+
+# Attribution claire dans l'historique Git : on sait quels commits viennent de l'agent.
+attribute-author: true
+attribute-committer: true
