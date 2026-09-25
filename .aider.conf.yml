@@ -7,6 +7,12 @@
 # par Aider pour Ollama (meilleure gestion du contexte que le préfixe ollama/ nu).
 model: ollama_chat/qwen2.5-coder:7b
 
+# Format d'édition en réécriture de fichier entier plutôt qu'en diff SEARCH/REPLACE.
+# Un modèle 7B respecte rarement le format diff exact ; "whole" est plus lent (plus de
+# tokens envoyés) mais bien plus fiable : moins de réponses qui restent en texte libre
+# au lieu d'être appliquées. https://aider.chat/docs/more/edit-formats.html
+edit-format: whole
+
 # Fichiers toujours chargés en contexte, en lecture seule pour l'agent :
 # le contrat produit/archi/design qu'il doit respecter à chaque tâche.
 read:
