@@ -257,6 +257,8 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-09-23 | Police retenue : **Plus Jakarta Sans**, auto-hébergée, chiffres tabulaires, `font-display: swap` + police de secours ajustée en métriques |
 | 2026-09-23 | Contrat opérationnel pour l'IA dev créé à la racine du repo : `PRD.md`, `ARCHITECTURE.md`, `DESIGN_SYSTEM.md`, `AGENTS.md` + `.aider.conf.yml` (Aider + Ollama, Qwen2.5-Coder 7B) |
 | 2026-09-28 | Aider abandonné (échecs répétés à appliquer les modifications, puis un commit ayant écrasé plusieurs fichiers `.scss` de production) ; remplacé par Continue (déjà installé, Qwen3-Coder 30B via Ollama) ; fichiers `.aider*` supprimés du repo |
+| 2026-09-28 | Continue abandonné à son tour (mêmes échecs d'application) ; remplacé par **Claude Code** (extension VS Code, Ollama via shim API Anthropic, `qwen3-coder:14b`) ; `CLAUDE.md` ajouté en miroir de `AGENTS.md` |
+| 2026-09-28 | Tâche `lot0-01-tokens-styles-scss` validée : tokens de design posés dans `src/styles.scss`, conformes à la spec |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 

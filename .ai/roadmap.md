@@ -29,8 +29,10 @@ application.
 ## 3. Lot 0 — Fondations (bloquant, à faire en premier)
 
 ### Design
-- Tokens SCSS remplacés par les variables de `DESIGN_SYSTEM.md` (`data-theme`, `data-palette`, échelle de
-  luminance). Supprimer les tokens emerald/slate actuels (`styles.scss`).
+- [x] **Tokens SCSS remplacés par les variables de `DESIGN_SYSTEM.md`** (`data-theme`, `data-palette`, échelle de
+  luminance, palette terracotta, pont de compatibilité temporaire). Fait le 2026-09-28 (`src/styles.scss`).
+  Reste à faire dans la foulée : poser `data-theme`/`data-palette` sur `<html>` (`theme.ts`, `index.html`) pour que
+  les tokens prennent effet visuellement — sans ça, les écrans restent non stylés (comportement attendu).
 - Police Plus Jakarta Sans auto-hébergée + police de secours ajustée en métriques (`DESIGN_SYSTEM.md` § 5.1).
 - Mesh gradient de fond : génération bornée, graine aléatoire stockée (`UserSettings.backgroundSeed`), jamais
   dérivée de l'identité.
@@ -148,6 +150,7 @@ constructeur de graphiques sur mesure, navigation personnalisable. Détail et ju
 - En cours : Transactions (liste + modal + formulaire d'ajout fonctionnels ; édition/suppression, styling,
   récurrences restants).
 - Pas commencé : Budget Mensuel, Dashboard, Paramètres, PWA.
-- Infrastructure IA dev : Aider abandonné après échecs répétés (voir `.ai/workflow.md` § 1) ; Continue installé et
-  configuré à la place (Qwen3-Coder 30B via Ollama). Fichiers `PRD.md` / `ARCHITECTURE.md` /
-  `DESIGN_SYSTEM.md` / `AGENTS.md` en place.
+- Infrastructure IA dev : Aider puis Continue abandonnés après échecs répétés (voir `.ai/workflow.md` § 1) ;
+  Claude Code (extension VS Code + Ollama, `qwen3-coder:14b`) utilisé depuis le 2026-09-28, première tâche
+  réussie du premier coup. Fichiers `PRD.md` / `ARCHITECTURE.md` / `DESIGN_SYSTEM.md` / `AGENTS.md` / `CLAUDE.md`
+  en place.

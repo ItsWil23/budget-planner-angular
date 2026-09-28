@@ -9,14 +9,17 @@
 |---|---|---|
 | **Toi** | Usage, rendu visuel, ressenti, arbitrages produit quand je te les soumets | N'écrit pas le code de l'application |
 | **Moi (PM/architecte)** | Specs, architecture, cohérence avec `PRD.md`/`ARCHITECTURE.md`/`DESIGN_SYSTEM.md`, revue technique | N'écrit pas le code de l'application, n'édite que la documentation (`.ai/`, fichiers racine `*.md`) |
-| **IA dev (actuellement Continue, en local via Ollama)** | Implémentation du code, à partir d'une spec | Ne décide pas du produit ni de l'architecture ; s'arrête et demande si une info manque (`AGENTS.md`) |
+| **IA dev (actuellement Claude Code, en local via Ollama)** | Implémentation du code, à partir d'une spec | Ne décide pas du produit ni de l'architecture ; s'arrête et demande si une info manque (`AGENTS.md`) |
 
 Aucun code applicatif n'est écrit par toi ou par moi. Tout code vient de l'IA dev, sur la base d'une spec, et n'est
 fusionné qu'après relecture humaine.
 
 > **Historique** : Aider + Qwen2.5-Coder (7B puis 14B) a été utilisé du 2026-09-23 au 2026-09-25, abandonné après
 > des échecs répétés (modifications non appliquées, puis un commit ayant écrasé plusieurs fichiers `.scss` de
-> production avec un simple commentaire). Remplacé par Continue, déjà installé et configuré avec Qwen3-Coder 30B.
+> production avec un simple commentaire). Remplacé par Continue (Qwen3-Coder 30B) le 2026-09-25, qui a subi le
+> même sort (modifications non appliquées). Remplacé à son tour par **Claude Code** (extension VS Code, pointant
+> vers Ollama via un shim compatible API Anthropic, `qwen3-coder:14b`) le 2026-09-28 — première tâche réussie
+> (`lot0-01-tokens-styles-scss`) dès le premier essai, y compris exécution autonome de `npm start` pour vérifier.
 > Les règles ci-dessous restent valables quel que soit l'outil ; seules les commandes d'interaction changent.
 
 ## 2. Cycle de vie d'une tâche

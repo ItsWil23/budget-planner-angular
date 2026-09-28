@@ -1,6 +1,6 @@
 # Agent Instructions — Budget Planner v3
 
-> Ce fichier s'adresse à l'agent de développement (actuellement Continue, en local via Ollama). Il ne remplace pas
+> Ce fichier s'adresse à l'agent de développement (actuellement Claude Code, en local via Ollama). Il ne remplace pas
 > la revue humaine : chaque tâche se termine par une Pull Request relue par l'humain avant fusion dans `main`.
 
 ## Project context
