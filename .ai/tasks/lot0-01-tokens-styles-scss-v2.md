@@ -1,0 +1,165 @@
+## Tâche : Fondations des tokens de design — styles.scss uniquement (v2 — recopie exacte)
+Lot : 0
+
+### Contexte
+Tentative précédente incomplète (tokens manquants, déclarations invalides hors bloc). Cette version donne le
+contenu final exact à reproduire, pour éliminer tout raisonnement/mapping de ta part.
+
+### Ce qu'il faut faire
+
+Remplace **l'intégralité** du contenu de `src/styles.scss` par le bloc ci-dessous, **exactement tel quel**, sans
+rien changer, reformuler, réordonner ou compléter :
+
+```scss
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  font-family: var(--font-body);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* ===== Police (repli système — Plus Jakarta Sans ajoutée dans une tâche séparée) ===== */
+  --font-body:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+
+  /* ===== Couleurs sémantiques invariantes (identiques dans toutes les palettes) ===== */
+  --color-income: #7dd3a0; /* clair : #15803d */
+  --color-ok: #7dd3a0; /* clair : #15803d */
+  --color-ok-soft: rgba(125, 211, 160, 0.14);
+  --color-over: #f17c7c; /* clair : #c93c37 */
+  --color-over-soft: rgba(241, 124, 124, 0.15);
+  --color-warn: #e8c56b;
+  --color-warn-soft: rgba(232, 197, 107, 0.14);
+
+  /* ===== Espacement ===== */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 28px;
+  --space-3xl: 40px;
+
+  /* ===== Rayons & bordures ===== */
+  --radius-sm: 9px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-full: 999px;
+  --border-width: 1px;
+
+  /* ===== Mouvement ===== */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ===== Typographie — texte ===== */
+  --text-label: 500 11px/1.3 var(--font-body);
+  --text-caption: 400 12px/1.4 var(--font-body);
+  --text-body: 400 14px/1.5 var(--font-body);
+  --text-emphasis: 600 15px/1.4 var(--font-body);
+  --text-heading: 600 20px/1.3 var(--font-body);
+
+  /* ===== Typographie — chiffres (toujours tabular-nums dans les composants) ===== */
+  --num-caption: 400 12px/1.4 var(--font-body);
+  --num-body: 500 14px/1.4 var(--font-body);
+  --num-emphasis: 500 19px/1.3 var(--font-body);
+  --num-hero: 400 42px/1 var(--font-body);
+
+  /* ===== Pont temporaire — anciens noms de tokens encore utilisés dans les composants existants.
+     À supprimer au fur et à mesure du restyle écran par écran (roadmap lots 2/4/6). ===== */
+  --color-bg: var(--surface-app);
+  --color-surface: var(--surface-card);
+  --color-surface-hover: var(--surface-card);
+  --color-border: var(--border);
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverted: var(--text-primary);
+  --color-accent-hover: var(--color-accent);
+  --color-expense: var(--text-primary);
+  --color-danger: var(--color-over);
+  --color-danger-hover: var(--color-over);
+  --color-danger-soft: var(--color-over-soft);
+  --color-action-edit: var(--color-accent);
+  --color-action-edit-hover: var(--color-accent);
+  --color-action-edit-surface: var(--color-accent-soft);
+  --shadow-card: none;
+  --shadow-elevated: none;
+  --shadow-md: none;
+  --spacing-xs: var(--space-xs);
+  --spacing-sm: var(--space-sm);
+  --spacing-md: var(--space-md);
+  --spacing-lg: var(--space-lg);
+  --spacing-lm: var(--space-xl);
+  --spacing-xl: var(--space-2xl);
+  --font1: var(--num-hero);
+  --font2: var(--text-heading);
+  --font4: var(--text-emphasis);
+  --font5: var(--text-caption);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-muted);
+  --color-surface-secondary: var(--surface-app);
+  --color-surface-tertiary: var(--surface-app);
+  --color-income-surface: var(--color-ok-soft);
+}
+
+/* ===== Thème sombre, palette terracotta (par défaut) ===== */
+[data-theme='dark'][data-palette='terracotta'] {
+  --surface-page: #0a0809;
+  --surface-app: #0f0e10;
+  --surface-card: #1b181b;
+  --border: #2f2a2e;
+  --text-primary: #eae7e8;
+  --text-muted: #94898d;
+  --color-accent: #e8926b;
+  --color-accent-soft: rgba(232, 146, 107, 0.15);
+}
+
+/* ===== Thème clair : neutres communs à toutes les palettes ===== */
+[data-theme='light'] {
+  --surface-app: #fbfbfd;
+  --surface-card: #ffffff;
+  --border: #e7e7ee;
+  --text-primary: #15151c;
+  --text-muted: #6a6a78;
+}
+
+/* ===== Thème clair, palette terracotta : seules la teinte de fond et l'accent changent ===== */
+[data-theme='light'][data-palette='terracotta'] {
+  --surface-page: #f0eaea;
+  --color-accent: #c2562a;
+  --color-accent-soft: rgba(194, 86, 42, 0.1);
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+
+button {
+  cursor: pointer;
+}
+```
+
+### Fichiers concernés
+`src/styles.scss` uniquement — remplacement intégral du fichier par le bloc ci-dessus.
+
+### Critères d'acceptation
+- Le contenu de `src/styles.scss` correspond exactement au bloc fourni (aucune déclaration en dehors d'un bloc de
+  règle, aucun token dupliqué avec des valeurs différentes).
+- `npm start` ne montre aucune erreur SCSS.
+
+### Hors périmètre pour cette tâche
+- Ne touche pas à `theme.ts`, `theme.spec.ts`, ni `index.html`.
+- N'ajoute aucune palette autre que « terracotta ».
+- Ne remplace pas la police par Plus Jakarta Sans.

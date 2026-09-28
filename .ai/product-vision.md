@@ -256,6 +256,7 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-09-23 | Graine du fond = nombre **aléatoire** stocké en préférence, **jamais dérivée de l'identifiant utilisateur** |
 | 2026-09-23 | Police retenue : **Plus Jakarta Sans**, auto-hébergée, chiffres tabulaires, `font-display: swap` + police de secours ajustée en métriques |
 | 2026-09-23 | Contrat opérationnel pour l'IA dev créé à la racine du repo : `PRD.md`, `ARCHITECTURE.md`, `DESIGN_SYSTEM.md`, `AGENTS.md` + `.aider.conf.yml` (Aider + Ollama, Qwen2.5-Coder 7B) |
+| 2026-09-28 | Aider abandonné (échecs répétés à appliquer les modifications, puis un commit ayant écrasé plusieurs fichiers `.scss` de production) ; remplacé par Continue (déjà installé, Qwen3-Coder 30B via Ollama) ; fichiers `.aider*` supprimés du repo |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 

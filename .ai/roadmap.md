@@ -148,5 +148,6 @@ constructeur de graphiques sur mesure, navigation personnalisable. Détail et ju
 - En cours : Transactions (liste + modal + formulaire d'ajout fonctionnels ; édition/suppression, styling,
   récurrences restants).
 - Pas commencé : Budget Mensuel, Dashboard, Paramètres, PWA.
-- Infrastructure IA dev : Ollama + Aider connectés et testés, fichiers `PRD.md` / `ARCHITECTURE.md` /
+- Infrastructure IA dev : Aider abandonné après échecs répétés (voir `.ai/workflow.md` § 1) ; Continue installé et
+  configuré à la place (Qwen3-Coder 30B via Ollama). Fichiers `PRD.md` / `ARCHITECTURE.md` /
   `DESIGN_SYSTEM.md` / `AGENTS.md` en place.

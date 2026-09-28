@@ -1,7 +1,7 @@
 # Agent Instructions — Budget Planner v3
 
-> Ce fichier s'adresse à l'agent de développement (Aider + Ollama). Il ne remplace pas la revue humaine : chaque
-> tâche se termine par une Pull Request relue par l'humain avant fusion dans `main`.
+> Ce fichier s'adresse à l'agent de développement (actuellement Continue, en local via Ollama). Il ne remplace pas
+> la revue humaine : chaque tâche se termine par une Pull Request relue par l'humain avant fusion dans `main`.
 
 ## Project context
 
@@ -18,9 +18,10 @@ Avant toute modification, lire dans cet ordre :
 4. Le composant ou service existant le plus proche du besoin, pour réutiliser ses conventions plutôt qu'en inventer
    de nouvelles
 
-**Modèle local 7B (Qwen2.5-Coder) : les tâches doivent rester petites.** Une tâche = un composant, un service, ou une
-correction ciblée. Si une demande semble couvrir plusieurs écrans ou plusieurs couches (modèle + service + UI) à la
-fois, dis-le explicitement et propose de la découper, plutôt que de deviner un découpage.
+**Avant chaque tâche : vérifie toi-même que le fichier a réellement changé sur le disque** (pas seulement affiché
+dans le chat) avant de considérer une tâche terminée. Une tâche = un composant, un service, ou une correction
+ciblée. Si une demande semble couvrir plusieurs écrans ou plusieurs couches (modèle + service + UI) à la fois,
+dis-le explicitement et propose de la découper, plutôt que de deviner un découpage.
 
 ## General rules
 
