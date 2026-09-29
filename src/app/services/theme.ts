@@ -5,14 +5,14 @@ import type { ThemeMode } from '../models/thememode';
   providedIn: 'root',
 })
 export class Theme {
-  private readonly _themeMode = signal<ThemeMode>('light');
+  private readonly _themeMode = signal<ThemeMode>('dark');
   readonly theme = this._themeMode.asReadonly();
   private readonly document = inject(DOCUMENT);
 
   constructor() {
     effect(() => {
       const themeMode = this._themeMode();
-      this.document.documentElement.classList.toggle('dark', themeMode === 'dark');
+      this.document.documentElement.setAttribute('data-theme', themeMode);
     });
   }
 
