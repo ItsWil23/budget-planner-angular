@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-09-23
+> Dernière mise à jour : 2026-10-01
 
 ## 1. Pourquoi cet ordre
 
@@ -34,8 +34,11 @@ application.
   Reste à faire dans la foulée : poser `data-theme`/`data-palette` sur `<html>` (`theme.ts`, `index.html`) pour que
   les tokens prennent effet visuellement — sans ça, les écrans restent non stylés (comportement attendu).
 - Police Plus Jakarta Sans auto-hébergée + police de secours ajustée en métriques (`DESIGN_SYSTEM.md` § 5.1).
-- Mesh gradient de fond : génération bornée, graine aléatoire stockée (`UserSettings.backgroundSeed`), jamais
-  dérivée de l'identité.
+- Mesh gradient de fond : génération bornée, graine aléatoire stockée, jamais dérivée de l'identité. La logique 01a
+  est implémentée et validée le 2026-10-01 (`Background`, PRNG mulberry32, validation de graine et gestion des erreurs
+  de stockage). Persistance provisoire dans `localStorage` (clé `budget-planner.background-seed`) jusqu'à son transfert
+  à `SettingsService` via `UserSettings.backgroundSeed`, puis suppression de cette persistance locale. Le branchement
+  visuel 01b reste à faire.
 - Layout racine : disposition « cartes flottantes », navigation en île pleine hauteur, `100dvh` desktop /
   défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte).
 
