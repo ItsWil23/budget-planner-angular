@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Budget Planner — comparaison de palettes</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px;
+    background: #050506;
+    color: #e6e6ea;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "tnum" 1;
+  }
+  .page-head { max-width: 70ch; margin: 0 auto 40px; }
+  .page-head h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+  .page-head p { margin: 0; color: #8b8b95; font-size: 14px; line-height: 1.6; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(540px, 1fr));
+    gap: 44px 36px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .palette__head { margin-bottom: 14px; }
+  .palette__head h2 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
+  .palette__desc { margin: 0 0 10px; font-size: 13px; color: #8b8b95; line-height: 1.55; }
+  .swatches { display: flex; gap: 6px; }
+  .swatches i {
+    width: 26px; height: 26px; border-radius: 7px;
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
+  /* ---------- contrôles ---------- */
+  .controls {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center;
+    max-width: 1500px; margin: 0 auto 32px;
+    padding: 14px 0 16px;
+    background: #050506;
+  }
+  .ctl { display: flex; align-items: center; gap: 10px; }
+  .ctl > b { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #6d6d78; font-weight: 500; }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: #121216; border: 1px solid #26262c; }
+  .seg button {
+    border: 0; background: transparent; color: #8b8b95;
+    font: inherit; font-size: 12px; padding: 6px 15px; border-radius: 999px; cursor: pointer;
+  }
+  .seg button.on { background: #292930; color: #f0f0f4; }
+
+  /* ---------- scène : fond mesh ---------- */
+  .stage {
+    position: relative;
+    padding: 20px;
+    border-radius: 24px;
+    background: var(--stage);
+    overflow: hidden;
+  }
+  .stage::before {
+    content: '';
+    position: absolute; inset: -10%;
+    background: var(--mesh);
+    pointer-events: none;
+  }
+
+  .app {
+    position: relative;
+    display: grid;
+    grid-template-columns: 176px 1fr;
+    min-height: 600px;
+    color: var(--text);
+  }
+
+  /* --- châssis : une seule surface, blocs translucides à l'intérieur --- */
+  .m-chassis .app {
+    border-radius: 16px; overflow: hidden;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    border: 1px solid var(--border);
+  }
+  .m-chassis .side { border-right: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 60%, transparent); }
+  .m-chassis .main { padding: 16px 20px 24px; gap: 16px; }
+  .m-chassis .top { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .m-chassis .hero { padding: 4px 2px 6px; }
+  .m-chassis .card { background: color-mix(in srgb, var(--surface) 78%, transparent); }
+
+  /* --- cartes flottantes : pas de châssis, blocs opaques posés sur le dégradé --- */
+  .m-islands .app { gap: 14px; }
+  .m-islands .side,
+  .m-islands .top,
+  .m-islands .hero,
+  .m-islands .card { background: var(--surface); border: 1px solid var(--border); }
+  .m-islands .side { border-radius: 18px; }
+  .m-islands .top { border-radius: 16px; padding: 12px 16px; }
+  .m-islands .hero { border-radius: 18px; padding: 18px 20px; }
+  .m-islands .main { padding: 0; gap: 14px; }
+
+  /* --- variantes de navigation (uniquement en cartes flottantes) --- */
+  .m-islands.nav-full .side { align-self: stretch; }
+  .m-islands.nav-edge { padding-left: 0; padding-top: 0; padding-bottom: 0; }
+  .m-islands.nav-edge .side {
+    align-self: stretch;
+    border-radius: 0;
+    border-top: 0; border-bottom: 0; border-left: 0;
+  }
+  .m-islands.nav-edge .main { padding: 20px 0; }
+
+  .side { padding: 18px 12px; }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; margin-bottom: 22px; padding: 0 8px;
+  }
+  .brand i { width: 20px; height: 20px; border-radius: 6px; background: var(--accent); display: block; }
+  .side nav { display: flex; flex-direction: column; gap: 2px; }
+  .side a {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 10px; border-radius: 9px;
+    font-size: 13px; color: var(--muted); text-decoration: none;
+  }
+  .side a i { width: 15px; height: 15px; border-radius: 4px; background: currentColor; opacity: .5; flex: none; }
+  .side a.active { background: var(--accent-soft); color: var(--accent); }
+  .side a.active i { opacity: 1; }
+
+  .main { display: flex; flex-direction: column; }
+
+  .top {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .top__title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .month {
+    margin-left: auto; font-size: 12px; color: var(--text);
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px;
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+  }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 999px; flex: none;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-size: 11px; font-weight: 600;
+  }
+
+  .label {
+    display: block; font-size: 10.5px; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+  .muted { font-size: 12px; color: var(--muted); }
+
+  .hero { color: var(--text); }
+  .hero__row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .hero__num { font-size: 42px; font-weight: 400; letter-spacing: -.02em; line-height: 1; }
+
+  .pill {
+    font-size: 11px; padding: 4px 10px; border-radius: 999px;
+    background: var(--ok-soft); color: var(--ok);
+  }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--text);
+  }
+  .num { font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
+  .income { color: var(--income); }
+
+  .line {
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 13px; margin: 12px 0 7px;
+  }
+  .line span:first-child { flex: 1; }
+  .ratio { font-size: 12px; color: var(--muted); }
+  .ratio--over { color: var(--over); }
+
+  .bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--ok); border-radius: 999px; }
+  .bar--over i { background: var(--over); }
+
+  .tx {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  .tx:first-of-type { border-top: 0; }
+  .tx span:nth-child(2) { flex: 1; }
+  .tx .num { font-size: 14px; font-weight: 500; }
+  .tag { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+  .c1 { background: #7aa2f7; } .c2 { background: #e0af68; } .c3 { background: #bb9af7; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Budget Planner — comparaison de palettes</h1>
+  <p>
+    Même maquette, même base, même sémantique. <strong>Seuls l'accent et le fond changent.</strong>
+  </p>
+  <p>
+    Règles communes : revenus colorés et signés «&nbsp;+&nbsp;», dépenses en couleur de texte par défaut et signées «&nbsp;−&nbsp;»,
+    vert réservé à la santé budgétaire, rouge réservé au dépassement. Cartes à bordure d'un pixel, sans ombre.
+    Chiffres en graisse normale, labels en petites majuscules sourdes.
+  </p>
+  <p>
+    Le fond est un <strong>mesh gradient</strong> : plusieurs taches très diffuses qui se fondent.
+    Deux dispositions sont comparées. <strong>Châssis</strong> : l'application est un bloc unique, le dégradé
+    n'apparaît qu'en périphérie, les blocs internes sont translucides.
+    <strong>Cartes flottantes</strong> : pas de châssis du tout, chaque bloc est une île opaque posée directement
+    sur le dégradé, qui traverse alors toute la page.
+  </p>
+</div>
+
+<div class="controls">
+  <div class="ctl">
+    <b>Disposition</b>
+    <div class="seg" id="seg-mode">
+      <button data-v="islands">Cartes flottantes</button>
+      <button data-v="chassis">Châssis</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <b>Fond</b>
+    <div class="seg" id="seg-bg">
+      <button data-v="duo">Deux foyers</button>
+      <button data-v="corners">Quatre coins</button>
+      <button data-v="organic">Organique</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <b>Navigation</b>
+    <div class="seg" id="seg-nav">
+      <button data-v="full">Île pleine hauteur</button>
+      <button data-v="edge">Ancrée au bord</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <b>Thème</b>
+    <div class="seg" id="seg-theme">
+      <button data-v="dark">Sombre</button>
+      <button data-v="light">Clair</button>
+    </div>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<template id="mock">
+  <section class="palette">
+    <div class="palette__head">
+      <h2></h2>
+      <p class="palette__desc"></p>
+      <div class="swatches"></div>
+    </div>
+    <div class="stage">
+      <div class="app">
+        <aside class="side">
+          <div class="brand"><i></i>Budget Planner</div>
+          <nav>
+            <a class="active"><i></i>Dashboard</a>
+            <a><i></i>Budget mensuel</a>
+            <a><i></i>Transactions</a>
+            <a><i></i>Catégories</a>
+            <a><i></i>Paramètres</a>
+          </nav>
+        </aside>
+        <main class="main">
+          <div class="top">
+            <span class="top__title">Dashboard</span>
+            <span class="month">‹&nbsp; Septembre 2026 &nbsp;›</span>
+            <span class="avatar">W</span>
+          </div>
+
+          <div class="hero">
+            <span class="label">Reste à dépenser</span>
+            <div class="hero__row">
+              <span class="hero__num">1&nbsp;245,60&nbsp;€</span>
+              <span class="pill">62 % du budget consommé</span>
+            </div>
+            <span class="muted">Disponible réel · 2&nbsp;480,15&nbsp;€</span>
+          </div>
+
+          <div class="cards">
+            <div class="card">
+              <span class="label">Revenus du mois</span>
+              <span class="num income">+ 2&nbsp;400,00&nbsp;€</span>
+            </div>
+            <div class="card">
+              <span class="label">Dépenses du mois</span>
+              <span class="num">− 1&nbsp;154,40&nbsp;€</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="label">Budget par catégorie</span>
+            <div class="line"><span>Courses</span><span class="ratio">320 / 400 €</span></div>
+            <div class="bar"><i style="width:80%"></i></div>
+            <div class="line"><span>Loisirs</span><span class="ratio ratio--over">215 / 150 €</span></div>
+            <div class="bar bar--over"><i style="width:100%"></i></div>
+          </div>
+
+          <div class="card">
+            <span class="label">Dernières transactions</span>
+            <div class="tx"><span class="tag c1"></span><span>Salaire</span><span class="num income">+ 2&nbsp;400,00&nbsp;€</span></div>
+            <div class="tx"><span class="tag c2"></span><span>Courses Carrefour</span><span class="num">− 84,30&nbsp;€</span></div>
+            <div class="tx"><span class="tag c3"></span><span>Abonnement musique</span><span class="num">− 12,99&nbsp;€</span></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script>
+// La sémantique financière ne dépend jamais de la palette : seuls l'accent et le fond portent l'identité.
+const semantics = {
+  dark: {
+    income: '#7dd3a0',
+    ok: '#7dd3a0', 'ok-soft': 'rgba(125,211,160,.14)',
+    over: '#f17c7c', 'over-soft': 'rgba(241,124,124,.15)'
+  },
+  light: {
+    income: '#15803d',
+    ok: '#15803d', 'ok-soft': 'rgba(21,128,61,.12)',
+    over: '#c93c37', 'over-soft': 'rgba(201,60,55,.10)'
+  }
+};
+
+// En thème clair, les neutres sont communs à toutes les palettes : cartes blanches, texte quasi noir.
+const neutralLight = {
+  bg: '#fbfbfd', surface: '#ffffff', border: '#e7e7ee',
+  text: '#15151c', muted: '#6a6a78', track: '#ececf1'
+};
+
+const palettes = [
+  {
+    name: 'A — Terracotta',
+    desc: "Chaleureux et humain, sans connotation de luxe. L'accent est nettement distinct du vert « revenu » et du rouge « dépassement ».",
+    dark: {
+      stage: '#0a0809', bg: '#0f0e10', surface: '#1b181b', border: '#2f2a2e',
+      text: '#eae7e8', muted: '#94898d',
+      accent: '#e8926b', 'accent-soft': 'rgba(232,146,107,.15)', track: '#2f2a2e',
+      hues: ['rgba(232,146,107,.22)', 'rgba(124,92,190,.18)', 'rgba(216,150,96,.13)']
+    },
+    light: {
+      stage: '#f0eaea', accent: '#c2562a', 'accent-soft': 'rgba(194,86,42,.10)',
+      hues: ['rgba(232,146,107,.40)', 'rgba(150,120,210,.30)', 'rgba(230,180,130,.22)']
+    }
+  },
+  {
+    name: 'B — Violet profond',
+    desc: "Le plus « moderne / techno ». Se marie parfaitement avec un fond en dégradé, et n'entre en collision avec aucune couleur sémantique.",
+    dark: {
+      stage: '#08070e', bg: '#0e0d15', surface: '#1a1824', border: '#2e2b3a',
+      text: '#e9e8f0', muted: '#8d8a9d',
+      accent: '#a78bfa', 'accent-soft': 'rgba(167,139,250,.16)', track: '#2e2b3a',
+      hues: ['rgba(139,110,240,.24)', 'rgba(78,130,230,.18)', 'rgba(200,110,200,.13)']
+    },
+    light: {
+      stage: '#eeecf7', accent: '#6d4ae0', 'accent-soft': 'rgba(109,74,224,.10)',
+      hues: ['rgba(150,120,245,.36)', 'rgba(110,160,240,.28)', 'rgba(215,140,215,.20)']
+    }
+  },
+  {
+    name: 'C — Or sobre',
+    desc: "Registre Finary, adouci. Le plus premium des huit — mais celui qui risque de sonner « finance de patrimoine » plutôt que « budget du quotidien ».",
+    dark: {
+      stage: '#08080a', bg: '#0e0e10', surface: '#1a1a1d', border: '#2c2c2e',
+      text: '#eae9e7', muted: '#8e8c88',
+      accent: '#e5b567', 'accent-soft': 'rgba(229,181,103,.15)', track: '#2c2c2e',
+      hues: ['rgba(229,181,103,.18)', 'rgba(96,96,140,.17)', 'rgba(180,140,90,.11)']
+    },
+    light: {
+      stage: '#f1eee7', accent: '#9a6c16', 'accent-soft': 'rgba(154,108,22,.10)',
+      hues: ['rgba(229,181,103,.40)', 'rgba(150,150,190,.26)', 'rgba(200,170,120,.20)']
+    }
+  },
+  {
+    name: 'D — Teal (ton accent actuel)',
+    desc: "⚠️ Ton emerald dans le nouveau cadre. Regarde la sidebar et le montant « Revenus » : deux verts proches se disputent le sens. C'est la collision sémantique dont je te parlais.",
+    dark: {
+      stage: '#060b0b', bg: '#0c1112', surface: '#182022', border: '#2a3534',
+      text: '#e6eced', muted: '#86959a',
+      accent: '#34d399', 'accent-soft': 'rgba(52,211,153,.15)', track: '#2a3534',
+      hues: ['rgba(52,211,153,.18)', 'rgba(60,130,180,.16)', 'rgba(40,170,190,.11)']
+    },
+    light: {
+      stage: '#e9f2ee', accent: '#0f8a63', 'accent-soft': 'rgba(15,138,99,.10)',
+      hues: ['rgba(52,211,153,.32)', 'rgba(90,160,200,.26)', 'rgba(120,200,190,.18)']
+    }
+  },
+  {
+    name: 'E — Bleu nuit & cyan',
+    desc: "La traduction sombre de ta référence Healthlog. Calme, fiable, très lisible. Le registre le plus « application financière » sans être froid ni clinique.",
+    dark: {
+      stage: '#050a11', bg: '#0b1119', surface: '#162029', border: '#273545',
+      text: '#e4ecf3', muted: '#82949f',
+      accent: '#6bc5e8', 'accent-soft': 'rgba(107,197,232,.15)', track: '#273545',
+      hues: ['rgba(72,166,224,.26)', 'rgba(86,108,220,.20)', 'rgba(64,190,196,.15)']
+    },
+    light: {
+      stage: '#e9f0f7', accent: '#17749f', 'accent-soft': 'rgba(23,116,159,.10)',
+      hues: ['rgba(100,180,235,.40)', 'rgba(120,140,235,.28)', 'rgba(90,200,205,.22)']
+    }
+  },
+  {
+    name: 'F — Corail doux',
+    desc: "Le plus chaleureux et le plus rassurant. Un corail désaturé, très loin du rouge d'alerte — il reste donc lisible à côté du rouge « dépassement ».",
+    dark: {
+      stage: '#0b0709', bg: '#110d10', surface: '#1e181c', border: '#332930',
+      text: '#eee6e9', muted: '#9a888f',
+      accent: '#f0968f', 'accent-soft': 'rgba(240,150,143,.15)', track: '#332930',
+      hues: ['rgba(240,150,143,.24)', 'rgba(120,96,200,.18)', 'rgba(236,160,120,.13)']
+    },
+    light: {
+      stage: '#f5ebeb', accent: '#c8514a', 'accent-soft': 'rgba(200,81,74,.10)',
+      hues: ['rgba(240,150,143,.40)', 'rgba(150,125,215,.28)', 'rgba(240,180,140,.22)']
+    }
+  },
+  {
+    name: 'G — Lin & graphite',
+    desc: "L'accent est un lin presque neutre : le « waouh » ne vient pas de la couleur mais du fond, de l'espacement et des chiffres. Le plus intemporel, celui qui vieillira le mieux.",
+    dark: {
+      stage: '#09090a', bg: '#0f0f10', surface: '#1b1b1d', border: '#2e2e30',
+      text: '#ebeae8', muted: '#8d8c88',
+      accent: '#ded3c0', 'accent-soft': 'rgba(222,211,192,.12)', track: '#2e2e30',
+      hues: ['rgba(210,190,160,.15)', 'rgba(110,120,150,.17)', 'rgba(160,150,170,.10)']
+    },
+    light: {
+      stage: '#f1efec', accent: '#7e6f52', 'accent-soft': 'rgba(126,111,82,.10)',
+      hues: ['rgba(215,196,166,.42)', 'rgba(140,150,180,.26)', 'rgba(180,170,190,.18)']
+    }
+  },
+  {
+    name: 'H — Aurore',
+    desc: "Le plus spectaculaire : le fond fait tout le travail, l'accent lavande reste discret. À surveiller — c'est celui qui peut le plus vite basculer dans le « trop ».",
+    dark: {
+      stage: '#07060d', bg: '#0d0c14', surface: '#191823', border: '#2d2b3a',
+      text: '#e9e7f1', muted: '#8b889c',
+      accent: '#9ab0f5', 'accent-soft': 'rgba(154,176,245,.16)', track: '#2d2b3a',
+      hues: ['rgba(150,110,235,.28)', 'rgba(226,120,180,.20)', 'rgba(70,180,210,.18)', 'rgba(120,140,245,.15)']
+    },
+    light: {
+      stage: '#eeeaf7', accent: '#5a5fd0', 'accent-soft': 'rgba(90,95,208,.10)',
+      hues: ['rgba(165,130,240,.38)', 'rgba(240,150,200,.30)', 'rgba(110,200,225,.28)', 'rgba(140,160,250,.20)']
+    }
+  }
+];
+
+// Trois motifs de fond. Les teintes viennent de la palette, la géométrie du motif.
+const patterns = {
+  duo: [
+    { x: 12, y: 6, w: 50, h: 54 },
+    { x: 90, y: 90, w: 54, h: 58 },
+    { x: 64, y: 32, w: 44, h: 40 }
+  ],
+  corners: [
+    { x: 0, y: 0, w: 46, h: 50 },
+    { x: 100, y: 0, w: 44, h: 48 },
+    { x: 0, y: 100, w: 48, h: 46 },
+    { x: 100, y: 100, w: 46, h: 50 },
+    { x: 50, y: 50, w: 38, h: 36 }
+  ]
+};
+
+// Générateur déterministe : « aléatoire » mais stable d'un rechargement à l'autre.
+function seeded(seed) {
+  let s = seed * 2654435761 % 2147483647;
+  return () => (s = (s * 1103515245 + 12345) % 2147483647) / 2147483647;
+}
+
+function organicBlobs(seed) {
+  const rand = seeded(seed);
+  const blobs = [];
+  for (let i = 0; i < 7; i++) {
+    blobs.push({
+      x: Math.round(rand() * 116 - 8),
+      y: Math.round(rand() * 116 - 8),
+      w: Math.round(28 + rand() * 34),
+      h: Math.round(26 + rand() * 36)
+    });
+  }
+  return blobs;
+}
+
+function buildMesh(hues, blobs) {
+  return blobs
+    .map((b, i) => `radial-gradient(${b.w}% ${b.h}% at ${b.x}% ${b.y}%, ${hues[i % hues.length]} 0%, transparent 64%)`)
+    .join(', ');
+}
+
+const state = { mode: 'islands', bg: 'duo', nav: 'full', theme: 'dark' };
+
+const grid = document.getElementById('grid');
+const tpl = document.getElementById('mock');
+
+function varsFor(p) {
+  return state.theme === 'dark'
+    ? { ...semantics.dark, ...p.dark }
+    : { ...semantics.light, ...neutralLight, ...p.light };
+}
+
+function render() {
+  grid.textContent = '';
+
+  palettes.forEach((p, index) => {
+    const node = tpl.content.cloneNode(true);
+    const section = node.querySelector('.palette');
+    section.querySelector('h2').textContent = p.name;
+    section.querySelector('.palette__desc').textContent = p.desc;
+
+    const vars = varsFor(p);
+    const stage = section.querySelector('.stage');
+    stage.classList.add('m-' + state.mode, 'nav-' + state.nav);
+
+    for (const [k, v] of Object.entries(vars)) {
+      if (k !== 'hues') stage.style.setProperty('--' + k, v);
+    }
+
+    const blobs = state.bg === 'organic' ? organicBlobs(index + 1) : patterns[state.bg];
+    stage.style.setProperty('--mesh', buildMesh(vars.hues, blobs));
+
+    const sw = section.querySelector('.swatches');
+    for (const key of ['stage', 'surface', 'border', 'accent', 'income', 'over']) {
+      const i = document.createElement('i');
+      i.style.background = vars[key];
+      i.title = key + ' · ' + vars[key];
+      sw.appendChild(i);
+    }
+
+    grid.appendChild(node);
+  });
+}
+
+const segments = [
+  ['seg-mode', 'mode'],
+  ['seg-bg', 'bg'],
+  ['seg-nav', 'nav'],
+  ['seg-theme', 'theme']
+];
+
+function syncSegments() {
+  for (const [id, key] of segments) {
+    for (const btn of document.getElementById(id).querySelectorAll('button')) {
+      btn.classList.toggle('on', btn.dataset.v === state[key]);
+    }
+  }
+}
+
+for (const [id, key] of segments) {
+  document.getElementById(id).addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state[key] = btn.dataset.v;
+    syncSegments();
+    render();
+  });
+}
+
+syncSegments();
+render();
+</script>
+
+</body>
+</html>

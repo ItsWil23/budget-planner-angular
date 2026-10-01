@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Budget Planner — comparaison de polices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600&family=Sora:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=DM+Sans:wght@400;500;600&family=Urbanist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 28px 64px;
+    background: #050506;
+    color: #e6e6ea;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .page-head { max-width: 74ch; margin: 0 auto 30px; }
+  .page-head h1 { font-size: 22px; font-weight: 600; margin: 0 0 10px; }
+  .page-head p { margin: 0 0 8px; color: #8b8b95; font-size: 13.5px; line-height: 1.65; }
+  .page-head strong { color: #d5d5dc; font-weight: 600; }
+
+  .controls {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center;
+    max-width: 1500px; margin: 0 auto 32px;
+    padding: 14px 0 16px;
+    background: #050506;
+  }
+  .ctl { display: flex; align-items: center; gap: 10px; }
+  .ctl > b { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #6d6d78; font-weight: 500; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 999px; background: #121216; border: 1px solid #26262c; }
+  .seg button {
+    border: 0; background: transparent; color: #8b8b95;
+    font: inherit; font-size: 12px; padding: 6px 15px; border-radius: 999px; cursor: pointer;
+  }
+  .seg button.on { background: #292930; color: #f0f0f4; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(560px, 1fr));
+    gap: 44px 36px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .palette__head { margin-bottom: 14px; }
+  .palette__head h2 { font-size: 16px; font-weight: 600; margin: 0 0 6px; font-family: ui-sans-serif, system-ui, sans-serif; }
+  .palette__desc { margin: 0; font-size: 13px; color: #8b8b95; line-height: 1.55; }
+
+  /* ---------- scène (palette A, sombre, cartes flottantes, fond organique — fixé) ---------- */
+  .stage {
+    --stage: #0a0809; --bg: #0f0e10; --surface: #1b181b; --border: #2f2a2e;
+    --text: #eae7e8; --muted: #94898d;
+    --accent: #e8926b; --accent-soft: rgba(232,146,107,.15); --track: #2f2a2e;
+    --income: #7dd3a0; --ok: #7dd3a0; --ok-soft: rgba(125,211,160,.14);
+    --over: #f17c7c; --over-soft: rgba(241,124,124,.15);
+    position: relative;
+    padding: 20px;
+    border-radius: 24px;
+    background: var(--stage);
+    overflow: hidden;
+    color: var(--text);
+  }
+  .stage::before {
+    content: '';
+    position: absolute; inset: -8%;
+    background:
+      radial-gradient(34% 30% at 10% 14%, rgba(232,146,107,.20) 0%, transparent 64%),
+      radial-gradient(30% 36% at 82% 6%, rgba(124,92,190,.16) 0%, transparent 64%),
+      radial-gradient(38% 32% at 92% 78%, rgba(216,150,96,.14) 0%, transparent 64%),
+      radial-gradient(26% 28% at 22% 92%, rgba(150,110,190,.12) 0%, transparent 64%);
+    pointer-events: none;
+  }
+
+  .app {
+    position: relative;
+    display: grid;
+    grid-template-columns: 176px 1fr;
+    gap: 14px;
+  }
+  .side, .top, .hero, .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .side { border-radius: 18px; padding: 18px 12px; }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; margin-bottom: 22px; padding: 0 8px;
+  }
+  .brand i { width: 20px; height: 20px; border-radius: 6px; background: var(--accent); display: block; flex: none; }
+  .side nav { display: flex; flex-direction: column; gap: 2px; }
+  .side a {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 10px; border-radius: 9px;
+    font-size: 13px; color: var(--muted); text-decoration: none;
+  }
+  .side a i { width: 15px; height: 15px; border-radius: 4px; background: currentColor; opacity: .45; flex: none; }
+  .side a.active { background: var(--accent-soft); color: var(--accent); }
+  .side a.active i { opacity: 1; }
+
+  .main { display: flex; flex-direction: column; gap: 14px; }
+
+  .top { border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .top__title { font-size: 15px; font-weight: 600; }
+  .month {
+    margin-left: auto; font-size: 12px;
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px;
+  }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 999px; flex: none;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-size: 11px; font-weight: 600;
+  }
+
+  .label {
+    display: block; font-size: 10.5px; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+  .muted { font-size: 12px; color: var(--muted); }
+
+  .hero { border-radius: 18px; padding: 18px 20px; }
+  .hero__row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+  .hero__num { font-size: 42px; font-weight: 400; letter-spacing: -.02em; line-height: 1; }
+
+  .pill {
+    font-size: 11px; padding: 4px 10px; border-radius: 999px;
+    background: var(--ok-soft); color: var(--ok);
+  }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { border-radius: 14px; padding: 14px 16px; }
+  .num { font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
+  .income { color: var(--income); }
+
+  .line {
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 13px; margin: 12px 0 7px;
+  }
+  .line span:first-child { flex: 1; }
+  .ratio { font-size: 12px; color: var(--muted); }
+  .ratio--over { color: var(--over); }
+
+  .bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--ok); border-radius: 999px; }
+  .bar--over i { background: var(--over); }
+
+  .tx {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  .tx:first-of-type { border-top: 0; }
+  .tx span:nth-child(2) { flex: 1; }
+  .tx .num { font-size: 14px; font-weight: 500; }
+  .tag { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+  .c1 { background: #7aa2f7; } .c2 { background: #e0af68; } .c3 { background: #bb9af7; }
+
+  /* Les chiffres sont toujours en graisse « number », les libellés en graisse « body ». */
+  .app { font-family: var(--f-body); }
+  .hero__num, .num, .ratio, .month, .pill { font-family: var(--f-number); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Budget Planner — comparaison de polices</h1>
+  <p>
+    Même maquette, même palette (A — Terracotta, sombre). <strong>Seule la police change.</strong>
+    Dans chaque option, les libellés utilisent la police de texte ; les montants, le chiffre héros et les pastilles
+    utilisent la police de chiffres, toujours en <code>tabular-nums</code> pour que les colonnes s'alignent.
+  </p>
+</div>
+
+<div class="controls">
+  <div class="ctl">
+    <b>Police</b>
+    <div class="seg" id="seg-font">
+      <button data-v="system">Système (actuel)</button>
+      <button data-v="inter">Inter</button>
+      <button data-v="manrope">Manrope</button>
+      <button data-v="sora">Sora</button>
+      <button data-v="jakarta">Plus Jakarta Sans</button>
+      <button data-v="dmsans">DM Sans</button>
+      <button data-v="urbanist">Urbanist</button>
+      <button data-v="pairing">Inter + Space Grotesk (chiffres)</button>
+    </div>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<template id="mock">
+  <section class="palette">
+    <div class="palette__head">
+      <h2></h2>
+      <p class="palette__desc"></p>
+    </div>
+    <div class="stage">
+      <div class="app">
+        <aside class="side">
+          <div class="brand"><i></i>Budget Planner</div>
+          <nav>
+            <a class="active"><i></i>Dashboard</a>
+            <a><i></i>Budget mensuel</a>
+            <a><i></i>Transactions</a>
+            <a><i></i>Catégories</a>
+            <a><i></i>Paramètres</a>
+          </nav>
+        </aside>
+        <main class="main">
+          <div class="top">
+            <span class="top__title">Dashboard</span>
+            <span class="month">‹&nbsp; Septembre 2026 &nbsp;›</span>
+            <span class="avatar">W</span>
+          </div>
+
+          <div class="hero">
+            <span class="label">Reste à dépenser</span>
+            <div class="hero__row">
+              <span class="hero__num">1&nbsp;245,60&nbsp;€</span>
+              <span class="pill">62 % du budget consommé</span>
+            </div>
+            <span class="muted">Disponible réel · 2&nbsp;480,15&nbsp;€</span>
+          </div>
+
+          <div class="cards">
+            <div class="card">
+              <span class="label">Revenus du mois</span>
+              <span class="num income">+ 2&nbsp;400,00&nbsp;€</span>
+            </div>
+            <div class="card">
+              <span class="label">Dépenses du mois</span>
+              <span class="num">− 1&nbsp;154,40&nbsp;€</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="label">Budget par catégorie</span>
+            <div class="line"><span>Courses</span><span class="ratio">320 / 400 €</span></div>
+            <div class="bar"><i style="width:80%"></i></div>
+            <div class="line"><span>Loisirs</span><span class="ratio ratio--over">215 / 150 €</span></div>
+            <div class="bar bar--over"><i style="width:100%"></i></div>
+          </div>
+
+          <div class="card">
+            <span class="label">Dernières transactions</span>
+            <div class="tx"><span class="tag c1"></span><span>Salaire</span><span class="num income">+ 2&nbsp;400,00&nbsp;€</span></div>
+            <div class="tx"><span class="tag c2"></span><span>Courses Carrefour</span><span class="num">− 84,30&nbsp;€</span></div>
+            <div class="tx"><span class="tag c3"></span><span>Abonnement musique</span><span class="num">− 12,99&nbsp;€</span></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script>
+const systemStack = `ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`;
+
+const fonts = {
+  system: {
+    name: 'Système (actuel)',
+    desc: "La pile actuelle du projet. Zéro requête réseau, zéro risque de décalage. Correct mais anonyme — rend la même chose que des centaines d'autres apps.",
+    body: systemStack, number: systemStack
+  },
+  inter: {
+    name: 'Inter',
+    desc: "Le choix « SaaS moderne » par défaut. Neutre, extrêmement lisible, chiffres tabulaires natifs. Sûr, mais très vu — c'est la police de la moitié des dashboards actuels.",
+    body: `'Inter', ${systemStack}`, number: `'Inter', ${systemStack}`
+  },
+  manrope: {
+    name: 'Manrope',
+    desc: "Une grotesque légèrement plus ronde qu'Inter. Va bien avec l'objectif « chaleureux / rassurant » sans perdre en sérieux.",
+    body: `'Manrope', ${systemStack}`, number: `'Manrope', ${systemStack}`
+  },
+  sora: {
+    name: 'Sora',
+    desc: "Géométrique et plus affirmée. Sert bien « moderne / techno », un peu au détriment du « chaleureux ».",
+    body: `'Sora', ${systemStack}`, number: `'Sora', ${systemStack}`
+  },
+  jakarta: {
+    name: 'Plus Jakarta Sans',
+    desc: "Terminaisons douces, très \"amicale\" sans être enfantine. Probablement le meilleur compromis chaleureux + premium des quatre.",
+    body: `'Plus Jakarta Sans', ${systemStack}`, number: `'Plus Jakarta Sans', ${systemStack}`
+  },
+  dmsans: {
+    name: 'DM Sans',
+    desc: "Proche de Plus Jakarta Sans mais plus géométrique et plus froide. Très propre, un peu moins « chaleureuse ». Bon candidat si on veut pencher davantage vers le premium.",
+    body: `'DM Sans', ${systemStack}`, number: `'DM Sans', ${systemStack}`
+  },
+  urbanist: {
+    name: 'Urbanist',
+    desc: "Minimaliste avec du caractère : contreformes ouvertes, allure un peu plus fine que Jakarta. Élégant, mais à surveiller sur les tout petits corps de texte (finesse des traits).",
+    body: `'Urbanist', ${systemStack}`, number: `'Urbanist', ${systemStack}`
+  },
+  pairing: {
+    name: 'Inter + Space Grotesk (chiffres)',
+    desc: "Texte en Inter (sûr, discret), mais le chiffre héros et les montants passent en Space Grotesk : plus de caractère uniquement là où ça compte — sur l'argent.",
+    body: `'Inter', ${systemStack}`, number: `'Space Grotesk', ${systemStack}`
+  }
+};
+
+const grid = document.getElementById('grid');
+const tpl = document.getElementById('mock');
+
+function render(key) {
+  grid.textContent = '';
+  const f = fonts[key];
+
+  const node = tpl.content.cloneNode(true);
+  const section = node.querySelector('.palette');
+  section.querySelector('h2').textContent = f.name;
+  section.querySelector('.palette__desc').textContent = f.desc;
+  const stage = section.querySelector('.stage');
+  stage.style.setProperty('--f-body', f.body);
+  stage.style.setProperty('--f-number', f.number);
+  grid.appendChild(node);
+
+  // Deuxième bloc : même police, thème clair, pour vérifier la tenue sur fond blanc.
+  const node2 = tpl.content.cloneNode(true);
+  const section2 = node2.querySelector('.palette');
+  section2.querySelector('h2').textContent = f.name + ' — sur fond clair';
+  section2.querySelector('.palette__desc').textContent = 'Même police, pour vérifier la lisibilité et le poids visuel sur les deux thèmes.';
+  const stage2 = section2.querySelector('.stage');
+  stage2.style.setProperty('--f-body', f.body);
+  stage2.style.setProperty('--f-number', f.number);
+  stage2.style.setProperty('--stage', '#f0eaea');
+  stage2.style.setProperty('--bg', '#fbfbfd');
+  stage2.style.setProperty('--surface', '#ffffff');
+  stage2.style.setProperty('--border', '#e7e7ee');
+  stage2.style.setProperty('--text', '#15151c');
+  stage2.style.setProperty('--muted', '#6a6a78');
+  stage2.style.setProperty('--track', '#ececf1');
+  stage2.style.setProperty('--income', '#15803d');
+  stage2.style.setProperty('--ok', '#15803d');
+  stage2.style.setProperty('--ok-soft', 'rgba(21,128,61,.12)');
+  stage2.style.setProperty('--over', '#c93c37');
+  stage2.style.setProperty('--over-soft', 'rgba(201,60,55,.10)');
+  stage2.style.setProperty('--accent', '#c2562a');
+  stage2.style.setProperty('--accent-soft', 'rgba(194,86,42,.10)');
+  grid.appendChild(node2);
+}
+
+const seg = document.getElementById('seg-font');
+seg.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  for (const b of seg.querySelectorAll('button')) b.classList.toggle('on', b === btn);
+  render(btn.dataset.v);
+});
+seg.querySelector('button[data-v="system"]').classList.add('on');
+render('system');
+</script>
+
+</body>
+</html>

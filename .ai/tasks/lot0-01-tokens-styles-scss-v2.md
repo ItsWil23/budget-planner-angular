@@ -1,3 +1,16 @@
+## Tâche : Fondations des tokens de design — styles.scss uniquement (v2 — recopie exacte)
+Lot : 0
+
+### Contexte
+Tentative précédente incomplète (tokens manquants, déclarations invalides hors bloc). Cette version donne le
+contenu final exact à reproduire, pour éliminer tout raisonnement/mapping de ta part.
+
+### Ce qu'il faut faire
+
+Remplace **l'intégralité** du contenu de `src/styles.scss` par le bloc ci-dessous, **exactement tel quel**, sans
+rien changer, reformuler, réordonner ou compléter :
+
+```scss
 *,
 *::before,
 *::after {
@@ -136,3 +149,17 @@ body {
 button {
   cursor: pointer;
 }
+```
+
+### Fichiers concernés
+`src/styles.scss` uniquement — remplacement intégral du fichier par le bloc ci-dessus.
+
+### Critères d'acceptation
+- Le contenu de `src/styles.scss` correspond exactement au bloc fourni (aucune déclaration en dehors d'un bloc de
+  règle, aucun token dupliqué avec des valeurs différentes).
+- `npm start` ne montre aucune erreur SCSS.
+
+### Hors périmètre pour cette tâche
+- Ne touche pas à `theme.ts`, `theme.spec.ts`, ni `index.html`.
+- N'ajoute aucune palette autre que « terracotta ».
+- Ne remplace pas la police par Plus Jakarta Sans.

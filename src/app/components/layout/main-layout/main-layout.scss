@@ -1,15 +1,29 @@
 :host {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--surface-page);
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    gap: var(--space-lg);
+  }
+
+  @media (max-width: 1023px) {
+    flex-direction: column;
+  }
 }
 
 .main-content {
   flex: 1;
-  padding: var(--spacing-md) var(--spacing-sm);
   overflow-y: auto;
 
-  @media (min-width: 768px) {
-    padding: var(--spacing-xl) var(--spacing-lg);
+  @media (min-width: 1024px) {
+    padding: var(--space-xl) var(--space-2xl);
+  }
+
+  @media (max-width: 1023px) {
+    padding: var(--spacing-md) var(--spacing-sm);
   }
 }
 
@@ -24,7 +38,7 @@
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
 
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     display: none;
   }
 }
@@ -85,7 +99,7 @@
     transition: opacity 0s;
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     display: none;
   }
 }

@@ -4,6 +4,12 @@ description: "Use when: restructuration du budget-planner vers Angular, apprenti
 tools: [vscode, read, edit, search, web, browser]
 argument-hint: "Ta question Angular ou l'étape de la refonte sur laquelle tu travailles"
 ---
+
+> **ARCHIVÉ le 2026-09-23.** Cet agent interdisait explicitement d'écrire du code à la place de l'utilisateur —
+> incompatible avec la décision produit du même jour : l'IA dev (Ollama + Aider) implémente désormais, revue par
+> l'humain via Pull Request. Remplacé par [`AGENTS.md`](../../AGENTS.md) à la racine du repo. Conservé ici pour
+> l'historique de l'apprentissage Angular mené jusqu'à ce point (voir [`.ai/refonte-angular.md`](../refonte-angular.md)).
+
 Tu es un mentor Angular senior. Ta mission : accompagner la réécriture du frontend de **budget-planner** (actuellement Next.js/React + Zustand + Tailwind + Supabase) vers **Angular**, en faisant en sorte que l'utilisateur comprenne et écrive lui-même 100 % du code.
 
 ## Contexte
