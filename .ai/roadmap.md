@@ -40,8 +40,18 @@ application.
   à `SettingsService` via `UserSettings.backgroundSeed`, puis suppression de cette persistance locale. Branchement
   visuel 01b implémenté et rendu validé le 2026-10-05 (thèmes clair/sombre, stabilité après rechargement).
 - Layout racine : disposition « cartes flottantes », navigation en île pleine hauteur, `100dvh` desktop /
-  défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte). Revue du 2026-10-05 : défaut mobile
-  à traiter dans une tâche distincte — la sidebar fermée réserve presque toute la hauteur et comprime le contenu.
+  défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte). Correctif du défaut de hauteur de la
+  sidebar mobile validé et fusionné le 2026-10-05 (PR #3) : sous 1024px, l'hôte est retiré du flux avec
+  `display: contents`, sans masquer le tiroir. Les finitions restantes sont **absorbées par la tâche topbar**
+  (décision du 2026-10-05, voir « Ordre de réalisation » ci-dessous), pas traitées isolément :
+  - hamburger déplacé dans la topbar (le `position: relative` qui écrase `fixed` disparaît avec lui) ;
+  - topbar **sticky** sur mobile et toujours visible sur desktop (`DESIGN_SYSTEM.md` § 2) ;
+  - token `--overlay-scrim` (`DESIGN_SYSTEM.md` § 4.6) appliqué au backdrop du tiroir **et** à l'overlay de
+    `modal.scss` (tous deux en `rgba(0, 0, 0, 0.5)` en dur aujourd'hui) ;
+  - défilement de page classique sous 1024px (le `:host` est encore en `100dvh; overflow: hidden` partout) ;
+  - cibles tactiles ≥ 44px (hamburger 40px, bouton × du tiroir 32px) ;
+  - bouton × du tiroir masqué dès 768px alors que le tiroir reste actif jusqu'à 1023px ;
+  - `aria-label` / `aria-expanded` sur le hamburger (textes via i18n).
 
 ### Données & services
 - Interfaces mises à jour selon `.ai/domain-model.md` : `Transaction.subcategoryId` obligatoire, `BudgetLine`,
@@ -51,6 +61,20 @@ application.
   `CategoryService`/`TransactionService` déjà amorcés à adapter.
 - Bibliothèque i18n runtime installée (Transloco pressenti) + extraction des chaînes déjà écrites en dur (landing,
   auth, catégories, transactions).
+
+### Ordre de réalisation du lot 0 (décidé le 2026-10-05)
+
+Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` § 2).
+
+1. Remettre `npm test` au vert (7 échecs préexistants : assertion de titre obsolète, providers `ActivatedRoute`
+   manquants, locale `fr-FR` absente, fixture `CategoryCard` incomplète).
+2. Police Plus Jakarta Sans auto-hébergée.
+3. Modèles et mocks en centimes (`domain-model.md`), puis `SettingsService` : transfert de `backgroundSeed` vers
+   `UserSettings` et suppression de la persistance `localStorage` de `Background`.
+4. `MonthContextService`.
+5. Bibliothèque i18n (nouvelle dépendance npm, à signaler dans la PR) + extraction des chaînes en dur.
+6. Topbar : coquille (hamburger, emplacements) puis contenu ; absorbe les finitions du layout listées plus haut.
+   Le menu compte accessible reste du lot 5.
 
 **Definition of done** : un écran vide (ex. squelette de page) affiche déjà le bon fond, la bonne typographie, la
 bonne navigation, et bascule thème/palette/langue depuis un état global fonctionnel.
