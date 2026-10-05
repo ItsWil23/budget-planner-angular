@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-10-01
+> Dernière mise à jour : 2026-10-05
 
 ## 1. Pourquoi cet ordre
 
@@ -40,7 +40,8 @@ application.
   à `SettingsService` via `UserSettings.backgroundSeed`, puis suppression de cette persistance locale. Branchement
   visuel 01b implémenté et rendu validé le 2026-10-05 (thèmes clair/sombre, stabilité après rechargement).
 - Layout racine : disposition « cartes flottantes », navigation en île pleine hauteur, `100dvh` desktop /
-  défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte).
+  défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte). Revue du 2026-10-05 : défaut mobile
+  à traiter dans une tâche distincte — la sidebar fermée réserve presque toute la hauteur et comprime le contenu.
 
 ### Données & services
 - Interfaces mises à jour selon `.ai/domain-model.md` : `Transaction.subcategoryId` obligatoire, `BudgetLine`,
