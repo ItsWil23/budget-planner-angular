@@ -37,8 +37,8 @@ application.
 - Mesh gradient de fond : génération bornée, graine aléatoire stockée, jamais dérivée de l'identité. La logique 01a
   est implémentée et validée le 2026-10-01 (`Background`, PRNG mulberry32, validation de graine et gestion des erreurs
   de stockage). Persistance provisoire dans `localStorage` (clé `budget-planner.background-seed`) jusqu'à son transfert
-  à `SettingsService` via `UserSettings.backgroundSeed`, puis suppression de cette persistance locale. Le branchement
-  visuel 01b reste à faire.
+  à `SettingsService` via `UserSettings.backgroundSeed`, puis suppression de cette persistance locale. Branchement
+  visuel 01b implémenté et rendu validé le 2026-10-05 (thèmes clair/sombre, stabilité après rechargement).
 - Layout racine : disposition « cartes flottantes », navigation en île pleine hauteur, `100dvh` desktop /
   défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte).
 

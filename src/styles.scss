@@ -110,6 +110,10 @@ body {
   --text-muted: #94898d;
   --color-accent: #e8926b;
   --color-accent-soft: rgba(232, 146, 107, 0.15);
+  /* ===== Mesh background gradients (terracotta) ===== */
+  --mesh-hue-1: rgba(232, 146, 107, 0.22);
+  --mesh-hue-2: rgba(124, 92, 190, 0.18);
+  --mesh-hue-3: rgba(216, 150, 96, 0.13);
 }
 
 /* ===== Thème clair : neutres communs à toutes les palettes ===== */
@@ -126,6 +130,10 @@ body {
   --surface-page: #f0eaea;
   --color-accent: #c2562a;
   --color-accent-soft: rgba(194, 86, 42, 0.1);
+  /* ===== Mesh background gradients (terracotta light theme) ===== */
+  --mesh-hue-1: rgba(232, 146, 107, 0.40);
+  --mesh-hue-2: rgba(150, 120, 210, 0.30);
+  --mesh-hue-3: rgba(230, 180, 130, 0.22);
 }
 
 body {
