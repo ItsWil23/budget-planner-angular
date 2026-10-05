@@ -1,4 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import localeFr from '@angular/common/locales/fr';
+import { registerLocaleData } from '@angular/common';
+
+registerLocaleData(localeFr);
 
 import { Transactions } from './transactions';
 
@@ -9,6 +14,7 @@ describe('Transactions', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Transactions],
+      providers: [provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Transactions);
