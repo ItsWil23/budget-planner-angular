@@ -4,7 +4,7 @@
 > [`.ai/product-vision.md`](./.ai/product-vision.md) § 11. Aucune couleur, taille ou espacement ne doit être écrit
 > en dur dans un composant : tout passe par les tokens de ce document.
 > Exploration visuelle : [`.ai/design/palettes.html`](./.ai/design/palettes.html), [`.ai/design/fonts.html`](./.ai/design/fonts.html).
-> Dernière mise à jour : 2026-09-23
+> Dernière mise à jour : 2026-10-05
 
 ---
 
@@ -41,14 +41,18 @@ toutes les pages, y compris Budget Mensuel (une île peut contenir une table ent
 
 - Racine applicative en `height: 100dvh`, `overflow: hidden`.
 - Navigation : île pleine hauteur, fixe, icône + libellé (jamais un rail d'icônes seules).
-- Zone de contenu (topbar + hero + reste) : `overflow-y: auto`, seule cette zone défile.
+- Topbar : île fixe en haut de la colonne de contenu, **toujours visible** (elle ne défile jamais avec le contenu).
+- Zone de contenu sous la topbar (hero + reste) : `overflow-y: auto`, seule cette zone défile.
 - Le fond ne bouge donc jamais — c'est l'effet recherché, cohérent avec les références retenues.
 
 ### Layout mobile / tablette (< 1024px)
 
 - Défilement de page classique (pas de `100dvh` contraint).
-- Navigation en tiroir (drawer), déclenchée par un bouton hamburger dans la topbar.
-- Topbar mobile : `hamburger | sélecteur de mois | avatar`.
+- Navigation en tiroir (drawer), déclenchée par un bouton hamburger dans la topbar. Le fond du tiroir ouvert est
+  assombri par `--overlay-scrim` (§ 4.6).
+- Topbar mobile : `hamburger | sélecteur de mois | avatar`. **Sticky** (`position: sticky; top: 0`) : elle reste
+  visible pendant le défilement de page, donc le hamburger reste toujours accessible.
+- La topbar sticky est opaque (`--surface-card`) ; le défilement passe sous elle sans transparence.
 - Chaque fonction doit être accessible au doigt (cible tactile ≥ 44×44px), aucune ne dépend du survol.
 
 ### Cas de l'en-tête du Dashboard
@@ -245,6 +249,18 @@ d'interface. Valeurs provisoires (maquette) : `#7aa2f7`, `#e0af68`, `#bb9af7` �
 avant l'implémentation de l'écran Catégories, garantissant un contraste suffisant sur `--surface-card` dans les deux
 thèmes.
 
+### 4.6 Overlay (voile derrière tiroir et modale)
+
+```css
+--overlay-scrim: rgba(0, 0, 0, 0.6);   /* thème clair : rgba(0, 0, 0, 0.4) */
+```
+
+- Neutre et **invariant selon la palette** : seul le thème (sombre / clair) le fait varier.
+- Utilisé uniquement pour le voile qui assombrit la page derrière un élément superposé : backdrop du tiroir de
+  navigation mobile et overlay de la modale. Jamais comme fond d'île, jamais pour simuler une ombre.
+- Aucun flou associé (§ 3) ; la séparation avec l'élément superposé reste assurée par `--border` et la luminance.
+- Valeurs de départ, à valider visuellement dans les deux thèmes lors de la tâche topbar.
+
 ## 5. Typographie
 
 **Famille unique : Plus Jakarta Sans**, graisses 400 / 500 / 600. Choisie après comparatif sur maquette
@@ -371,7 +387,7 @@ Toujours désactivé/réduit sous `prefers-reduced-motion: reduce`.
 | **Bouton secondaire** | Bordure `--border`, fond transparent, texte `--text-primary`. |
 | **Champ de formulaire** | `font: inherit`, `margin: 0` avant tout dimensionnement en `em` (piège déjà rencontré). Label toujours visible, jamais uniquement un placeholder. |
 | **Table** (Budget Mensuel, Transactions) | Une seule île contenante ; les lignes ne sont pas elles-mêmes des îles séparées (sinon la page devient interminable — décision `product-vision.md` § 9). |
-| **Modale** | Contenu projeté détruit/recréé à l'ouverture (déjà acquis en phase A). Fermeture : bouton ×, backdrop, touche Échap. Piège de focus obligatoire. |
+| **Modale** | Contenu projeté détruit/recréé à l'ouverture (déjà acquis en phase A). Fermeture : bouton ×, backdrop, touche Échap. Piège de focus obligatoire. Voile : `--overlay-scrim` (§ 4.6). |
 | **Menu de compte** (avatar, topbar) | Un vrai composant accessible : Échap pour fermer, piège de focus, navigation clavier — jamais un `<div>` conditionnel simple. |
 | **Barre de progression prévu/réel** | Couleur pilotée par le statut (§ 4.3 / `domain-model.md` § 3 : `under` / `on-track` / `over`), jamais par la catégorie. |
 | **Pastille de catégorie** | Couleur de `Category.color` (palette catégorielle, § 4.5), jamais une couleur sémantique. |
