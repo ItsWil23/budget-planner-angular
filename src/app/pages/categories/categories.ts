@@ -1,6 +1,6 @@
-import { Component, signal } from '@angular/core';
-import { Category, Subcategory } from '../../models/category';
-import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../mocks/mock-categories';
+import { Component, inject } from '@angular/core';
+import { CategoryService } from '../../services/category';
+import { Subcategory } from '../../models/category';
 import { CategoryCard } from '../../components/ui/category-card/category-card';
 
 @Component({
@@ -10,27 +10,20 @@ import { CategoryCard } from '../../components/ui/category-card/category-card';
   styleUrl: './categories.scss',
 })
 export class Categories {
-  // === ÉTAT GLOBAL (signals) ===
-  protected readonly categories = signal<Category[]>(MOCK_CATEGORIES);
-  protected readonly subcategories = signal<Subcategory[]>(MOCK_SUBCATEGORIES);
+  protected readonly categoryService = inject(CategoryService);
+  protected readonly categories = this.categoryService.categories;
 
   // === GESTION DES CATÉGORIES ===
 
   protected onEditCategory(payload: { id: string; name: string; type: string }) {
-    this.categories.update(cats =>
-      cats.map(cat =>
-        cat.id === payload.id
-          ? { ...cat, name: payload.name, type: payload.type as 'income' | 'expense' }
-          : cat
-      )
-    );
+    this.categoryService.updateCategory(payload.id, {
+      name: payload.name,
+      type: payload.type as 'income' | 'expense',
+    });
   }
 
   protected onDeleteCategory(id: string) {
-    // Supprimer la catégorie
-    this.categories.update(cats => cats.filter(cat => cat.id !== id));
-    // Supprimer toutes les sous-catégories associées
-    this.subcategories.update(subs => subs.filter(sub => sub.categoryId !== id));
+    this.categoryService.deleteCategory(id);
   }
 
   // === GESTION DES SOUS-CATÉGORIES ===
@@ -38,33 +31,30 @@ export class Categories {
   protected onAddSubcategory(payload: { categoryId: string; label: string }) {
     if (!payload.label.trim()) return;
 
-    const newSubcategory: Subcategory = {
-      id: `sub-${Date.now()}`, // ID temporaire pour la phase A
+    const newId = `sub-${Date.now()}`; // ID temporaire pour la phase A
+    this.categoryService.addSubcategory({
+      id: newId,
       name: payload.label.trim(),
       categoryId: payload.categoryId,
       icon: '',
-    };
-
-    this.subcategories.update(subs => [...subs, newSubcategory]);
+    });
   }
 
   protected onEditSubcategory(payload: { id: string; label: string }) {
     if (!payload.label.trim()) return;
 
-    this.subcategories.update(subs =>
-      subs.map(sub =>
-        sub.id === payload.id ? { ...sub, name: payload.label.trim() } : sub
-      )
-    );
+    this.categoryService.updateSubcategory(payload.id, {
+      name: payload.label.trim(),
+    });
   }
 
   protected onDeleteSubcategory(id: string) {
-    this.subcategories.update(subs => subs.filter(sub => sub.id !== id));
+    this.categoryService.deleteSubcategory(id);
   }
 
   // === UTILITAIRE ===
 
   protected getSubcategoriesForCategory(categoryId: string): Subcategory[] {
-    return this.subcategories().filter(sub => sub.categoryId === categoryId);
+    return this.categoryService.getSubcategoriesForCategory(categoryId);
   }
 }

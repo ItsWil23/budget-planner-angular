@@ -1,6 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { TransactionList } from '../../components/ui/transaction-list/transaction-list';
-import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../mocks/mock-categories';
+import { CategoryService } from '../../services/category';
 import { Category, Subcategory } from '../../models/category';
 import { MOCK_TRANSACTIONS } from '../../mocks/mock-transactions';
 import { Transaction } from '../../models/transactions';
@@ -21,8 +21,9 @@ export class Transactions {
   protected readonly isModalOpened = signal(false);
 
   protected readonly transactions = signal<Transaction[]>(MOCK_TRANSACTIONS);
-  protected readonly categories = signal<Category[]>(MOCK_CATEGORIES);
-  protected readonly subcategories = signal<Subcategory[]>(MOCK_SUBCATEGORIES);
+  protected readonly categoryService = inject(CategoryService);
+  protected readonly categories = this.categoryService.categories;
+  protected readonly subcategories = this.categoryService.subcategories;
 
   onTransactionSubmit(transaction: Transaction) {
     this.transactions.update(transactions => [...transactions, transaction]);
