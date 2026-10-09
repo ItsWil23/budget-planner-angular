@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Category, Subcategory } from '../../../models/category';
-import { Transaction } from '../../../models/transactions';
+import { TransactionPresentation } from '../../../models/transactions';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 
 @Component({
@@ -13,12 +13,12 @@ import { DatePipe, CurrencyPipe } from '@angular/common';
   styleUrl: './transaction-list.scss',
 })
 export class TransactionList {
-  @Input() transactions: Transaction[] = [];
+  @Input() transactions: TransactionPresentation[] = [];
   @Input() categories: Category[] = [];
   @Input() subcategories: Subcategory[] = [];
   @Input() readOnly = false;
 
-  @Output() editTransaction = new EventEmitter<Transaction>();
+  @Output() editTransaction = new EventEmitter<TransactionPresentation>();
   @Output() deleteTransaction = new EventEmitter<string>();
 
   protected getCategoryById(categoryId: string): Category {
