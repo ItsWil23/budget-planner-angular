@@ -27,7 +27,7 @@
           [class.amount-income]="tx.type === 'income'"
           [class.amount-expense]="tx.type === 'expense'"
         >
-          {{ tx.amount | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr-FR' }}
+          {{ tx.amountEuros | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr-FR' }}
         </td>
       </tr>
     } @empty {

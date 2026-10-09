@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { ReactiveFormsModule, Validators, FormBuilder, FormControl } from '@angular/forms';
 import { Category, Subcategory } from '../../../models/category';
-import { Transaction } from '../../../models/transactions';
+import { TransactionInput } from '../../../models/transactions';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -14,7 +14,7 @@ export class TransactionForm {
   @Input() formCategories: Category[] = [];
   @Input() formSubcategories: Subcategory[] = [];
 
-  @Output() transactionSubmit = new EventEmitter<Transaction>();
+  @Output() transactionSubmit = new EventEmitter<TransactionInput>();
   @Output() cancel = new EventEmitter<void>();
 
   private readonly formBuilder = inject(FormBuilder);
@@ -24,7 +24,7 @@ export class TransactionForm {
     categoryId: ['', Validators.required],
     subcategoryId: ['', Validators.required],
     label: ['', Validators.required],
-    amount: new FormControl<number | null>(null, [Validators.required, Validators.min(0.1)]),
+    amountEuros: new FormControl<number | null>(null, [Validators.required, Validators.min(0.1)]),
     date: [new Date().toISOString().substring(0, 10), Validators.required],
   });
 
@@ -46,12 +46,12 @@ export class TransactionForm {
     }
 
     const validForm = this.newTransactionForm.getRawValue();
-    if (validForm.amount === null) return;
+    if (validForm.amountEuros === null) return;
     const newTransactionType = this.getCategoryById(validForm.categoryId).type;
-    const newTransaction: Transaction = {
+    const newTransaction: TransactionInput = {
       id: crypto.randomUUID(),
       ...validForm,
-      amount: validForm.amount,
+      amountEuros: validForm.amountEuros,
       type: newTransactionType,
     };
 

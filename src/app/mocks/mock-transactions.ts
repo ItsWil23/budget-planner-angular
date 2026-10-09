@@ -7,7 +7,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-1',
     subcategoryId: 'sub-1',
     date: '2026-08-01',
-    amount: 2450,
+    amountCents: 245000,
     type: 'income',
   },
   {
@@ -16,7 +16,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-2',
     subcategoryId: 'sub-2',
     date: '2026-08-02',
-    amount: 850,
+    amountCents: 85000,
     type: 'expense',
   },
   {
@@ -25,7 +25,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-2',
     subcategoryId: 'sub-3',
     date: '2026-08-05',
-    amount: 39.99,
+    amountCents: 3999,
     type: 'expense',
   },
   {
@@ -34,7 +34,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-2',
     subcategoryId: 'sub-4',
     date: '2026-08-08',
-    amount: 72.4,
+    amountCents: 7240,
     type: 'expense',
   },
   {
@@ -43,7 +43,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-3',
     subcategoryId: 'sub-5',
     date: '2026-08-10',
-    amount: 96.3,
+    amountCents: 9630,
     type: 'expense',
   },
   {
@@ -52,7 +52,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-3',
     subcategoryId: 'sub-6',
     date: '2026-08-13',
-    amount: 68.5,
+    amountCents: 6850,
     type: 'expense',
   },
   {
@@ -61,7 +61,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-1',
     subcategoryId: 'sub-1',
     date: '2026-08-16',
-    amount: 320,
+    amountCents: 32000,
     type: 'income',
   },
   {
@@ -70,7 +70,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-3',
     subcategoryId: 'sub-5',
     date: '2026-08-22',
-    amount: 81.75,
+    amountCents: 8175,
     type: 'expense',
   },
   {
@@ -79,7 +79,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     categoryId: 'cat-3',
     subcategoryId: 'sub-6',
     date: '2026-08-27',
-    amount: 75.45,
+    amountCents: 7545,
     type: 'expense',
   },
 ];

@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import type { Transaction } from '../models/transactions';
+import type { TransactionInput } from '../models/transactions';
+import { MoneyService } from './money';
 import { TransactionService } from './transaction';
 
 describe('TransactionService', () => {
   let service: TransactionService;
-  let addedTransaction: Transaction;
+  let addedTransaction: TransactionInput;
 
   beforeEach(() => {
-    service = new TransactionService();
+    service = new TransactionService(new MoneyService());
 
     // Préparer une nouvelle transaction pour les tests d'ajout
     addedTransaction = {
@@ -16,7 +17,7 @@ describe('TransactionService', () => {
       categoryId: 'cat-1',
       subcategoryId: 'sub-1',
       date: '2026-10-06',
-      amount: 100,
+      amountEuros: 1.23,
       type: 'income',
     };
   });
@@ -28,6 +29,7 @@ describe('TransactionService', () => {
       expect(transactions.length).toBe(9); // Les 9 transactions initiales (tx-1 à tx-9)
       expect(transactions[0].id).toBe('tx-1');
       expect(transactions[0].label).toBe('Salaire mensuel');
+      expect(transactions[2].amountCents).toBe(3999);
     });
   });
 
@@ -40,6 +42,8 @@ describe('TransactionService', () => {
       expect(service.transactions().length).toBe(initialCount + 1);
       expect(service.transactions()[9].id).toBe('tx-10');
       expect(service.transactions()[9].label).toBe('Test transaction');
+      expect(service.transactions()[9].amountCents).toBe(123);
+      expect(service.presentationTransactions()[9].amountEuros).toBe(1.23);
     });
 
     it('should append new transaction at the end', () => {
@@ -65,8 +69,8 @@ describe('TransactionService', () => {
     it('should maintain correct transaction count after multiple adds', () => {
       const initialCount = service.transactions().length;
 
-      const tx1: Transaction = { ...addedTransaction, id: 'tx-11' };
-      const tx2: Transaction = { ...addedTransaction, id: 'tx-12' };
+      const tx1: TransactionInput = { ...addedTransaction, id: 'tx-11' };
+      const tx2: TransactionInput = { ...addedTransaction, id: 'tx-12' };
 
       service.add(tx1);
       service.add(tx2);
