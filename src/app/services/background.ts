@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MeshBlob } from '../models/meshblob';
+import { SettingsService } from './settings';
 
 @Injectable({
   providedIn: 'root'
@@ -9,61 +10,11 @@ export class Background {
   readonly blobs: MeshBlob[];
   readonly background: string;
 
-  constructor() {
-    // Read seed from localStorage or generate a new one
-    let seed: number;
-    try {
-      const storedSeed = localStorage.getItem('budget-planner.background-seed');
-      if (storedSeed !== null && storedSeed !== undefined) {
-        const validatedSeed = this.validateAndParseSeed(storedSeed);
-        if (validatedSeed === null) {
-          // If seed is invalid, generate a new one
-          seed = this.generateRandomSeed();
-          this.writeSeedToStorage(seed);
-        } else {
-          seed = validatedSeed;
-        }
-      } else {
-        seed = this.generateRandomSeed();
-        this.writeSeedToStorage(seed);
-      }
-    } catch (error) {
-      // If localStorage fails, keep the seed in memory without crashing
-      seed = this.generateRandomSeed();
-    }
-
+  constructor(settingsService: SettingsService) {
+    const seed = settingsService.settings().backgroundSeed;
     this.seed = seed;
     this.blobs = this.generateBlobs(seed);
     this.background = this.generateBackgroundString(this.blobs);
-  }
-
-  private validateAndParseSeed(seedString: string): number | null {
-    // Check if it's a valid decimal string with only digits
-    if (!/^\d+$/.test(seedString)) {
-      return null;
-    }
-
-    // Parse as integer
-    const parsedSeed = parseInt(seedString, 10);
-
-    // Check if it's within uint32 range
-    if (isNaN(parsedSeed) || parsedSeed < 0 || parsedSeed > 4294967295) {
-      return null;
-    }
-
-    return parsedSeed;
-  }
-
-  private generateRandomSeed(): number {
-    return crypto.getRandomValues(new Uint32Array(1))[0];
-  }
-
-  private writeSeedToStorage(seed: number): void {
-    try {
-      localStorage.setItem('budget-planner.background-seed', seed.toString());
-    } catch (error) {
-      // Ignore storage errors to avoid crashing
-    }
   }
 
   private generateBlobs(seed: number): MeshBlob[] {
