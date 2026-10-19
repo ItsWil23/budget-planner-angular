@@ -1,9 +1,10 @@
 import { Component, Output, EventEmitter } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 
 @Component({
   selector: 'app-modal',
-  imports: [],
+  imports: [TranslocoPipe],
   templateUrl: './modal.html',
   styleUrl: './modal.scss',
 })

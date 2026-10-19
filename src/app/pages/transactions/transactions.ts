@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { TransactionList } from '../../components/ui/transaction-list/transaction-list';
 import { CategoryService } from '../../services/category';
 import { TransactionInput } from '../../models/transactions';
@@ -12,6 +13,7 @@ import { TransactionService } from '../../services/transaction';
     TransactionList,
     Modal,
     TransactionForm,
+    TranslocoPipe,
   ],
   templateUrl: './transactions.html',
   styleUrl: './transactions.scss',

@@ -1,8 +1,8 @@
 <form [formGroup]="newTransactionForm" (ngSubmit)="onSubmitTransactionForm()">
   <div class="form-group">
-    <label for="transactionCategory">Catégorie</label>
+    <label for="transactionCategory">{{ 'transactionForm.category' | transloco }}</label>
     <select id="transactionCategory" formControlName="categoryId">
-      <option value="" disabled>— Choisir une catégorie —</option>
+      <option value="" disabled>{{ 'transactionForm.categoryPlaceholder' | transloco }}</option>
       @for(category of formCategories; track category.id){
         <option [value]="category.id">{{ category.name }}</option>
       }
@@ -10,9 +10,9 @@
   </div>
 
   <div class="form-group">
-    <label for="transactionSubCategory">Sous-Catégorie</label>
+    <label for="transactionSubCategory">{{ 'transactionForm.subcategory' | transloco }}</label>
     <select id="transactionSubCategory" formControlName="subcategoryId">
-      <option value="" disabled>— Choisir une sous-catégorie —</option>
+      <option value="" disabled>{{ 'transactionForm.subcategoryPlaceholder' | transloco }}</option>
       @for(subcategory of filteredSubcategories; track subcategory.id){
         <option [value]="subcategory.id">{{ subcategory.name }}</option>
       }
@@ -20,22 +20,22 @@
   </div>
 
   <div class="form-group">
-    <label for="transactionLabel">Libellé</label>
+    <label for="transactionLabel">{{ 'transactionForm.label' | transloco }}</label>
     <input id="transactionLabel" formControlName="label" type="text"/>
   </div>
 
   <div class="form-group">
-    <label for="transactionAmount">Montant</label>
+    <label for="transactionAmount">{{ 'transactionForm.amount' | transloco }}</label>
     <input id="transactionAmount" formControlName="amountEuros" type="number" step="0.01"/>
   </div>
 
   <div class="form-group">
-    <label for="transactionDate">Date</label>
+    <label for="transactionDate">{{ 'transactionForm.date' | transloco }}</label>
     <input id="transactionDate" formControlName="date" type="date"/>
   </div>
 
   <div class="form-action-buttons">
-    <button type="submit">Ajouter</button>
-    <button type="button" (click)="cancel.emit()">Annuler</button>
+    <button type="submit">{{ 'transactionForm.submit' | transloco }}</button>
+    <button type="button" (click)="cancel.emit()">{{ 'transactionForm.cancel' | transloco }}</button>
   </div>
 </form>

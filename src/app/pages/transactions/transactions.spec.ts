@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import localeFr from '@angular/common/locales/fr';
 import { registerLocaleData } from '@angular/common';
 
@@ -13,7 +14,18 @@ describe('Transactions', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Transactions],
+      imports: [
+        Transactions,
+        TranslocoTestingModule.forRoot({
+          langs: {
+            fr: {
+              transactions: { title: 'Transactions' },
+            },
+          },
+          translocoConfig: { availableLangs: ['fr', 'en'], defaultLang: 'fr' },
+          preloadLangs: true,
+        }),
+      ],
       providers: [provideRouter([])],
     }).compileComponents();
 
