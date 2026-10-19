@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-10-05
+> Dernière mise à jour : 2026-10-19
 
 ## 1. Pourquoi cet ordre
 
@@ -34,10 +34,9 @@ application.
   Reste à faire dans la foulée : poser `data-theme`/`data-palette` sur `<html>` (`theme.ts`, `index.html`) pour que
   les tokens prennent effet visuellement — sans ça, les écrans restent non stylés (comportement attendu).
 - Police Plus Jakarta Sans auto-hébergée + police de secours ajustée en métriques (`DESIGN_SYSTEM.md` § 5.1).
-- Mesh gradient de fond : génération bornée, graine aléatoire stockée, jamais dérivée de l'identité. La logique 01a
-  est implémentée et validée le 2026-10-01 (`Background`, PRNG mulberry32, validation de graine et gestion des erreurs
-  de stockage). Persistance provisoire dans `localStorage` (clé `budget-planner.background-seed`) jusqu'à son transfert
-  à `SettingsService` via `UserSettings.backgroundSeed`, puis suppression de cette persistance locale. Branchement
+- Mesh gradient de fond : génération bornée, graine jamais dérivée de l'identité. La logique 01a
+  est implémentée et validée le 2026-10-01 (`Background`, PRNG mulberry32). La graine vient de `SettingsService`
+  via `UserSettings.backgroundSeed` ; plus aucune persistance navigateur (PR #11). Branchement
   visuel 01b implémenté et rendu validé le 2026-10-05 (thèmes clair/sombre, stabilité après rechargement).
 - Layout racine : disposition « cartes flottantes », navigation en île pleine hauteur, `100dvh` desktop /
   défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte). Correctif du défaut de hauteur de la
@@ -56,9 +55,9 @@ application.
 ### Données & services
 - Interfaces mises à jour selon `.ai/domain-model.md` : `Transaction.subcategoryId` obligatoire, `BudgetLine`,
   `RecurringRule`, `BudgetMonth`, `UserSettings` étendu (`palette`, `backgroundSeed`, `language`).
-- Montants convertis en entiers (centimes) dans les mocks et les modèles.
-- Squelettes de services : `MonthContextService`, `BudgetService`, `RecurringRuleService`, `SettingsService` —
-  `CategoryService`/`TransactionService` déjà amorcés à adapter.
+- [x] Montants convertis en entiers (centimes) dans les mocks et les modèles (PR #9, #10).
+- Squelettes de services : `BudgetService` et `RecurringRuleService` à faire ; `SettingsService` (PR #11) et
+  `MonthContextService` (PR #12) faits ; `CategoryService`/`TransactionService` adaptés aux centimes (PR #10).
 - Bibliothèque i18n runtime installée (Transloco pressenti) + extraction des chaînes déjà écrites en dur (landing,
   auth, catégories, transactions).
 
@@ -70,8 +69,8 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
    manquants, locale `fr-FR` absente, fixture `CategoryCard` incomplète).
 2. Police Plus Jakarta Sans auto-hébergée.
 3. Modèles et mocks en centimes (`domain-model.md`), puis `SettingsService` : transfert de `backgroundSeed` vers
-   `UserSettings` et suppression de la persistance `localStorage` de `Background`.
-4. `MonthContextService`.
+   `UserSettings` et suppression de la persistance `localStorage` de `Background`. Fait (PR #9 à #11).
+4. `MonthContextService`. Fait (PR #12), mois système par défaut.
 5. Bibliothèque i18n (nouvelle dépendance npm, à signaler dans la PR) + extraction des chaînes en dur.
 6. Topbar : coquille (hamburger, emplacements) puis contenu ; absorbe les finitions du layout listées plus haut.
    Le menu compte accessible reste du lot 5.
@@ -150,7 +149,7 @@ et pour la landing — pattern hero + aperçu produit (amélioration déjà not�
 | Dashboard : revenus / charges prévues / dépenses réelles / solde / reste à vivre | À refaire (lot 3), formules revues (`domain-model.md` § 3) |
 | Dashboard : répartition par catégorie | À refaire (lot 3) |
 | Dashboard : 5 dernières dépenses | À refaire (lot 3) |
-| Sélecteur de mois synchronisé sur toute l'app | À refaire (lot 0, `MonthContextService`) |
+| Sélecteur de mois synchronisé sur toute l'app | Service fait (lot 0, PR #12) ; sélecteur à faire (lot 0, point 6) |
 | Page Budget mensuel / Overview | À refaire, restructurée (lot 1) — la version v2 « n'est pas bien réussie » (saisie sans retour visuel) |
 | Table `budget_lines` (prévu/réel) | Reprise avec révision : `actual_amount` supprimé, toujours recalculé (`domain-model.md` § 1 et § 7) |
 | Mode simple / mode avancé (planification fine) | ❌ Abandonné — un seul parcours |

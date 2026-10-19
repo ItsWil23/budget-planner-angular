@@ -1,7 +1,7 @@
 # Modèle de domaine — Budget Planner v3
 
 > Contrat de données de référence. Le front est codé contre ce modèle ; le backend (phase B) devra le respecter.
-> Dernière mise à jour : 2026-09-21
+> Dernière mise à jour : 2026-10-19
 
 ---
 
@@ -66,7 +66,7 @@ interface Transaction {
   monthKey: string;        // 'YYYY-MM', dérivé de date, indexé
   date: string;            // ISO 'YYYY-MM-DD'
   label: string;
-  amount: number;          // entier, en centimes ; toujours > 0, le signe vient du type
+  amountCents: number;     // entier, en centimes ; toujours > 0, le signe vient du type
   categoryId: string;
   subcategoryId: string;   // obligatoire
   type: CategoryType;      // dérivé de la catégorie, jamais saisi
