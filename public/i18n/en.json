@@ -114,6 +114,9 @@
   "modal": {
     "close": "Close"
   },
+  "topbar": {
+    "menu": "Menu"
+  },
   "sidebar": {
     "nav": {
       "dashboard": "Dashboard",
@@ -123,7 +126,8 @@
       "settings": "Settings"
     },
     "loggedInAs": "Logged in as:",
-    "logout": "Log out"
+    "logout": "Log out",
+    "closeMenu": "Close menu"
   },
   "themeSwitch": {
     "ariaLabel": "Toggle dark theme"

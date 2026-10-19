@@ -114,6 +114,9 @@
   "modal": {
     "close": "Fermer"
   },
+  "topbar": {
+    "menu": "Menu"
+  },
   "sidebar": {
     "nav": {
       "dashboard": "Dashboard",
@@ -123,7 +126,8 @@
       "settings": "Paramètres"
     },
     "loggedInAs": "Connecté en tant que:",
-    "logout": "Déconnecter"
+    "logout": "Déconnecter",
+    "closeMenu": "Fermer le menu"
   },
   "themeSwitch": {
     "ariaLabel": "Basculer le thème sombre"

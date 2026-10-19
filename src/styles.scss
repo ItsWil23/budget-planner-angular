@@ -49,6 +49,11 @@ body {
   --space-2xl: 28px;
   --space-3xl: 40px;
 
+  /* ===== Dimensions ===== */
+  --size-touch-min: 44px; /* cible tactile minimale (DESIGN_SYSTEM § 2) */
+  --size-bar-length: 24px;
+  --size-bar-thickness: 2px;
+
   /* ===== Rayons & bordures ===== */
   --radius-sm: 9px;
   --radius-md: 14px;
@@ -112,6 +117,11 @@ body {
   --color-income-surface: var(--color-ok-soft);
 }
 
+/* ===== Thème sombre : voile neutre, identique dans toutes les palettes (§ 4.6) ===== */
+[data-theme='dark'] {
+  --overlay-scrim: rgba(0, 0, 0, 0.6);
+}
+
 /* ===== Thème sombre, palette terracotta (par défaut) ===== */
 [data-theme='dark'][data-palette='terracotta'] {
   --surface-page: #0a0809;
@@ -130,6 +140,7 @@ body {
 
 /* ===== Thème clair : neutres communs à toutes les palettes ===== */
 [data-theme='light'] {
+  --overlay-scrim: rgba(0, 0, 0, 0.4);
   --surface-app: #fbfbfd;
   --surface-card: #ffffff;
   --border: #e7e7ee;

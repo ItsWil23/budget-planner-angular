@@ -1,7 +1,11 @@
 <aside class="sidebar" [class.open]="isOpen()">
   <div class="sidebar-header">
     <span>Budget Planner</span>
-    <button class="close-button" (click)="closeSidebar()">
+    <button
+      class="close-button"
+      aria-label="{{ 'sidebar.closeMenu' | transloco }}"
+      (click)="closeSidebar()"
+    >
     <span></span>
     <span></span>
   </button>

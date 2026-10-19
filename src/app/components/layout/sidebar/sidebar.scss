@@ -70,8 +70,8 @@
 .close-button {
   display: flex;
   position: relative;
-  width: 2rem;
-  height: 2rem;
+  width: var(--size-touch-min);
+  height: var(--size-touch-min);
 
   align-items: center;
   justify-content: center;
@@ -110,7 +110,7 @@
     }
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     display: none;
   }
 }
