@@ -1,7 +1,6 @@
-import { MOCK_FEATURES } from '../../mocks/mock-features';
-import { Feature } from '../../models/feature';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { FeatureService } from '../../services/feature';
 
 @Component({
   selector: 'app-landing',
@@ -10,5 +9,7 @@ import { RouterLink } from '@angular/router';
   styleUrl: './landing.scss',
 })
 export class Landing {
-  features: Feature[] = MOCK_FEATURES;
+  private readonly featureService = inject(FeatureService);
+
+  protected readonly features = this.featureService.features;
 }
