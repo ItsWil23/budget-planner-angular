@@ -57,5 +57,32 @@
       "login": "Log in",
       "register": "Sign up"
     }
+  },
+  "categories": {
+    "title": "Categories",
+    "newCategory": "New category",
+    "comingSoon": "Coming soon",
+    "empty": "No categories yet."
+  },
+  "categoryCard": {
+    "namePlaceholder": "Category name",
+    "typeOptions": {
+      "income": "Money in (income)",
+      "expense": "Money out (expenses)"
+    },
+    "badge": {
+      "income": "Income",
+      "expense": "Expense"
+    },
+    "actions": {
+      "editCategory": "Edit category",
+      "deleteCategory": "Delete category",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "save": "Save",
+    "cancel": "Cancel",
+    "emptySubcategories": "No subcategory",
+    "subcategoryPlaceholder": "New subcategory"
   }
 }
