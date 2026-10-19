@@ -1,4 +1,4 @@
 export interface Feature {
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
 }

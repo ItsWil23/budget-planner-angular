@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 
 import { Landing } from './landing';
 
@@ -9,7 +10,24 @@ describe('Landing', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Landing],
+      imports: [
+        Landing,
+        TranslocoTestingModule.forRoot({
+          langs: {
+            fr: {
+              landing: {
+                features: {
+                  planning: { title: 'Planification mensuelle' },
+                  tracking: { title: 'Suivi quotidien' },
+                  summary: { title: 'Synthèse claire' },
+                },
+              },
+            },
+          },
+          translocoConfig: { availableLangs: ['fr', 'en'], defaultLang: 'fr' },
+          preloadLangs: true,
+        }),
+      ],
       providers: [provideRouter([])],
     }).compileComponents();
 

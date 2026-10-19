@@ -1,1 +1,31 @@
-{}
+{
+  "landing": {
+    "header": {
+      "login": "Log in"
+    },
+    "hero": {
+      "title": "A simple tool to plan and track your budget",
+      "text": "Add your income, plan your expenses and record your spending day to day. See your monthly situation without unnecessary complexity.",
+      "cta": "Get started"
+    },
+    "features": {
+      "planning": {
+        "title": "Monthly planning",
+        "description": "Set your planned income and expenses for a clear view from the start of the month."
+      },
+      "tracking": {
+        "title": "Daily tracking",
+        "description": "Record your expenses easily from your phone or computer."
+      },
+      "summary": {
+        "title": "Clear summary",
+        "description": "Compare planned and actual amounts and see your results without a complex table."
+      }
+    },
+    "about": {
+      "title": "A simple, personal approach",
+      "text": "Budget Planner is not meant to replace a financial advisor. It is a personal tool designed to keep a clear view of your finances and track your spending habits without making things complicated."
+    },
+    "footer": "© 2026 Budget Planner — Initial version"
+  }
+}
