@@ -27,5 +27,35 @@
       "text": "Budget Planner n’a pas vocation à remplacer un conseiller financier. C’est un outil personnel conçu pour garder une vision claire de ses finances et suivre ses habitudes de dépense sans se compliquer la vie."
     },
     "footer": "© 2026 Budget Planner — Version initiale"
+  },
+  "auth": {
+    "login": {
+      "title": "Se connecter"
+    },
+    "register": {
+      "title": "S'inscrire"
+    },
+    "oauth": "Continuer avec Google",
+    "divider": "ou",
+    "fields": {
+      "email": "Email",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe"
+    },
+    "messages": {
+      "invalidCredentials": "Email ou mot de passe incorrect",
+      "loginSuccess": "Connexion réussie !",
+      "registerSuccess": "Vérifiez votre email pour valider l'inscription."
+    },
+    "actions": {
+      "login": "Se connecter",
+      "register": "S'inscrire"
+    },
+    "toggle": {
+      "noAccount": "Pas encore de compte ?",
+      "hasAccount": "Déjà inscrit ?",
+      "login": "Se connecter",
+      "register": "S'inscrire"
+    }
   }
 }

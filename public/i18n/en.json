@@ -27,5 +27,35 @@
       "text": "Budget Planner is not meant to replace a financial advisor. It is a personal tool designed to keep a clear view of your finances and track your spending habits without making things complicated."
     },
     "footer": "© 2026 Budget Planner — Initial version"
+  },
+  "auth": {
+    "login": {
+      "title": "Log in"
+    },
+    "register": {
+      "title": "Sign up"
+    },
+    "oauth": "Continue with Google",
+    "divider": "or",
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+    "messages": {
+      "invalidCredentials": "Incorrect email or password",
+      "loginSuccess": "Signed in successfully!",
+      "registerSuccess": "Check your email to confirm your registration."
+    },
+    "actions": {
+      "login": "Log in",
+      "register": "Sign up"
+    },
+    "toggle": {
+      "noAccount": "No account yet?",
+      "hasAccount": "Already registered?",
+      "login": "Log in",
+      "register": "Sign up"
+    }
   }
 }

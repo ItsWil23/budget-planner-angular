@@ -1,17 +1,17 @@
 <div class="auth-container">
   <div class="auth-card">
 
-    <h1>@if (mode() === 'login') { Se connecter } @else { S'inscrire }</h1>
+    <h1>{{ (mode() === 'login' ? 'auth.login.title' : 'auth.register.title') | transloco }}</h1>
 
     <button type="button" disabled class="btn-oauth">
-      Continuer avec Google
+      {{ 'auth.oauth' | transloco }}
     </button>
 
-    <div class="divider">ou</div>
+    <div class="divider">{{ 'auth.divider' | transloco }}</div>
 
     <form>
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email">{{ 'auth.fields.email' | transloco }}</label>
         <input
           id="email"
           type="email"
@@ -22,7 +22,7 @@
       </div>
 
       <div class="form-group">
-        <label for="password">Mot de passe</label>
+        <label for="password">{{ 'auth.fields.password' | transloco }}</label>
         <input
           id="password"
           type="password"
@@ -34,7 +34,7 @@
 
       @if (mode() === 'register') {
         <div class="form-group">
-          <label for="confirm-password">Confirmer le mot de passe</label>
+          <label for="confirm-password">{{ 'auth.fields.confirmPassword' | transloco }}</label>
           <input
             id="confirm-password"
             type="password"
@@ -48,27 +48,27 @@
       @if (mockState() !== 'idle') {
         <div class="message" [class.error]="mockState() === 'error'" [class.success]="mockState() === 'success'">
           @if (mockState() === 'error') {
-            Email ou mot de passe incorrect
+            {{ 'auth.messages.invalidCredentials' | transloco }}
           } @else {
             @if (mode() === 'login') {
-              Connexion réussie !
+              {{ 'auth.messages.loginSuccess' | transloco }}
             } @else {
-              Vérifiez votre email pour valider l'inscription.
+              {{ 'auth.messages.registerSuccess' | transloco }}
             }
           }
         </div>
       }
 
       <button type="submit" class="btn-primary">
-        @if (mode() === 'login') { Se connecter } @else { S'inscrire }
+        {{ (mode() === 'login' ? 'auth.actions.login' : 'auth.actions.register') | transloco }}
       </button>
     </form>
 
     <p class="toggle-link">
       @if (mode() === 'login') {
-        Pas encore de compte ? <a routerLink="/auth/register">S'inscrire</a>
+        {{ 'auth.toggle.noAccount' | transloco }} <a routerLink="/auth/register">{{ 'auth.toggle.register' | transloco }}</a>
       } @else {
-        Déjà inscrit ? <a routerLink="/auth/login">Se connecter</a>
+        {{ 'auth.toggle.hasAccount' | transloco }} <a routerLink="/auth/login">{{ 'auth.toggle.login' | transloco }}</a>
       }
     </p>
 

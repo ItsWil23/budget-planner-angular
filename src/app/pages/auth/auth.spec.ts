@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router, RouterOutlet } from '@angular/router';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 
 import { Auth } from './auth';
 
@@ -16,7 +17,22 @@ describe('Auth', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Auth, RouterHost],
+      imports: [
+        Auth,
+        RouterHost,
+        TranslocoTestingModule.forRoot({
+          langs: {
+            fr: {
+              auth: {
+                login: { title: 'Se connecter' },
+                register: { title: "S'inscrire" },
+              },
+            },
+          },
+          translocoConfig: { availableLangs: ['fr', 'en'], defaultLang: 'fr' },
+          preloadLangs: true,
+        }),
+      ],
       providers: [
         provideRouter([
           { path: 'auth/login', component: Auth },
@@ -32,6 +48,13 @@ describe('Auth', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should render the French login title', () => {
+    fixture.detectChanges();
+
+    const title: HTMLHeadingElement = fixture.nativeElement.querySelector('h1');
+    expect(title.textContent?.trim()).toBe('Se connecter');
   });
 
   it('should set autocomplete="current-password" on the password field in login mode', () => {
