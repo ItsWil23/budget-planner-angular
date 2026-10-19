@@ -2,18 +2,17 @@ import { Feature } from '../models/feature';
 
 export const MOCK_FEATURES: Feature[] = [
   {
-    title: 'Planification mensuelle',
-    description:
-      'Définissez vos revenus et vos charges prévues pour avoir une vision claire dès le début du mois.',
+    titleKey: 'landing.features.planning.title',
+    descriptionKey: 'landing.features.planning.description',
   },
 
   {
-    title: 'Suivi quotidien',
-    description: 'Enregistrez vos dépenses simplement depuis votre téléphone ou votre ordinateur.',
+    titleKey: 'landing.features.tracking.title',
+    descriptionKey: 'landing.features.tracking.description',
   },
 
   {
-    title: 'Synthèse claire',
-    description: 'Comparez prévisionnel et réel et visualisez vos résultats sans tableau complexe.',
+    titleKey: 'landing.features.summary.title',
+    descriptionKey: 'landing.features.summary.description',
   },
 ];

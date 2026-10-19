@@ -1,1 +1,31 @@
-{}
+{
+  "landing": {
+    "header": {
+      "login": "Se connecter"
+    },
+    "hero": {
+      "title": "Un outil simple pour planifier et suivre votre budget",
+      "text": "Ajoutez vos revenus, planifiez vos charges et enregistrez vos dépenses au quotidien. Visualisez votre situation mensuelle sans complexité inutile.",
+      "cta": "Commencer"
+    },
+    "features": {
+      "planning": {
+        "title": "Planification mensuelle",
+        "description": "Définissez vos revenus et vos charges prévues pour avoir une vision claire dès le début du mois."
+      },
+      "tracking": {
+        "title": "Suivi quotidien",
+        "description": "Enregistrez vos dépenses simplement depuis votre téléphone ou votre ordinateur."
+      },
+      "summary": {
+        "title": "Synthèse claire",
+        "description": "Comparez prévisionnel et réel et visualisez vos résultats sans tableau complexe."
+      }
+    },
+    "about": {
+      "title": "Une approche simple et personnelle",
+      "text": "Budget Planner n’a pas vocation à remplacer un conseiller financier. C’est un outil personnel conçu pour garder une vision claire de ses finances et suivre ses habitudes de dépense sans se compliquer la vie."
+    },
+    "footer": "© 2026 Budget Planner — Version initiale"
+  }
+}
