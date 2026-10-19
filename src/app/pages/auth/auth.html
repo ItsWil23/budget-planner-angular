@@ -27,7 +27,7 @@
           id="password"
           type="password"
           name="password"
-          autocomplete="@if (mode() === 'login') { current-password } @else { new-password }"
+          [attr.autocomplete]="mode() === 'login' ? 'current-password' : 'new-password'"
           required
         />
       </div>
