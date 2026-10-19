@@ -113,5 +113,19 @@
   },
   "modal": {
     "close": "Close"
+  },
+  "sidebar": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "transactions": "Transactions",
+      "categories": "Categories",
+      "budgetMensuel": "Monthly budget",
+      "settings": "Settings"
+    },
+    "loggedInAs": "Logged in as:",
+    "logout": "Log out"
+  },
+  "themeSwitch": {
+    "ariaLabel": "Toggle dark theme"
   }
 }
