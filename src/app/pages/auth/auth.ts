@@ -1,9 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 @Component({
   selector: 'app-auth',
   imports: [
     RouterLink,
+    TranslocoPipe,
   ],
   templateUrl: './auth.html',
   styleUrl: './auth.scss',
