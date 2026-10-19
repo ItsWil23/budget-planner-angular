@@ -9,20 +9,22 @@
           [value]="editValues().name"
           (input)="editValues.update((v) => ({ ...v, name: $any($event.target).value }))"
           class="input"
-          placeholder="Nom de la catégorie"
+          [placeholder]="'categoryCard.namePlaceholder' | transloco"
         />
         <select
           [value]="editValues().type"
           (change)="editValues.update((v) => ({ ...v, type: $any($event.target).value }))"
           class="select"
         >
-          <option value="income">Entrée d'argent (revenus)</option>
-          <option value="expense">Sortie d'argent (dépenses)</option>
+          <option value="income">{{ 'categoryCard.typeOptions.income' | transloco }}</option>
+          <option value="expense">{{ 'categoryCard.typeOptions.expense' | transloco }}</option>
         </select>
         <div class="action-buttons">
-          <button type="button" (click)="saveCategory()" class="btn btn-primary">Valider</button>
+          <button type="button" (click)="saveCategory()" class="btn btn-primary">
+            {{ 'categoryCard.save' | transloco }}
+          </button>
           <button type="button" (click)="cancelEditCategory()" class="btn btn-secondary">
-            Annuler
+            {{ 'categoryCard.cancel' | transloco }}
           </button>
         </div>
       </div>
@@ -32,7 +34,11 @@
         <div>
           <h3 class="category-name">{{ category.name }}</h3>
           <span class="badge" [class.badge-success]="category.type === 'income'">
-            {{ category.type === 'income' ? 'Entrée' : 'Sortie' }}
+            {{
+              (category.type === 'income'
+                ? 'categoryCard.badge.income'
+                : 'categoryCard.badge.expense') | transloco
+            }}
           </span>
         </div>
         <div class="action-buttons">
@@ -40,7 +46,7 @@
             type="button"
             (click)="startEditingCategory()"
             class="btn-icon"
-            title="Modifier la catégorie"
+            [title]="'categoryCard.actions.editCategory' | transloco"
           >
             <svg viewBox="0 0 512 512" class="icon">
               <path
@@ -60,7 +66,7 @@
             type="button"
             (click)="onDeleteCategory()"
             class="btn-icon btn-danger"
-            title="Supprimer la catégorie"
+            [title]="'categoryCard.actions.deleteCategory' | transloco"
           >
             <svg viewBox="0 0 448 512" class="icon">
               <path
@@ -79,7 +85,7 @@
   <!-- Corps : liste des sous-catégories -->
   <div class="card-body">
     @if (subcategories.length === 0) {
-      <p class="empty-state">Aucune sous-catégorie</p>
+      <p class="empty-state">{{ 'categoryCard.emptySubcategories' | transloco }}</p>
     } @else {
       <ul class="subcategory-list">
         @for (sub of subcategories; track sub.id) {
@@ -103,7 +109,7 @@
                   type="button"
                   (click)="startEditingSubcategory(sub.id)"
                   class="btn-icon btn-icon-sm"
-                  title="Modifier"
+                  [title]="'categoryCard.actions.edit' | transloco"
                 >
                   <svg viewBox="0 0 512 512" class="icon">
                     <path
@@ -123,7 +129,7 @@
                   type="button"
                   (click)="onDeleteSubcategory(sub.id)"
                   class="btn-icon btn-icon-sm btn-danger"
-                  title="Supprimer"
+                  [title]="'categoryCard.actions.delete' | transloco"
                 >
                   <svg viewBox="0 0 448 512" class="icon">
                     <path
@@ -149,7 +155,7 @@
         type="text"
         [value]="newSubcategoryLabel()"
         (input)="newSubcategoryLabel.set($any($event.target).value)"
-        placeholder="Nouvelle sous-catégorie"
+        [placeholder]="'categoryCard.subcategoryPlaceholder' | transloco"
         class="input input-sm"
       />
       <button type="submit" class="btn btn-sm">+</button>

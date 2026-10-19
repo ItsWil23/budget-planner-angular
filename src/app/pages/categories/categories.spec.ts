@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 
 import { Categories } from './categories';
 import { CategoryCard } from '../../components/ui/category-card/category-card';
@@ -9,7 +10,19 @@ describe('Categories', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Categories, CategoryCard],
+      imports: [
+        Categories,
+        CategoryCard,
+        TranslocoTestingModule.forRoot({
+          langs: {
+            fr: {
+              categories: { title: 'Catégories' },
+            },
+          },
+          translocoConfig: { availableLangs: ['fr', 'en'], defaultLang: 'fr' },
+          preloadLangs: true,
+        }),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Categories);
@@ -37,5 +50,11 @@ describe('Categories', () => {
     expect(compiled.textContent).toContain('Loyer');
     expect(compiled.textContent).toContain('Internet');
     expect(compiled.textContent).toContain('Électricité');
+  });
+
+  it('should render the French page title', () => {
+    fixture.detectChanges();
+    const title: HTMLHeadingElement = fixture.nativeElement.querySelector('h1');
+    expect(title.textContent?.trim()).toBe('Catégories');
   });
 });

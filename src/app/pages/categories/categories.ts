@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { CategoryService } from '../../services/category';
 import { Subcategory } from '../../models/category';
 import { CategoryCard } from '../../components/ui/category-card/category-card';
 
 @Component({
   selector: 'app-categories',
-  imports: [CategoryCard],
+  imports: [CategoryCard, TranslocoPipe],
   templateUrl: './categories.html',
   styleUrl: './categories.scss',
 })

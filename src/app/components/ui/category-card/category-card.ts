@@ -1,9 +1,10 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Category, Subcategory } from '../../../models/category';
 
 @Component({
   selector: 'app-category-card',
-  imports: [],
+  imports: [TranslocoPipe],
   templateUrl: './category-card.html',
   styleUrl: './category-card.scss',
 })

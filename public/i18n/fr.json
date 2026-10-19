@@ -57,5 +57,32 @@
       "login": "Se connecter",
       "register": "S'inscrire"
     }
+  },
+  "categories": {
+    "title": "Catégories",
+    "newCategory": "Nouvelle catégorie",
+    "comingSoon": "Fonctionnalité à venir en phase B",
+    "empty": "Aucune catégorie pour le moment."
+  },
+  "categoryCard": {
+    "namePlaceholder": "Nom de la catégorie",
+    "typeOptions": {
+      "income": "Entrée d'argent (revenus)",
+      "expense": "Sortie d'argent (dépenses)"
+    },
+    "badge": {
+      "income": "Entrée",
+      "expense": "Sortie"
+    },
+    "actions": {
+      "editCategory": "Modifier la catégorie",
+      "deleteCategory": "Supprimer la catégorie",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "save": "Valider",
+    "cancel": "Annuler",
+    "emptySubcategories": "Aucune sous-catégorie",
+    "subcategoryPlaceholder": "Nouvelle sous-catégorie"
   }
 }
