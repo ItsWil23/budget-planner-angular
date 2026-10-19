@@ -3,10 +3,11 @@ import { ReactiveFormsModule, Validators, FormBuilder, FormControl } from '@angu
 import { Category, Subcategory } from '../../../models/category';
 import { TransactionInput } from '../../../models/transactions';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-transaction-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslocoPipe],
   templateUrl: './transaction-form.html',
   styleUrl: './transaction-form.scss',
 })

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import type { Category, Subcategory } from '../../../models/category';
 import type { TransactionInput } from '../../../models/transactions';
 
@@ -10,7 +11,18 @@ describe('TransactionForm', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TransactionForm],
+      imports: [
+        TransactionForm,
+        TranslocoTestingModule.forRoot({
+          langs: {
+            fr: {
+              transactionForm: { submit: 'Ajouter', cancel: 'Annuler' },
+            },
+          },
+          translocoConfig: { availableLangs: ['fr', 'en'], defaultLang: 'fr' },
+          preloadLangs: true,
+        }),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionForm);

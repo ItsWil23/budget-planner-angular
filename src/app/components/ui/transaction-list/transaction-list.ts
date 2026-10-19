@@ -2,12 +2,14 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Category, Subcategory } from '../../../models/category';
 import { TransactionPresentation } from '../../../models/transactions';
 import { DatePipe, CurrencyPipe } from '@angular/common';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-transaction-list',
   imports: [
     DatePipe,
     CurrencyPipe,
+    TranslocoPipe,
   ],
   templateUrl: './transaction-list.html',
   styleUrl: './transaction-list.scss',

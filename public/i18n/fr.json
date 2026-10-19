@@ -84,5 +84,34 @@
     "cancel": "Annuler",
     "emptySubcategories": "Aucune sous-catégorie",
     "subcategoryPlaceholder": "Nouvelle sous-catégorie"
+  },
+  "transactions": {
+    "title": "Transactions",
+    "newButton": "Nouvelle transaction",
+    "addTooltip": "Ajouter une nouvelle transaction"
+  },
+  "transactionList": {
+    "headers": {
+      "label": "Libellé",
+      "category": "Catégorie",
+      "subcategory": "Sous-catégorie",
+      "date": "Date",
+      "amount": "Montant"
+    },
+    "empty": "Aucune transaction pour le moment."
+  },
+  "transactionForm": {
+    "category": "Catégorie",
+    "categoryPlaceholder": "— Choisir une catégorie —",
+    "subcategory": "Sous-Catégorie",
+    "subcategoryPlaceholder": "— Choisir une sous-catégorie —",
+    "label": "Libellé",
+    "amount": "Montant",
+    "date": "Date",
+    "submit": "Ajouter",
+    "cancel": "Annuler"
+  },
+  "modal": {
+    "close": "Fermer"
   }
 }
