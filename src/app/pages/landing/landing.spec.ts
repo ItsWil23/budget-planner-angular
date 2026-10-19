@@ -21,4 +21,14 @@ describe('Landing', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should render the feature cards in order', () => {
+    fixture.detectChanges();
+
+    const titles = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.feature-card h3'),
+    ).map(title => title.textContent?.trim());
+
+    expect(titles).toEqual(['Planification mensuelle', 'Suivi quotidien', 'Synthèse claire']);
+  });
 });

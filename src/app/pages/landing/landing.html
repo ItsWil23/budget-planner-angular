@@ -18,7 +18,7 @@
 
 <section class="landing-features">
   <div class="container">
-    @for (featureCard of features; track featureCard.title) {
+    @for (featureCard of features(); track featureCard.title) {
       <div class="feature-card">
         <h3>{{ featureCard.title }}</h3>
         <p>{{ featureCard.description }}</p>
