@@ -5,7 +5,7 @@
       class="theme__toggle"
       type="checkbox"
       role="switch"
-      aria-label="Basculer le thème sombre"
+      [attr.aria-label]="'themeSwitch.ariaLabel' | transloco"
       [checked]="theme.theme() === 'dark'"
       (change)="theme.toggleTheme()"
     />

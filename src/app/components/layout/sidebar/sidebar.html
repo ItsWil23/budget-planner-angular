@@ -19,7 +19,7 @@
               [routerLink]="item.path"
               (click)="closeSidebar()"
             >
-              {{ item.label }}
+              {{ item.labelKey | transloco }}
             </a>
           </li>
         }
@@ -31,9 +31,9 @@
     <app-theme-switch />
 
     <div class="user">
-      Connecté en tant que: <span class="user-name"> {{ user().name }} </span>
+      {{ 'sidebar.loggedInAs' | transloco }} <span class="user-name"> {{ user().name }} </span>
     </div>
 
-    <button class="logout-button">Déconnecter</button>
+    <button class="logout-button">{{ 'sidebar.logout' | transloco }}</button>
   </div>
 </aside>

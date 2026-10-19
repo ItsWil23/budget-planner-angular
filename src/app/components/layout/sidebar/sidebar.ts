@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ThemeSwitch } from '../../ui/theme-switch/theme-switch';
 import { NavItem } from '../../../models/navitem';
 import { UserService } from '../../../services/user';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, ThemeSwitch],
+  imports: [RouterLink, RouterLinkActive, ThemeSwitch, TranslocoPipe],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -15,11 +16,11 @@ export class Sidebar {
   protected readonly user = inject(UserService).user;
 
   readonly SIDEBAR_ITEMS: NavItem[] = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Transactions', path: '/transactions' },
-    { label: 'Categories', path: '/categories' },
-    { label: 'Budget Mensuel', path: '/budget-mensuel' },
-    { label: 'Settings', path: '/settings' },
+    { labelKey: 'sidebar.nav.dashboard', path: '/dashboard' },
+    { labelKey: 'sidebar.nav.transactions', path: '/transactions' },
+    { labelKey: 'sidebar.nav.categories', path: '/categories' },
+    { labelKey: 'sidebar.nav.budgetMensuel', path: '/budget-mensuel' },
+    { labelKey: 'sidebar.nav.settings', path: '/settings' },
   ];
 
   toggleSidebar(): void {

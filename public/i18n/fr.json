@@ -113,5 +113,19 @@
   },
   "modal": {
     "close": "Fermer"
+  },
+  "sidebar": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "transactions": "Transactions",
+      "categories": "Catégories",
+      "budgetMensuel": "Budget Mensuel",
+      "settings": "Paramètres"
+    },
+    "loggedInAs": "Connecté en tant que:",
+    "logout": "Déconnecter"
+  },
+  "themeSwitch": {
+    "ariaLabel": "Basculer le thème sombre"
   }
 }
