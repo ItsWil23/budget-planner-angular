@@ -3,11 +3,7 @@
 }
 <app-sidebar />
 <main class="main-content">
-  <button class="hamburger" [class.hidden]="sidebar().isOpen()" (click)="sidebar().toggleSidebar()">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
+  <app-topbar [menuOpen]="sidebar().isOpen()" (menuToggle)="sidebar().toggleSidebar()" />
   <div class="page-container">
     <router-outlet />
   </div>
