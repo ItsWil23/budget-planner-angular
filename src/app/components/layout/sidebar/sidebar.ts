@@ -1,9 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ThemeSwitch } from '../../ui/theme-switch/theme-switch';
 import { NavItem } from '../../../models/navitem';
-import { User } from '../../../models/user';
-import { MOCK_USER } from '../../../mocks/mock-user';
+import { UserService } from '../../../services/user';
 
 @Component({
   selector: 'app-sidebar',
@@ -13,6 +12,7 @@ import { MOCK_USER } from '../../../mocks/mock-user';
 })
 export class Sidebar {
   readonly isOpen = signal<boolean>(false);
+  protected readonly user = inject(UserService).user;
 
   readonly SIDEBAR_ITEMS: NavItem[] = [
     { label: 'Dashboard', path: '/dashboard' },
@@ -21,8 +21,6 @@ export class Sidebar {
     { label: 'Budget Mensuel', path: '/budget-mensuel' },
     { label: 'Settings', path: '/settings' },
   ];
-
-  user: User = MOCK_USER;
 
   toggleSidebar(): void {
     this.isOpen.update(isOpen => !isOpen);
