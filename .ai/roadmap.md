@@ -58,8 +58,8 @@ application.
 - [x] Montants convertis en entiers (centimes) dans les mocks et les modèles (PR #9, #10).
 - Squelettes de services : `BudgetService` et `RecurringRuleService` à faire ; `SettingsService` (PR #11) et
   `MonthContextService` (PR #12) faits ; `CategoryService`/`TransactionService` adaptés aux centimes (PR #10).
-- Bibliothèque i18n runtime installée (Transloco pressenti) + extraction des chaînes déjà écrites en dur (landing,
-  auth, catégories, transactions).
+- Bibliothèque i18n runtime installée : Transloco 8.4.0 (PR #14). Extraction faite pour la landing (PR #16) ; restent
+  auth, catégories, transactions (voir point 5 ci-dessous).
 
 ### Ordre de réalisation du lot 0 (décidé le 2026-10-05)
 
@@ -71,7 +71,10 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
 3. Modèles et mocks en centimes (`domain-model.md`), puis `SettingsService` : transfert de `backgroundSeed` vers
    `UserSettings` et suppression de la persistance `localStorage` de `Background`. Fait (PR #9 à #11).
 4. `MonthContextService`. Fait (PR #12), mois système par défaut.
-5. Bibliothèque i18n (nouvelle dépendance npm, à signaler dans la PR) + extraction des chaînes en dur.
+5. Bibliothèque i18n : faite (PR #14). Extraction des chaînes UI, un écran par PR : landing faite (PR #16), puis
+   auth, catégories, transactions. Les libellés de données mockées (noms de transactions et de catégories) ne sont pas
+   traduits : ce sont des données utilisateur, pas de l'interface. Décision à confirmer.
+5bis. `UserService` : la sidebar n'importe plus `MOCK_USER` (règle d'accès aux mocks, AGENTS.md). Fait avant la topbar.
 6. Topbar : coquille (hamburger, emplacements) puis contenu ; absorbe les finitions du layout listées plus haut.
    Le menu compte accessible reste du lot 5.
 
