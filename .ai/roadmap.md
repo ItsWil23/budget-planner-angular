@@ -17,7 +17,7 @@ application.
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 0 | Fondations design + données + services | À faire — bloquant |
+| 0 | Fondations design + données + services | En cours — bloquant (points 1 à 5bis faits, topbar 6c en cours) |
 | 1 | Budget Mensuel | À faire — écran cœur |
 | 2 | Transactions — finalisation | Partiellement fait (v3 phase A) |
 | 3 | Dashboard | À faire |
@@ -41,16 +41,10 @@ application.
 - Layout racine : disposition « cartes flottantes », navigation en île pleine hauteur, `100dvh` desktop /
   défilement + tiroir mobile, topbar (titre, sélecteur de mois, menu compte). Correctif du défaut de hauteur de la
   sidebar mobile validé et fusionné le 2026-10-05 (PR #3) : sous 1024px, l'hôte est retiré du flux avec
-  `display: contents`, sans masquer le tiroir. Les finitions restantes sont **absorbées par la tâche topbar**
-  (décision du 2026-10-05, voir « Ordre de réalisation » ci-dessous), pas traitées isolément :
-  - hamburger déplacé dans la topbar (le `position: relative` qui écrase `fixed` disparaît avec lui) ;
-  - topbar **sticky** sur mobile et toujours visible sur desktop (`DESIGN_SYSTEM.md` § 2) ;
-  - token `--overlay-scrim` (`DESIGN_SYSTEM.md` § 4.6) appliqué au backdrop du tiroir **et** à l'overlay de
-    `modal.scss` (tous deux en `rgba(0, 0, 0, 0.5)` en dur aujourd'hui) ;
-  - défilement de page classique sous 1024px (le `:host` est encore en `100dvh; overflow: hidden` partout) ;
-  - cibles tactiles ≥ 44px (hamburger 40px, bouton × du tiroir 32px) ;
-  - bouton × du tiroir masqué dès 768px alors que le tiroir reste actif jusqu'à 1023px ;
-  - `aria-label` / `aria-expanded` sur le hamburger (textes via i18n).
+  `display: contents`, sans masquer le tiroir. Topbar, coquille (PR #25) et finitions (PR #26) faites :
+  hamburger dans la topbar, topbar sticky, défilement mobile,
+  voile `--overlay-scrim` (`DESIGN_SYSTEM.md` § 4.6), cibles tactiles 44px, × du tiroir actif jusqu'à 1023px,
+  `aria-label` / `aria-expanded` traduits. Restent : titre de page et sélecteur de mois (point 6c).
 
 ### Données & services
 - Interfaces mises à jour selon `.ai/domain-model.md` : `Transaction.subcategoryId` obligatoire, `BudgetLine`,
@@ -71,12 +65,12 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
 3. Modèles et mocks en centimes (`domain-model.md`), puis `SettingsService` : transfert de `backgroundSeed` vers
    `UserSettings` et suppression de la persistance `localStorage` de `Background`. Fait (PR #9 à #11).
 4. `MonthContextService`. Fait (PR #12), mois système par défaut.
-5. Bibliothèque i18n : faite (PR #14). Extraction des chaînes UI, un écran par PR : landing faite (PR #16), puis
-   auth, catégories, transactions. Les libellés de données mockées (noms de transactions et de catégories) ne sont pas
-   traduits : ce sont des données utilisateur, pas de l'interface. Décision à confirmer.
+5. Bibliothèque i18n : faite (PR #14). Extraction des chaînes UI faite pour la landing (PR #16), l'auth (PR #19),
+   les catégories (PR #20), les transactions (PR #21) et la sidebar (PR #23). Les libellés de données mockées (noms de
+   transactions et de catégories) ne sont pas traduits : données utilisateur, pas interface (décision validée).
 5bis. `UserService` : la sidebar n'importe plus `MOCK_USER` (règle d'accès aux mocks, AGENTS.md). Fait avant la topbar.
-6. Topbar : coquille (hamburger, emplacements) puis contenu ; absorbe les finitions du layout listées plus haut.
-   Le menu compte accessible reste du lot 5.
+6. Topbar : coquille faite (PR #25), finitions faites (PR #26), titre de page et sélecteur de mois en cours (6c).
+   Le panneau mois/année et le menu compte accessible restent au lot 5.
 
 **Definition of done** : un écran vide (ex. squelette de page) affiche déjà le bon fond, la bonne typographie, la
 bonne navigation, et bascule thème/palette/langue depuis un état global fonctionnel.
@@ -128,6 +122,7 @@ posée dès la v3 pour permettre la grille réarrangeable de la v3.1 (`product-v
 - Thème (sombre / clair / système), palette (5 options), langue (FR/EN), devise (affichage seul).
 - Réinitialisation des données (mock).
 - Menu compte dans la topbar : accès aux paramètres + déconnexion (composant accessible : Échap, piège de focus).
+- Panneau de sélection mois/année (fenêtre flottante, navigation par année) : même socle accessible que le menu de compte, construit une fois pour les deux.
 
 ## 9. Lot 6 — Auth & Landing (restyle)
 
@@ -152,7 +147,7 @@ et pour la landing — pattern hero + aperçu produit (amélioration déjà not�
 | Dashboard : revenus / charges prévues / dépenses réelles / solde / reste à vivre | À refaire (lot 3), formules revues (`domain-model.md` § 3) |
 | Dashboard : répartition par catégorie | À refaire (lot 3) |
 | Dashboard : 5 dernières dépenses | À refaire (lot 3) |
-| Sélecteur de mois synchronisé sur toute l'app | Service fait (lot 0, PR #12) ; sélecteur à faire (lot 0, point 6) |
+| Sélecteur de mois synchronisé sur toute l'app | Service fait (PR #12) ; sélecteur simple en cours (lot 0, point 6c) ; panneau mois/année reporté (lot 5) |
 | Page Budget mensuel / Overview | À refaire, restructurée (lot 1) — la version v2 « n'est pas bien réussie » (saisie sans retour visuel) |
 | Table `budget_lines` (prévu/réel) | Reprise avec révision : `actual_amount` supprimé, toujours recalculé (`domain-model.md` § 1 et § 7) |
 | Mode simple / mode avancé (planification fine) | ❌ Abandonné — un seul parcours |
