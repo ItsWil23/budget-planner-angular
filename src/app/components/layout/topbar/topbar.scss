@@ -24,8 +24,8 @@
 }
 
 .hamburger {
-  width: var(--space-3xl);
-  height: var(--space-3xl);
+  width: var(--size-touch-min);
+  height: var(--size-touch-min);
 
   display: flex;
   align-items: center;
@@ -39,13 +39,13 @@
 
   span {
     position: absolute;
-    width: 1.5rem;
-    height: 2px;
+    width: var(--size-bar-length);
+    height: var(--size-bar-thickness);
     background: var(--color-text);
     transition:
-      transform 0.3s ease,
-      opacity 0.3s ease,
-      background-color 0.3s;
+      transform var(--duration-slow) ease,
+      opacity var(--duration-slow) ease,
+      background-color var(--duration-slow);
 
     &:nth-child(1) {
       transform: translateY(calc(-1 * var(--space-sm)));
@@ -59,12 +59,12 @@
   }
 
   opacity: 1;
-  transition: opacity 0s 0.3s;
+  transition: opacity 0s var(--duration-slow);
 
   &.hidden {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0s;
+    transition: none;
   }
 
   @media (min-width: 1024px) {

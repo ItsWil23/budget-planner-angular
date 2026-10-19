@@ -1,5 +1,11 @@
 <div class="topbar">
-  <button class="hamburger" [class.hidden]="menuOpen" (click)="menuToggle.emit()">
+  <button
+    class="hamburger"
+    [class.hidden]="menuOpen"
+    [attr.aria-expanded]="menuOpen"
+    aria-label="{{ 'topbar.menu' | transloco }}"
+    (click)="menuToggle.emit()"
+  >
     <span></span>
     <span></span>
     <span></span>

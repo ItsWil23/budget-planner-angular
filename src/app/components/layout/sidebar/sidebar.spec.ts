@@ -25,6 +25,7 @@ describe('Sidebar', () => {
                 },
                 loggedInAs: 'Connecté en tant que:',
                 logout: 'Déconnecter',
+                closeMenu: 'Fermer le menu',
               },
               themeSwitch: { ariaLabel: 'Basculer le thème sombre' },
             },
@@ -54,5 +55,10 @@ describe('Sidebar', () => {
       'Connecté en tant que: John Doe',
     );
     expect(sidebar.querySelector('.sidebar-item')?.textContent?.trim()).toBe('Dashboard');
+  });
+
+  it('should label the close button with the translated close menu text', () => {
+    const closeButton: HTMLButtonElement = fixture.nativeElement.querySelector('.close-button');
+    expect(closeButton.getAttribute('aria-label')).toBe('Fermer le menu');
   });
 });
