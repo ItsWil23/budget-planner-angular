@@ -45,4 +45,18 @@ describe('MainLayout', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should open the sidebar from the topbar hamburger', () => {
+    const layout: HTMLElement = fixture.nativeElement;
+    const sidebar = layout.querySelector('.sidebar');
+
+    expect(sidebar?.classList.contains('open')).toBe(false);
+    expect(layout.querySelector('.backdrop')).toBeNull();
+
+    layout.querySelector<HTMLButtonElement>('app-topbar .hamburger')?.click();
+    fixture.detectChanges();
+
+    expect(sidebar?.classList.contains('open')).toBe(true);
+    expect(layout.querySelector('.backdrop')).not.toBeNull();
+  });
 });
