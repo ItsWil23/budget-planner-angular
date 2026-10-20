@@ -1,14 +1,21 @@
 <div class="topbar">
-  <button
-    class="hamburger"
-    [class.hidden]="menuOpen"
-    [attr.aria-expanded]="menuOpen"
-    aria-label="{{ 'topbar.menu' | transloco }}"
-    (click)="menuToggle.emit()"
-  >
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
-  <div class="topbar-title"></div>
+  <div class="topbar-start">
+    <button
+      class="hamburger"
+      [class.hidden]="menuOpen"
+      [attr.aria-expanded]="menuOpen"
+      aria-label="{{ 'topbar.menu' | transloco }}"
+      (click)="menuToggle.emit()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <h1 class="topbar-title">
+      @if (titleKey(); as key) {
+        {{ key | transloco }}
+      }
+    </h1>
+  </div>
+  <app-month-selector />
 </div>

@@ -117,6 +117,20 @@
   "topbar": {
     "menu": "Menu"
   },
+  "monthSelector": {
+    "previous": "Mois précédent",
+    "next": "Mois suivant",
+    "today": "Aujourd'hui"
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  },
+  "budgetMensuel": {
+    "title": "Budget Mensuel"
+  },
+  "settings": {
+    "title": "Paramètres"
+  },
   "sidebar": {
     "nav": {
       "dashboard": "Dashboard",
