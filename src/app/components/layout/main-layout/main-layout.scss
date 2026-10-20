@@ -4,9 +4,10 @@
   position: relative;
   isolation: isolate;
 
+  // Fixé à la fenêtre : couvre tout l'écran quelle que soit la hauteur du contenu.
   &::before {
     content: '';
-    position: absolute;
+    position: fixed;
     inset: -10%;
     background: var(--mesh-background);
     z-index: -1;
@@ -32,7 +33,7 @@
 
   @media (min-width: 1024px) {
     overflow-y: auto;
-    padding: var(--space-xl) var(--space-2xl);
+    padding: var(--space-sm) var(--space-2xl) var(--space-xl);
   }
 
   @media (max-width: 1023px) {
