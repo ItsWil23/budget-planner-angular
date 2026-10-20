@@ -72,4 +72,55 @@ describe('MonthContextService', () => {
 
     expect('set' in service.monthKey).toBe(false);
   });
+
+  it('shifts forward and backward by one month', () => {
+    const service = new MonthContextService();
+    service.setMonth('2026-05');
+
+    service.shiftMonth(1);
+    expect(service.monthKey()).toBe('2026-06');
+
+    service.shiftMonth(-1);
+    service.shiftMonth(-1);
+    expect(service.monthKey()).toBe('2026-04');
+  });
+
+  it('crosses the year boundary forward', () => {
+    const service = new MonthContextService();
+    service.setMonth('2026-12');
+
+    service.shiftMonth(1);
+
+    expect(service.monthKey()).toBe('2027-01');
+  });
+
+  it('crosses the year boundary backward', () => {
+    const service = new MonthContextService();
+    service.setMonth('2026-01');
+
+    service.shiftMonth(-1);
+
+    expect(service.monthKey()).toBe('2025-12');
+  });
+
+  it('returns to the system month with resetToCurrentMonth', () => {
+    const service = new MonthContextService();
+    const initialMonth = service.monthKey();
+
+    service.setMonth('2020-05');
+    service.resetToCurrentMonth();
+
+    expect(service.monthKey()).toBe(initialMonth);
+  });
+
+  it('tracks whether the displayed month is the system month', () => {
+    const service = new MonthContextService();
+    expect(service.isCurrentMonth()).toBe(true);
+
+    service.shiftMonth(1);
+    expect(service.isCurrentMonth()).toBe(false);
+
+    service.resetToCurrentMonth();
+    expect(service.isCurrentMonth()).toBe(true);
+  });
 });

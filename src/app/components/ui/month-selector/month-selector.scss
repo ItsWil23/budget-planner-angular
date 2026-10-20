@@ -1,0 +1,93 @@
+.month-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.month-button,
+.today-button {
+  min-width: var(--size-touch-min);
+  min-height: var(--size-touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-sm);
+
+  font: var(--text-body);
+  color: var(--color-text);
+  background: transparent;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    background: var(--color-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.month-button {
+  font: var(--text-emphasis);
+}
+
+.icon {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.month-label {
+  display: grid;
+  justify-items: center;
+  font: var(--text-emphasis);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.month-label-reserve,
+.month-label-value {
+  grid-area: 1 / 1;
+}
+
+.month-label-reserve {
+  visibility: hidden;
+}
+
+.today-button {
+  position: absolute;
+  inset-inline-start: calc(100% + var(--space-xs));
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0;
+  gap: var(--space-xs);
+  font: var(--text-emphasis);
+  color: var(--color-accent);
+
+  @media (min-width: 640px) {
+    padding: 0 var(--space-md);
+    font: var(--text-body);
+  }
+}
+
+.today-text {
+  display: none;
+
+  @media (min-width: 640px) {
+    display: inline;
+  }
+}

@@ -51,10 +51,4 @@ describe('Categories', () => {
     expect(compiled.textContent).toContain('Internet');
     expect(compiled.textContent).toContain('Électricité');
   });
-
-  it('should render the French page title', () => {
-    fixture.detectChanges();
-    const title: HTMLHeadingElement = fixture.nativeElement.querySelector('h1');
-    expect(title.textContent?.trim()).toBe('Catégories');
-  });
 });

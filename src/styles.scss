@@ -53,6 +53,8 @@ body {
   --size-touch-min: 44px; /* cible tactile minimale (DESIGN_SYSTEM § 2) */
   --size-bar-length: 24px;
   --size-bar-thickness: 2px;
+  --size-focus-ring: 2px; /* contour de focus clavier (DESIGN_SYSTEM § 7) */
+  --size-focus-offset: 2px;
 
   /* ===== Rayons & bordures ===== */
   --radius-sm: 9px;
