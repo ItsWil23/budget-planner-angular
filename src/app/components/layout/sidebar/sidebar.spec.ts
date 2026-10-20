@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 
 import { Sidebar } from './sidebar';
+import { NAV_ITEMS } from '../nav-items';
 
 describe('Sidebar', () => {
   let component: Sidebar;
@@ -60,5 +61,10 @@ describe('Sidebar', () => {
   it('should label the close button with the translated close menu text', () => {
     const closeButton: HTMLButtonElement = fixture.nativeElement.querySelector('.close-button');
     expect(closeButton.getAttribute('aria-label')).toBe('Fermer le menu');
+  });
+
+  it('should render one link per shared navigation item', () => {
+    const links = fixture.nativeElement.querySelectorAll('.sidebar-item');
+    expect(links.length).toBe(NAV_ITEMS.length);
   });
 });

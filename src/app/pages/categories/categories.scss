@@ -10,6 +10,35 @@
   justify-content: flex-end;
   margin-bottom: 2rem;
   gap: 1rem;
+
+  // Entre 500px et 767px, le bouton d'ajout est rendu dans la topbar : l'en-tête n'a plus de contenu.
+  @media (min-width: 500px) and (max-width: 767px) {
+    display: none;
+  }
+
+  // Dès 1024px, le bouton d'ajout se place à gauche de l'en-tête.
+  @media (min-width: 1024px) {
+    justify-content: flex-start;
+  }
+}
+
+.page-action {
+  display: flex;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
+
+  // Sous 500px, le bouton d'ajout occupe toute la largeur de la page.
+  .btn {
+    width: 100%;
+    justify-content: center;
+
+    @media (min-width: 768px) {
+      width: auto;
+    }
+  }
 }
 
 .categories-grid {

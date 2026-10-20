@@ -1,0 +1,90 @@
+// Mobile-first : la barre est visible par défaut, et masquée dès 768px.
+// Île flottante : marges latérales et basse, safe-area incluse dans la marge basse.
+:host {
+  display: block;
+  position: fixed;
+  inset-inline: var(--space-md);
+  bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
+  z-index: 20;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.bottom-nav {
+  height: var(--size-bottom-nav);
+  background: var(--surface-card);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.bottom-nav-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bottom-nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  height: 100%;
+  min-width: 0;
+  min-height: var(--size-touch-min);
+
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-standard);
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: calc(-1 * var(--size-focus-offset));
+  }
+
+  // Indicateur de l'entrée active : une barre en haut, en plus de la couleur.
+  &.active {
+    color: var(--color-accent);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: var(--size-bar-length);
+      height: var(--size-bar-thickness);
+      transform: translateX(-50%);
+      background: var(--color-accent);
+      border-radius: var(--radius-full);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.bottom-nav-icon {
+  flex-shrink: 0;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--size-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bottom-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  font: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -38,6 +38,13 @@
   @media (max-width: 1023px) {
     padding: var(--spacing-md) var(--spacing-sm);
   }
+
+  // Réserve la place de la barre flottante (hauteur, marge basse et safe-area) pour ne pas masquer la fin de page.
+  @media (max-width: 767px) {
+    padding-bottom: calc(
+      var(--size-bottom-nav) + env(safe-area-inset-bottom) + 2 * var(--space-md)
+    );
+  }
 }
 
 .page-container {
@@ -46,10 +53,15 @@
 }
 
 .backdrop {
+  display: none;
   position: fixed;
   inset: 0;
   background: var(--overlay-scrim);
   z-index: 999;
+
+  @media (min-width: 768px) {
+    display: block;
+  }
 
   @media (min-width: 1024px) {
     display: none;

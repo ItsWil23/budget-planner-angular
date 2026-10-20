@@ -2,6 +2,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+
+  // Dès 1024px, le bouton d'ajout se place à gauche de l'en-tête.
+  @media (min-width: 1024px) {
+    justify-content: flex-start;
+  }
 }
 
 .btn {
@@ -27,8 +32,15 @@
 }
 
 .new-transaction-btn {
+  // Sous 768px, le bouton occupe toute la largeur, en première position sous la topbar.
+  width: 100%;
+  justify-content: center;
   background-color: var(--color-accent);
   color: white;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
 
   &:hover:not(:disabled) {
     background-color: var(--color-accent-hover);

@@ -27,6 +27,7 @@ describe('MainLayout', () => {
                 logout: 'Déconnecter',
               },
               themeSwitch: { ariaLabel: 'Basculer le thème sombre' },
+              bottomNav: { label: 'Navigation principale', budget: 'Budget' },
             },
           },
           translocoConfig: { availableLangs: ['fr', 'en'], defaultLang: 'fr' },
@@ -58,5 +59,14 @@ describe('MainLayout', () => {
 
     expect(sidebar?.classList.contains('open')).toBe(true);
     expect(layout.querySelector('.backdrop')).not.toBeNull();
+  });
+
+  it('should render the bottom navigation bar', () => {
+    const layout: HTMLElement = fixture.nativeElement;
+
+    expect(layout.querySelector('app-bottom-nav nav')?.getAttribute('aria-label')).toBe(
+      'Navigation principale',
+    );
+    expect(layout.querySelectorAll('app-bottom-nav .bottom-nav-item').length).toBe(5);
   });
 });

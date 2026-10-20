@@ -16,6 +16,16 @@
         {{ key | transloco }}
       }
     </h1>
+    @if (topbarAction(); as actionTemplate) {
+      <div class="topbar-action">
+        <ng-container *ngTemplateOutlet="actionTemplate" />
+      </div>
+    }
   </div>
-  <app-month-selector />
+  @if (showMonthSelector()) {
+    <app-month-selector />
+  }
+  <div class="topbar-end">
+    <!-- Emplacement de l'avatar (lot 5) -->
+  </div>
 </div>
