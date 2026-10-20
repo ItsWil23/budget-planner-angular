@@ -4,7 +4,7 @@
 > [`.ai/product-vision.md`](./.ai/product-vision.md) § 11. Aucune couleur, taille ou espacement ne doit être écrit
 > en dur dans un composant : tout passe par les tokens de ce document.
 > Exploration visuelle : [`.ai/design/palettes.html`](./.ai/design/palettes.html), [`.ai/design/fonts.html`](./.ai/design/fonts.html).
-> Dernière mise à jour : 2026-10-05
+> Dernière mise à jour : 2026-10-20
 
 ---
 
@@ -42,16 +42,21 @@ toutes les pages, y compris Budget Mensuel (une île peut contenir une table ent
 - Racine applicative en `height: 100dvh`, `overflow: hidden`.
 - Navigation : île pleine hauteur, fixe, icône + libellé (jamais un rail d'icônes seules).
 - Topbar : île fixe en haut de la colonne de contenu, **toujours visible** (elle ne défile jamais avec le contenu).
+  Son bord supérieur est aligné avec celui de la navigation.
+- Sur desktop, le titre de page n'est pas affiché dans la topbar : la navigation indique déjà la page active. Le bouton
+  d'ajout de l'en-tête de page est à gauche.
 - Zone de contenu sous la topbar (hero + reste) : `overflow-y: auto`, seule cette zone défile.
 - Le fond ne bouge donc jamais — c'est l'effet recherché, cohérent avec les références retenues.
 
 ### Layout mobile / tablette (< 1024px)
 
 - Défilement de page classique (pas de `100dvh` contraint).
-- Navigation en tiroir (drawer), déclenchée par un bouton hamburger dans la topbar. Le fond du tiroir ouvert est
-  assombri par `--overlay-scrim` (§ 4.6).
-- Topbar mobile : `hamburger | sélecteur de mois | avatar`. **Sticky** (`position: sticky; top: 0`) : elle reste
-  visible pendant le défilement de page, donc le hamburger reste toujours accessible.
+- Entre 768 et 1023px : navigation en tiroir (drawer), déclenchée par un bouton hamburger dans la topbar. Le fond du
+  tiroir ouvert est assombri par `--overlay-scrim` (§ 4.6).
+- Sous 768px : barre de navigation du bas, en île flottante au-dessus du contenu (icônes et libellés, cinq entrées).
+  Il n'y a pas de tiroir sur mobile.
+- Topbar mobile (sous 768px) : `Aujourd'hui (si le mois n'est pas le courant) | sélecteur de mois | avatar`, sans titre
+  de page. **Sticky** (`position: sticky; top: 0`) : elle reste visible pendant le défilement de page.
 - La topbar sticky est opaque (`--surface-card`) ; le défilement passe sous elle sans transparence.
 - Chaque fonction doit être accessible au doigt (cible tactile ≥ 44×44px), aucune ne dépend du survol.
 
@@ -257,9 +262,9 @@ thèmes.
 
 - Neutre et **invariant selon la palette** : seul le thème (sombre / clair) le fait varier.
 - Utilisé uniquement pour le voile qui assombrit la page derrière un élément superposé : backdrop du tiroir de
-  navigation mobile et overlay de la modale. Jamais comme fond d'île, jamais pour simuler une ombre.
+  navigation de tablette (768 à 1023px) et overlay de la modale. Jamais comme fond d'île, jamais pour simuler une ombre.
 - Aucun flou associé (§ 3) ; la séparation avec l'élément superposé reste assurée par `--border` et la luminance.
-- Valeurs de départ, à valider visuellement dans les deux thèmes lors de la tâche topbar.
+- Valeurs validées visuellement dans les deux thèmes (2026-10-20).
 
 ## 5. Typographie
 
@@ -299,8 +304,8 @@ thèmes.
 | `--text-label` | 11px | 500, `letter-spacing: .09em`, majuscules | Labels de section (« REVENUS DU MOIS ») |
 | `--text-caption` | 12px | 400 | Texte secondaire, dates, ratios, sous-titres de carte |
 | `--text-body` | 14px | 400 | Corps par défaut : nav, cellules de table, contenu de formulaire |
-| `--text-emphasis` | 15px | 600 | Titres de carte, titre de la topbar |
-| `--text-heading` | 20px | 600 | Titres de section/page (usage rare — la topbar suffit la plupart du temps) |
+| `--text-emphasis` | 15px | 600 | Titres de carte |
+| `--text-heading` | 20px | 600 | Titre de page dans la topbar (768 à 1023px), titres de section |
 
 ### 5.3 Échelle sémantique — chiffres (toujours `font-variant-numeric: tabular-nums`)
 
@@ -336,6 +341,15 @@ si aucun token existant ne convient — jamais une taille en dur pour un seul co
 --radius-full: 999px;  /* pilules, avatar, pastilles de statut */
 
 --border-width: 1px;   /* hairline — unique moyen de séparation avec la luminance, jamais d'ombre */
+--size-touch-min: 44px;   /* cible tactile minimale */
+--size-bottom-nav: 64px;  /* barre de navigation du bas, sous 768px (hors safe-area) */
+--size-icon: 20px;
+--size-icon-stroke: 1.5;  /* trait fin des icônes de navigation */
+--size-bar-length: 24px;  /* barres du hamburger */
+--size-bar-thickness: 2px;
+--size-focus-ring: 2px;
+--size-focus-offset: 2px;
+--duration-slow: 320ms;   /* transition du hamburger */
 ```
 
 Gaps entre îles : `--space-lg` (16px) en desktop, `--space-md` (12px) en mobile. L'aération prime sur la
