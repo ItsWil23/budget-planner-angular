@@ -1,7 +1,7 @@
 # Vision produit — Budget Planner v3
 
 > Source de vérité produit. Toute décision de design ou d'implémentation doit pouvoir se justifier par ce document.
-> Dernière mise à jour : 2026-09-21
+> Dernière mise à jour : 2026-10-20
 
 ---
 
@@ -137,7 +137,7 @@ Il n'y a **pas de châssis applicatif**. Le fond en mesh gradient est le fond de
 Conséquences actées :
 
 - **Navigation en île pleine hauteur**, avec icône + libellé. Non personnalisable en v3 (voir § 14).
-- **Layout à hauteur d'écran sur desktop** : `100dvh`, navigation fixe, seul le contenu défile. Le fond ne bouge donc jamais. Sur mobile, défilement de page classique et navigation en tiroir.
+- **Layout à hauteur d'écran sur desktop** : `100dvh`, navigation fixe, seul le contenu défile. Le fond ne bouge donc jamais. Sur mobile (< 768px), défilement de page classique et barre de navigation du bas ; entre 768 et 1023px, navigation en tiroir.
 - Les cartes étant opaques, **le fond ne passe jamais sous du texte** : le contraste est structurellement garanti.
 - Les îles consomment de la hauteur. Le défilement est assumé, l'aération prime sur la compression.
 
@@ -236,6 +236,7 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-09-21 | Solde d'ouverture reporté automatiquement du mois précédent, ajustable |
 | 2026-09-21 | Récurrences → alimentent le prévisionnel uniquement, jamais le réel |
 | 2026-09-21 | Topbar sobre portant le sélecteur de mois + menu compte à droite |
+| 2026-10-20 | Navigation mobile en barre du bas (< 768px), ordre Dashboard, Budget Mensuel, Transactions, Catégories, Paramètres ; sélecteur de mois centré dans la topbar ; titre de page retiré sur desktop |
 | 2026-09-21 | GitHub Flow (`main` + `feat/*`), une Pull Request par spec, pas de branche `dev` |
 | 2026-09-21 | Thème sombre par défaut |
 | 2026-09-21 | Montants stockés en centimes entiers, jamais en flottants |

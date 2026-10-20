@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-10-19
+> Dernière mise à jour : 2026-10-20
 
 ## 1. Pourquoi cet ordre
 
@@ -17,7 +17,7 @@ application.
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 0 | Fondations design + données + services | En cours — bloquant (points 1 à 5bis faits, topbar 6c en cours) |
+| 0 | Fondations design + données + services | Terminé (points 1 à 6 faits ; bascule de langue et menu de compte au lot 5) |
 | 1 | Budget Mensuel | À faire — écran cœur |
 | 2 | Transactions — finalisation | Partiellement fait (v3 phase A) |
 | 3 | Dashboard | À faire |
@@ -44,7 +44,7 @@ application.
   `display: contents`, sans masquer le tiroir. Topbar, coquille (PR #25) et finitions (PR #26) faites :
   hamburger dans la topbar, topbar sticky, défilement mobile,
   voile `--overlay-scrim` (`DESIGN_SYSTEM.md` § 4.6), cibles tactiles 44px, × du tiroir actif jusqu'à 1023px,
-  `aria-label` / `aria-expanded` traduits. Restent : titre de page et sélecteur de mois (point 6c).
+  `aria-label` / `aria-expanded` traduits. Titre de page et sélecteur (PR #28), navigation mobile (PR #29) faits.
 
 ### Données & services
 - Interfaces mises à jour selon `.ai/domain-model.md` : `Transaction.subcategoryId` obligatoire, `BudgetLine`,
@@ -69,11 +69,13 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
    les catégories (PR #20), les transactions (PR #21) et la sidebar (PR #23). Les libellés de données mockées (noms de
    transactions et de catégories) ne sont pas traduits : données utilisateur, pas interface (décision validée).
 5bis. `UserService` : la sidebar n'importe plus `MOCK_USER` (règle d'accès aux mocks, AGENTS.md). Fait avant la topbar.
-6. Topbar : coquille faite (PR #25), finitions faites (PR #26), titre de page et sélecteur de mois en cours (6c).
+6. Topbar et navigation : coquille (PR #25), finitions (PR #26), titre et sélecteur (PR #28), navigation mobile (PR #29) faits.
    Le panneau mois/année et le menu compte accessible restent au lot 5.
 
 **Definition of done** : un écran vide (ex. squelette de page) affiche déjà le bon fond, la bonne typographie, la
 bonne navigation, et bascule thème/palette/langue depuis un état global fonctionnel.
+
+*Clôture du lot 0 (2026-10-20)* : la bascule de langue et le menu de compte dépendent des Paramètres (lot 5). Le lot 0 est clos sans elles.
 
 ## 4. Lot 1 — Budget Mensuel (écran cœur)
 
@@ -122,6 +124,7 @@ posée dès la v3 pour permettre la grille réarrangeable de la v3.1 (`product-v
 - Thème (sombre / clair / système), palette (5 options), langue (FR/EN), devise (affichage seul).
 - Réinitialisation des données (mock).
 - Menu compte dans la topbar : accès aux paramètres + déconnexion (composant accessible : Échap, piège de focus).
+- Bascule de langue (FR/EN) dans les paramètres : reportée depuis la définition de fin du lot 0.
 - Panneau de sélection mois/année (fenêtre flottante, navigation par année) : même socle accessible que le menu de compte, construit une fois pour les deux.
 
 ## 9. Lot 6 — Auth & Landing (restyle)
@@ -147,7 +150,7 @@ et pour la landing — pattern hero + aperçu produit (amélioration déjà not�
 | Dashboard : revenus / charges prévues / dépenses réelles / solde / reste à vivre | À refaire (lot 3), formules revues (`domain-model.md` § 3) |
 | Dashboard : répartition par catégorie | À refaire (lot 3) |
 | Dashboard : 5 dernières dépenses | À refaire (lot 3) |
-| Sélecteur de mois synchronisé sur toute l'app | Service fait (PR #12) ; sélecteur simple en cours (lot 0, point 6c) ; panneau mois/année reporté (lot 5) |
+| Sélecteur de mois synchronisé sur toute l'app | Fait (PR #12, #28) ; panneau mois/année reporté (lot 5) |
 | Page Budget mensuel / Overview | À refaire, restructurée (lot 1) — la version v2 « n'est pas bien réussie » (saisie sans retour visuel) |
 | Table `budget_lines` (prévu/réel) | Reprise avec révision : `actual_amount` supprimé, toujours recalculé (`domain-model.md` § 1 et § 7) |
 | Mode simple / mode avancé (planification fine) | ❌ Abandonné — un seul parcours |
