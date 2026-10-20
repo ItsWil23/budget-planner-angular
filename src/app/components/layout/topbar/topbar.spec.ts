@@ -1,16 +1,35 @@
-import { Component } from '@angular/core';
+import { Component, TemplateRef, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter, Routes } from '@angular/router';
 import { TranslocoService, TranslocoTestingModule } from '@jsverse/transloco';
 
 import { Topbar } from './topbar';
+import { routes as appRoutes } from '../../../app.routes';
+import { TopbarActionService } from '../../../services/topbar-action';
 
 @Component({ template: '' })
 class StubPage {}
 
+@Component({
+  template: '<ng-template #action><button type="button" class="action-button">Ajouter</button></ng-template>',
+})
+class ActionHost {
+  readonly action = viewChild.required<TemplateRef<unknown>>('action');
+}
+
 const routes: Routes = [
-  { path: 'dashboard', component: StubPage, data: { titleKey: 'dashboard.title' } },
-  { path: 'budget-mensuel', component: StubPage, data: { titleKey: 'budgetMensuel.title' } },
+  { path: 'dashboard', component: StubPage, data: { titleKey: 'dashboard.title', monthScoped: true } },
+  {
+    path: 'budget-mensuel',
+    component: StubPage,
+    data: { titleKey: 'budgetMensuel.title', monthScoped: true },
+  },
+  { path: 'categories', component: StubPage, data: { titleKey: 'categories.title', monthScoped: false } },
+  {
+    path: 'settings',
+    component: StubPage,
+    data: { titleKey: 'settings.title', monthScoped: false, topbarHiddenOutsideTablet: true },
+  },
   { path: 'no-title', component: StubPage },
 ];
 
@@ -131,7 +150,77 @@ describe('Topbar', () => {
     expect(title.textContent?.trim()).toBe('');
   });
 
-  it('should embed the month selector', () => {
+  it('should embed the month selector on a month-scoped route', async () => {
+    await router.navigateByUrl('/dashboard');
+    fixture.detectChanges();
+
     expect(fixture.nativeElement.querySelector('app-month-selector')).toBeTruthy();
+  });
+
+  it('should not embed the month selector on a route that is not month-scoped', async () => {
+    await router.navigateByUrl('/categories');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-month-selector')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.topbar-end')).toBeTruthy();
+  });
+
+  it('should not embed the month selector when the route has no monthScoped flag', async () => {
+    await router.navigateByUrl('/no-title');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-month-selector')).toBeNull();
+  });
+
+  it('should declare the month scope on the application routes', () => {
+    const mainRoutes = appRoutes.find(route => route.children)?.children ?? [];
+    const dataOf = (path: string): Record<string, unknown> =>
+      mainRoutes.find(route => route.path === path)?.data ?? {};
+
+    expect(dataOf('dashboard')['monthScoped']).toBe(true);
+    expect(dataOf('transactions')['monthScoped']).toBe(true);
+    expect(dataOf('budget-mensuel')['monthScoped']).toBe(true);
+    expect(dataOf('categories')['monthScoped']).toBe(false);
+    expect(dataOf('settings')['monthScoped']).toBe(false);
+  });
+
+  it('should hide the topbar outside tablet widths on the settings route only', () => {
+    const mainRoutes = appRoutes.find(route => route.children)?.children ?? [];
+    const flagOf = (path: string): unknown =>
+      mainRoutes.find(route => route.path === path)?.data?.['topbarHiddenOutsideTablet'];
+
+    expect(flagOf('settings')).toBe(true);
+    expect(flagOf('categories')).toBeUndefined();
+    expect(flagOf('dashboard')).toBeUndefined();
+  });
+
+  it('should apply the tablet-only class on a route that requests it', async () => {
+    await router.navigateByUrl('/settings');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.classList.contains('topbar-tablet-only')).toBe(true);
+  });
+
+  it('should not apply the tablet-only class on other routes', async () => {
+    await router.navigateByUrl('/categories');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.classList.contains('topbar-tablet-only')).toBe(false);
+  });
+
+  it('should render the action registered by the page in the topbar, and remove it when unregistered', () => {
+    const actionFixture = TestBed.createComponent(ActionHost);
+    actionFixture.detectChanges();
+    const service = TestBed.inject(TopbarActionService);
+    const template = actionFixture.componentInstance.action();
+
+    service.register(template);
+    fixture.detectChanges();
+    const inTopbar = fixture.nativeElement.querySelectorAll('.topbar-action .action-button');
+    expect(inTopbar.length).toBe(1);
+
+    service.unregister(template);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.topbar-action')).toBeNull();
   });
 });

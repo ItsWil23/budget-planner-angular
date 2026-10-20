@@ -120,7 +120,12 @@
   "monthSelector": {
     "previous": "Previous month",
     "next": "Next month",
-    "today": "Today"
+    "today": "Today",
+    "todayShort": "Today"
+  },
+  "bottomNav": {
+    "label": "Main navigation",
+    "budget": "Budget"
   },
   "dashboard": {
     "title": "Dashboard"

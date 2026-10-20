@@ -13,9 +13,10 @@
 }
 
 .sidebar {
+  // Sous 768px, la navigation passe par la barre du bas : pas de tiroir.
+  display: none;
   height: 100%;
   width: 16rem;
-  display: flex;
   flex-direction: column;
   background: var(--surface-card);
   border-right: 1px solid var(--border);
@@ -35,6 +36,10 @@
     transform 0.3s ease,
     background-color 0.3s,
     color 0.3s;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
 
   @media (min-width: 1024px) {
     position: static;

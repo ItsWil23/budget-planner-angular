@@ -51,6 +51,9 @@ body {
 
   /* ===== Dimensions ===== */
   --size-touch-min: 44px; /* cible tactile minimale (DESIGN_SYSTEM § 2) */
+  --size-bottom-nav: 64px; /* hauteur de la barre de navigation du bas, sous 768px (hors safe-area) */
+  --size-icon: 20px;
+  --size-icon-stroke: 1.5; /* trait fin des icônes de navigation */
   --size-bar-length: 24px;
   --size-bar-thickness: 2px;
   --size-focus-ring: 2px; /* contour de focus clavier (DESIGN_SYSTEM § 7) */

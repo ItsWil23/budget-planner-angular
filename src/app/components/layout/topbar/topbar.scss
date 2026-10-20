@@ -1,9 +1,26 @@
+// Titre masqué visuellement, mais lu par les lecteurs d'écran.
+@mixin visually-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 :host {
   display: block;
   position: sticky;
   top: 0;
   z-index: 10;
   margin-bottom: var(--space-lg);
+}
+
+// Pages qui n'affichent la topbar qu'entre 768px et 1023px (ex. Paramètres).
+:host(.topbar-tablet-only) {
+  display: none;
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    display: block;
+  }
 }
 
 .topbar {
@@ -26,34 +43,56 @@
   min-width: 0;
 }
 
+// Bouton d'ajout de la page courante : affiché dans la topbar entre 500px et 767px seulement.
+.topbar-action {
+  display: none;
+
+  @media (min-width: 500px) and (max-width: 767px) {
+    display: flex;
+    min-width: 0;
+  }
+}
+
+// Emplacement réservé à l'avatar (lot 5) : vide pour l'instant, toujours dans la 3e colonne,
+// même quand le sélecteur de mois est absent.
+.topbar-end {
+  grid-column: 3;
+  justify-self: end;
+  width: var(--size-touch-min);
+  height: var(--size-touch-min);
+}
+
 .topbar-title {
-  // Sous 640px, pas de place pour le titre à côté du sélecteur : il est masqué visuellement,
-  // mais reste lu par les lecteurs d'écran.
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
+  // Sous 768px, le titre n'est pas affiché : la barre du bas indique la page active.
+  @include visually-hidden;
   margin: 0;
   font: var(--text-heading);
   color: var(--color-text);
   white-space: nowrap;
   text-overflow: ellipsis;
 
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
     position: static;
     flex: 1;
     width: auto;
     height: auto;
     min-width: 0;
   }
+
+  // Dès 1024px, la sidebar fixe est visible : le titre n'est plus affiché dans la topbar.
+  @media (min-width: 1024px) {
+    @include visually-hidden;
+  }
 }
+
 
 .hamburger {
   flex-shrink: 0;
   width: var(--size-touch-min);
   height: var(--size-touch-min);
 
-  display: flex;
+  // Sous 768px, la navigation passe par la barre du bas : pas de hamburger.
+  display: none;
   align-items: center;
   justify-content: center;
 
@@ -91,6 +130,10 @@
     opacity: 0;
     pointer-events: none;
     transition: none;
+  }
+
+  @media (min-width: 768px) {
+    display: flex;
   }
 
   @media (min-width: 1024px) {

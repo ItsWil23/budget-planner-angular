@@ -69,25 +69,39 @@
 }
 
 .today-button {
+  // Sous 768px, le bouton est à gauche du sélecteur, dans la ligne de la topbar.
+  // Le padding vient de la règle partagée avec .month-button.
   position: absolute;
-  inset-inline-start: calc(100% + var(--space-xs));
+  inset-inline-end: calc(100% + var(--space-xs));
   top: 50%;
   transform: translateY(-50%);
-  padding: 0;
   gap: var(--space-xs);
   font: var(--text-emphasis);
   color: var(--color-accent);
 
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
+    inset-inline-end: auto;
+    inset-inline-start: calc(100% + var(--space-xs));
     padding: 0 var(--space-md);
     font: var(--text-body);
   }
 }
 
-.today-text {
+.today-text,
+.today-text-short {
   display: none;
+}
 
-  @media (min-width: 640px) {
+.today-text-short {
+  display: inline;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.today-text {
+  @media (min-width: 768px) {
     display: inline;
   }
 }

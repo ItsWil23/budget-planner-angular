@@ -16,11 +16,31 @@ export const routes: Routes = [
     path: '',
     component: MainLayout,
     children: [
-      { path: 'dashboard', component: Dashboard, data: { titleKey: 'dashboard.title' } },
-      { path: 'transactions', component: Transactions, data: { titleKey: 'transactions.title' } },
-      { path: 'categories', component: Categories, data: { titleKey: 'categories.title' } },
-      { path: 'budget-mensuel', component: BudgetMensuel, data: { titleKey: 'budgetMensuel.title' } },
-      { path: 'settings', component: Settings, data: { titleKey: 'settings.title' } },
+      {
+        path: 'dashboard',
+        component: Dashboard,
+        data: { titleKey: 'dashboard.title', monthScoped: true },
+      },
+      {
+        path: 'transactions',
+        component: Transactions,
+        data: { titleKey: 'transactions.title', monthScoped: true },
+      },
+      {
+        path: 'categories',
+        component: Categories,
+        data: { titleKey: 'categories.title', monthScoped: false },
+      },
+      {
+        path: 'budget-mensuel',
+        component: BudgetMensuel,
+        data: { titleKey: 'budgetMensuel.title', monthScoped: true },
+      },
+      {
+        path: 'settings',
+        component: Settings,
+        data: { titleKey: 'settings.title', monthScoped: false, topbarHiddenOutsideTablet: true },
+      },
     ],
   },
   { path: '**', redirectTo: '' },
