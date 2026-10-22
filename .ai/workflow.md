@@ -1,18 +1,38 @@
 # Workflow — Budget Planner v3
 
 > Comment le travail circule entre les trois rôles, du choix d'une tâche jusqu'à la fusion dans `main`.
-> Dernière mise à jour : 2026-09-28
+> Dernière mise à jour : 2026-10-22
 
 ## 1. Les trois rôles
 
 | Rôle | Porte | Ne fait pas |
 |---|---|---|
 | **Toi** | Usage, rendu visuel, ressenti, arbitrages produit quand je te les soumets | N'écrit pas le code de l'application |
-| **Moi (PM/architecte)** | Specs, architecture, cohérence avec `PRD.md`/`ARCHITECTURE.md`/`DESIGN_SYSTEM.md`, revue technique | N'écrit pas le code de l'application, n'édite que la documentation (`.ai/`, fichiers racine `*.md`) |
-| **IA dev (actuellement Claude Code, en local via Ollama)** | Implémentation du code, à partir d'une spec | Ne décide pas du produit ni de l'architecture ; s'arrête et demande si une info manque (`AGENTS.md`) |
+| **Moi (PM/architecte, VS Code AI Chat avec GitHub Copilot)** | Specs, architecture, cohérence avec les documents de référence, revue technique et préparation de la PR après autorisation explicite | N'écrit pas le code de l'application ; édite uniquement la documentation et les fichiers de tâche |
+| **IA dev (principalement Claude Code avec un modèle local Ollama)** | Implémentation et tests à partir d'une spec ; relais possible dans VS Code Agents avec GitHub Copilot pour les tâches plus larges, complexes ou dépassant le modèle local | Ne décide pas du produit ni de l'architecture ; s'arrête et demande si une info manque (`AGENTS.md`) |
 
 Aucun code applicatif n'est écrit par toi ou par moi. Tout code vient de l'IA dev, sur la base d'une spec, et n'est
 fusionné qu'après relecture humaine.
+
+**GitHub Copilot code review**, une fois configuré, sera le reviewer automatisé des pull requests ; il ne
+remplace ni la revue du PM ni celle de l'utilisateur.
+
+### Plugins et choix de l'agent
+
+**Superpowers** et **Frontend Design** sont installés dans Claude Code et dans VS Code Agents / Copilot.
+
+- **Superpowers** : uniquement pour les tâches complexes, refontes, migrations ou tâches nécessitant un plan
+  structuré. Ne pas l'utiliser pour une tâche simple.
+- **Frontend Design** : à utiliser pour créer ou refondre des écrans, composants ou parcours UI importants,
+  dans le respect de `DESIGN_SYSTEM.md`, de l'accessibilité et du mobile-first.
+
+| Complexité | Agent et plugin |
+|---|---|
+| Tâche simple | Claude Code local, sans Superpowers |
+| Tâche UI importante | Claude Code local ou VS Code Agents avec GitHub Copilot, avec Frontend Design |
+| Tâche complexe, refonte ou migration | VS Code Agents avec GitHub Copilot et Superpowers, ou Claude Code avec Superpowers si le contexte reste maîtrisé ; ajouter Frontend Design si l'UI est concernée |
+
+Ne pas créer de skill maison dupliquant `workflow.md` ou `AGENTS.md`.
 
 > **Historique** : Aider + Qwen2.5-Coder (7B puis 14B) a été utilisé du 2026-09-23 au 2026-09-25, abandonné après
 > des échecs répétés (modifications non appliquées, puis un commit ayant écrasé plusieurs fichiers `.scss` de
@@ -26,19 +46,22 @@ fusionné qu'après relecture humaine.
 
 ```
 1. Choisir la tâche      → dans .ai/roadmap.md, une tâche = un point d'un lot (jamais un lot entier)
-2. Spec                  → je rédige une spec ciblée (format § 3)
+2. Spec                  → le PM crée une tâche courte dans tasks/active/TASK-XXX-nom.md (format § 3)
 3. Branche               → toi crées feat/<nom> depuis main à jour
-4. Implémentation        → l'IA dev travaille à partir de la spec, dans Continue (chat + apply)
-5. Vérification locale   → npm test + npm run build passent, avant toute revue
+4. Implémentation        → l'IA dev travaille à partir du fichier de tâche, avec l'agent adapté (§ 1),
+                             et ajoute les tests nécessaires
+5. Vérification locale   → l'IA dev exécute npx ng lint, npx ng test et npx ng build (réserve lint : § 5),
+                             puis les contrôles de sécurité et de dépendances applicables (§ 5)
 6. Revue usage           → toi : la fonctionnalité rendue correspond-elle à l'intention, sur mobile et desktop,
                              dans au moins un thème clair et un thème sombre ?
-7. Revue technique       → moi : conformité à ARCHITECTURE.md (couche service), DESIGN_SYSTEM.md (tokens),
-                             AGENTS.md (règles), pas de dérive de périmètre
-8. Itération             → corrections demandées via nouveaux messages dans Continue, sur la même branche,
-                             ou annulation manuelle (git checkout -- <fichier> / git reset) si la direction est mauvaise
-9. Pull Request          → ouverte une fois les deux revues (5) et (6)/(7) passées
-10. Merge                → dans main, jamais de commit direct dessus
-11. Mise à jour           → je mets à jour .ai/roadmap.md (statut) et .ai/product-vision.md si une décision a été
+7. Revue PM              → le PM relit le diff réel, vérifie les critères d'acceptation et la conformité aux
+                             documents de référence, puis relance les validations (§ 5)
+8. Itération             → corrections sur la même branche, puis nouvelles validations et revues si nécessaire
+9. Autorisation          → le PM demande l'autorisation explicite de l'utilisateur avant tout commit
+10. Clôture et PR         → après validation, le PM commit, déplace le fichier de tasks/active/ vers tasks/done/,
+                             commit ce déplacement sur la même branche, puis crée la pull request
+11. Merge                → l'utilisateur effectue le squash & merge dans main, puis supprime la branche
+12. Mise à jour           → je mets à jour .ai/roadmap.md (statut) et .ai/product-vision.md si une décision a été
                              prise en cours de route
 ```
 
@@ -64,20 +87,19 @@ Lot : <n° du lot dans roadmap.md>
 <liste de "c'est fait quand...">
 
 ### Hors périmètre pour cette tâche
-<explicitement ce qu'il ne faut PAS faire, pour éviter la dérive avec un modèle 7B>
+<explicitement ce qu'il ne faut PAS faire, pour éviter la dérive de périmètre>
 
 ### Références
 <sections précises de PRD.md / ARCHITECTURE.md / DESIGN_SYSTEM.md / domain-model.md concernées>
 ```
 
-Cette spec est ce que tu colles directement dans le chat de Continue, en pièce jointe des fichiers concernés
-(@fichier) — plus besoin de fichier de tâche séparé, Continue gère bien le collage multi-lignes dans son panneau
-de chat (contrairement à un terminal brut).
+Cette spec courte est conservée dans `tasks/active/TASK-XXX-nom.md` et transmise à l'IA dev avec les fichiers
+concernés. Le fichier de tâche reste la référence jusqu'à son archivage selon le § 2.
 
 > **Piège rencontré (2026-09-25, avec Aider en terminal)** : ne jamais coller une spec longue directement dans un
 > terminal interactif. Un collage multi-lignes dans une console Windows peut être interprété ligne par ligne
 > (comme si Entrée était pressé à chaque ligne) — seule la fin du texte arrive intacte comme message, le reste se
-> perd silencieusement. Ce risque ne concerne pas le panneau de chat de Continue (interface graphique), mais reste
+> perd silencieusement. Ce risque ne concerne pas les panneaux de chat graphiques, mais reste
 > valable pour tout outil en ligne de commande.
 >
 > **Piège plus grave rencontré le même jour** : un commit généré par l'agent a remplacé le contenu de plusieurs
@@ -94,17 +116,29 @@ de chat (contrairement à un terminal brut).
   diff avant de commiter (`git diff`) plutôt que de faire confiance à un commit automatique.
 - **Pull Request** : une par tâche. Description = la spec d'origine + ce qui a effectivement changé. Toute
   dépendance ajoutée ou décision prise en cours de route y est mentionnée explicitement (`AGENTS.md` § boundaries).
-- **Merge** : après les deux revues (§ 2, étapes 6-7), jamais avant.
+- **Autorisation, archivage et merge** : suivre le § 2, étapes 9 à 11 ; aucun commit avant autorisation explicite,
+  fichier de tâche archivé inclus dans la branche avant la PR, squash & merge et suppression de branche par toi.
 
 ## 5. Portes de qualité avant Pull Request
 
-- [ ] `npm test` passe
-- [ ] `npm run build` passe
+- [ ] L'IA dev a exécuté `npx ng lint`, `npx ng test` et `npx ng build` ; le PM les a relancés et a vérifié les résultats
+- [ ] Les contrôles de sécurité et de dépendances applicables ci-dessous ont été effectués
 - [ ] Vérifié en thème sombre **et** clair
 - [ ] Vérifié en largeur mobile **et** desktop
-- [ ] Aucune chaîne de texte visible en dur ajoutée
-- [ ] Aucune couleur/taille en dur ajoutée (tokens `DESIGN_SYSTEM.md` uniquement)
-- [ ] Aucun accès direct à un mock depuis un composant
+- [ ] Diff réel relu, critères d'acceptation satisfaits et règles d'`AGENTS.md` respectées
+
+**Réserve lint** : `npx ng lint` est la validation cible, mais le lint est indiqué non configuré dans `AGENTS.md`
+et `ARCHITECTURE.md`. Tant que c'est le cas, signaler ce blocage à l'utilisateur pour arbitrage avant la PR ;
+ne jamais le présenter comme une validation réussie ni ajouter une configuration hors périmètre.
+Les tests et le build doivent passer.
+
+### Sécurité et dépendances
+
+- Avant toute PR touchant l'authentification, les données utilisateur, les formulaires, le stockage local ou les
+  appels API, exécuter `/security-review`.
+- Pour un audit global, utiliser le plugin officiel **claude-security**.
+- Après tout ajout ou mise à jour de dépendance, exécuter `npm audit` et consigner les résultats dans la PR.
+  S'appuyer sur **Dependabot** pour le suivi continu.
 
 ## 6. Quand ça bloque
 
