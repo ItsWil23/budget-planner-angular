@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-10-20
+> Dernière mise à jour : 2026-10-23
 
 ## 1. Pourquoi cet ordre
 
@@ -79,12 +79,48 @@ bonne navigation, et bascule thème/palette/langue depuis un état global foncti
 
 ## 4. Lot 1 — Budget Mensuel (écran cœur)
 
-- Tables catégorie → sous-catégories, saisie du prévu (`BudgetLine.plannedAmount`), réel agrégé en regard.
+- Tables catégorie → sous-catégories, saisie du prévu au niveau sous-catégorie (`BudgetLine.plannedAmountCents`),
+  catégorie toujours agrégée automatiquement, réel agrégé en regard aux deux niveaux.
 - Bandeau d'allocation : revenus prévus, dépenses prévues, montant non encore alloué.
 - Barre de progression prévu/réel par ligne, statut `under` / `on-track` / `over` (seuils `domain-model.md` § 3).
 - Ouverture d'un mois : génération semi-automatique des lignes depuis les `RecurringRule` actives.
 - Solde d'ouverture reporté automatiquement du mois précédent, ajustable manuellement
   (`BudgetMonth.openingBalanceOverridden`).
+
+### Ordre de réalisation du lot 1 (décidé le 2026-10-22)
+
+Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` § 2). Décisions de modèle prises en
+amont, lors de la revue de code du lot 0 : identifiants de montant suffixés `Cents` partout (`domain-model.md`
+§ 2), formule du montant non alloué (`domain-model.md` § 3), portée de la cascade du solde d'ouverture
+(`domain-model.md` § 4), prévu saisi au niveau sous-catégorie comme en v2, catégorie toujours agrégée
+automatiquement (`domain-model.md` § 2, `BudgetLine`, corrigé le 2026-10-23), suppression/archivage des
+catégories traité au lot 4 (§ 7).
+
+0. `chore/strict-typescript` : activer `strict` (et `strictTemplates` si le coût reste faible) dans la
+   configuration TypeScript — dette relevée en revue du 2026-10-22, aucune décision produit nécessaire.
+1. `feat/lot1-budget-models` : modèles `BudgetLine`, `RecurringRule`, `BudgetMonth`, type `BudgetLineStatus`,
+   constante des seuils et fonction pure de statut, avec tests.
+2. `TransactionService` : `monthKey` dérivé de `date`, sélection des transactions d'un mois, correction du
+   stockage d'`amountEuros` en plus d'`amountCents` dans l'état (revue du 2026-10-22), mocks de transactions
+   étalés sur plusieurs mois.
+3. `RecurringRuleService` : lecture seule, règles actives d'un mois ; pas d'interface de gestion dans cette tâche.
+4. `BudgetService` (1/3) : état des `BudgetLine`, unicité par mois/sous-catégorie, saisie du prévu (euros vers
+   centimes), ouverture idempotente d'un mois depuis les `RecurringRule` actives.
+5. `BudgetService` (2/3) : réel et statut par sous-catégorie et par catégorie agrégée (`domain-model.md` § 3),
+   totaux du bandeau d'allocation.
+6. `BudgetService` (3/3) : solde d'ouverture reporté et ajustable, portée de la cascade décidée le 2026-10-22.
+7. Formateur monétaire centralisé (pipe), basé sur `SettingsService` (devise, locale), signes `+`/`−`
+   (`DESIGN_SYSTEM.md` § 4.1).
+8. Tokens sémantiques en thème clair + validation visuelle de `--color-warn` (`DESIGN_SYSTEM.md` § 4.3) —
+   nécessite une validation visuelle avant implémentation.
+9. Composant `ui/progress-bar`.
+10. Page : bandeau d'allocation, lecture seule.
+11. Page : table catégorie → sous-catégories, réel en regard aux deux niveaux, barres de progression, signalement
+    d'une catégorie sans sous-catégorie.
+12. Page : saisie inline du prévu **au niveau sous-catégorie** (le total de la catégorie se recalcule
+    automatiquement), avec validation (montant minimal `0.01`, pas `0.1` — piège relevé en revue du
+    2026-10-22 sur `TransactionForm`, voir Lot 2).
+13. Page : solde d'ouverture et ajustement manuel. Contrôle final à 375px, thèmes clair et sombre.
 
 **Definition of done** : un mois complet peut être planifié de bout en bout, sans dépendre du Dashboard.
 
@@ -99,6 +135,15 @@ Déjà fait en phase A : liste, modal, formulaire d'ajout, filtrage catégorie/s
 - Interface de gestion des `RecurringRule` — **emplacement à trancher** : sous-écran de Transactions, ou accessible
   depuis Budget Mensuel ? à décider avant de commencer cette tâche.
 - Pagination et tri : non bloquants pour la definition of done du produit, à faire si le temps le permet.
+
+Écarts relevés en revue de code du 2026-10-22, à corriger dans ce lot :
+
+- La liste ne filtre pas par mois sélectionné alors que la route est `monthScoped: true` (`MonthContextService`).
+- Date par défaut du formulaire calculée via `toISOString()` (UTC) au lieu de l'heure locale : décale le jour
+  entre minuit et l'heure du fuseau.
+- Montant minimal du formulaire fixé à `Validators.min(0.1)` : exclut les montants de 1 à 9 centimes, à corriger
+  en `Validators.min(0.01)` (le domaine autorise tout centime positif).
+- Génération de l'`id` et dérivation du `type` faites dans `TransactionForm` plutôt que dans `TransactionService`.
 
 ## 6. Lot 3 — Dashboard
 
@@ -119,6 +164,17 @@ posée dès la v3 pour permettre la grille réarrangeable de la v3.1 (`product-v
   thèmes (`DESIGN_SYSTEM.md` § 4.5 — actuellement seulement 3 couleurs de maquette).
 - Restyle selon le nouveau design system (îles, tokens).
 
+Écarts relevés en revue de code du 2026-10-22, à corriger dans ce lot :
+
+- Suppression bloquée et remplacée par un archivage (`archived`) quand la catégorie ou la sous-catégorie porte au
+  moins une transaction, avec message explicite (`domain-model.md` § 2, décision du 2026-10-22).
+- `addSubcategory` génère son id dans le composant (`sub-${Date.now()}`) plutôt que dans `CategoryService` ; à
+  déplacer dans le service à cette occasion.
+- Renommage `Subcategory.name` → `label`, ajout de `Category.icon?`, pour correspondre à `domain-model.md` § 2.
+- Remplacement des `$any($event.target)` du template par un typage explicite (`HTMLInputElement` /
+  `HTMLSelectElement`).
+- Token CSS manquant `--color-accent-surface` (anneau de focus invisible) à définir ou remplacer avant le restyle.
+
 ## 8. Lot 5 — Paramètres
 
 - Thème (sombre / clair / système), palette (5 options), langue (FR/EN), devise (affichage seul).
@@ -127,11 +183,24 @@ posée dès la v3 pour permettre la grille réarrangeable de la v3.1 (`product-v
 - Bascule de langue (FR/EN) dans les paramètres : reportée depuis la définition de fin du lot 0.
 - Panneau de sélection mois/année (fenêtre flottante, navigation par année) : même socle accessible que le menu de compte, construit une fois pour les deux.
 
+Écarts relevés en revue de code du 2026-10-22, à corriger dans ce lot :
+
+- `Theme` gère son propre signal sans lire `SettingsService.settings().theme` ; `data-palette` et `lang` sont
+  figés en dur dans `index.html`, `LOCALE_ID` figé à `fr-FR` dans `app.config.ts` : à unifier derrière
+  `SettingsService`.
+- `ThemeMode` n'a pas de valeur `'system'` alors que `UserSettings.theme` en prévoit une : à aligner.
+
 ## 9. Lot 6 — Auth & Landing (restyle)
 
 Fonctionnellement déjà faits en phase A. Restent : adaptation au nouveau design system, i18n des textes en dur,
 et pour la landing — pattern hero + aperçu produit (amélioration déjà notée comme différée dans le journal
 `.ai/refonte-angular.md`, à reprendre maintenant que le Dashboard va exister).
+
+Écarts relevés en revue de code du 2026-10-22, à corriger dans ce lot :
+
+- `User.id` est un `number` ; `domain-model.md` § 5 impose des identifiants `string` (UUID) partout.
+- Token CSS manquant `--color-accent-shadow` dans `auth.scss` (anneau de focus invisible), à remplacer par un
+  token existant du design system.
 
 ## 10. Lot 7 — PWA & transverse
 
@@ -155,7 +224,7 @@ et pour la landing — pattern hero + aperçu produit (amélioration déjà not�
 | Table `budget_lines` (prévu/réel) | Reprise avec révision : `actual_amount` supprimé, toujours recalculé (`domain-model.md` § 1 et § 7) |
 | Mode simple / mode avancé (planification fine) | ❌ Abandonné — un seul parcours |
 | Transactions prévisionnelles (`is_planned`) | ❌ Abandonné — remplacé par `BudgetLine` |
-| Comptes (`accounts`, solde initial) | ❌ Abandonné — remplacé par `BudgetMonth.openingBalance` |
+| Comptes (`accounts`, solde initial) | ❌ Abandonné — remplacé par `BudgetMonth.openingBalanceCents` |
 | Catégories/sous-catégories personnalisées | Repris (lot 4), invariant sous-catégorie obligatoire ajouté |
 | Transactions : saisie réelle, catégorisation | Repris (lot 2) |
 | Paramètres : switch planification fine | ❌ Abandonné avec le mode avancé |
