@@ -96,8 +96,8 @@ amont, lors de la revue de code du lot 0 : identifiants de montant suffixés `Ce
 automatiquement (`domain-model.md` § 2, `BudgetLine`, corrigé le 2026-10-23), suppression/archivage des
 catégories traité au lot 4 (§ 7).
 
-0. `chore/strict-typescript` : activer `strict` (et `strictTemplates` si le coût reste faible) dans la
-   configuration TypeScript — dette relevée en revue du 2026-10-22, aucune décision produit nécessaire.
+0. [x] `chore/strict-typescript` : activer `strict` et `strictTemplates` dans la configuration TypeScript. Fait le
+   2026-10-23 (PR en cours). Dette relevée en revue du 2026-10-22.
 1. `feat/lot1-budget-models` : modèles `BudgetLine`, `RecurringRule`, `BudgetMonth`, type `BudgetLineStatus`,
    constante des seuils et fonction pure de statut, avec tests.
 2. `TransactionService` : `monthKey` dérivé de `date`, sélection des transactions d'un mois, correction du
