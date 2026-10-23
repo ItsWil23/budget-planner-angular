@@ -1,7 +1,7 @@
 # Modèle de domaine — Budget Planner v3
 
 > Contrat de données de référence. Le front est codé contre ce modèle ; le backend (phase B) devra le respecter.
-> Dernière mise à jour : 2026-10-19
+> Dernière mise à jour : 2026-10-23
 
 ---
 
@@ -37,12 +37,14 @@ interface Category {
   type: CategoryType;
   color: string;   // pastille d'identification visuelle
   icon?: string;
+  archived?: boolean;  // true si supprimée alors qu'elle portait des transactions ; absent/false sinon
 }
 
 interface Subcategory {
   id: string;
   categoryId: string;
   label: string;
+  archived?: boolean;
 }
 ```
 
@@ -56,7 +58,27 @@ interface Subcategory {
 - **Écran Catégories** : une telle catégorie est signalée comme **incomplète**, pas par un état vide neutre.
 - **Création d'une catégorie** : le formulaire **propose** une première sous-catégorie (champ pré-rempli, supprimable). Non obligatoire, mais c'est le chemin par défaut.
 
-> ⚠️ Effet de bord : une catégorie sans sous-catégorie peut recevoir un montant **prévu** (le prévisionnel se définit au niveau catégorie) mais jamais de **réel**. Elle affichera indéfiniment « prévu 200 € / réel 0 € », ce qui ressemble à un bug. À signaler dans le Budget Mensuel.
+> ⚠️ Effet de bord : une catégorie sans sous-catégorie ne peut recevoir **aucun montant prévu** — le prévisionnel
+> se saisit au niveau sous-catégorie (voir `BudgetLine` ci-dessous), et il n'existe aucune sous-catégorie à
+> laquelle l'attacher. Elle affichera indéfiniment « prévu 0 € / réel 0 € » dans le Budget Mensuel, ce qui
+> ressemble à un état vide neutre — à distinguer de son signalement **incomplète** dans l'écran Catégories.
+
+### Suppression et archivage (`Category` / `Subcategory`)
+
+Une catégorie ou sous-catégorie **sans aucune transaction qui la référence** se supprime normalement (comportement
+actuel, inchangé). Une catégorie ou sous-catégorie **qui porte au moins une transaction** ne peut pas être
+supprimée : la suppression casserait l'affichage de l'historique.
+
+- La suppression est **bloquée**, pas simplement refusée en silence : un message explique pourquoi et propose
+  d'**archiver** à la place.
+- **Archiver** = `archived: true`. L'entité n'est jamais retirée du tableau en mémoire ; elle disparaît des listes
+  de sélection (formulaire de transaction, génération de `BudgetLine`) mais reste résolvable pour l'historique
+  (nom, couleur) sur les transactions déjà saisies.
+- Pas de case « supprimer quand même » qui détruirait la référence : une fois une transaction attachée, la seule
+  option disponible est d'archiver.
+- La restauration d'une entité archivée n'est pas exposée dans l'UI v3 (pas de besoin exprimé), mais `archived` est
+  un simple booléen, pas une suppression logique irréversible : une évolution future peut l'exposer sans changement
+  de modèle.
 
 ### `Transaction` — le réel
 
@@ -84,15 +106,21 @@ interface Transaction {
 interface BudgetLine {
   id: string;
   monthKey: string;
-  categoryId: string;
-  subcategoryId?: string;  // absent = ligne au niveau catégorie
-  plannedAmount: number;   // entier, en centimes ; > 0
+  categoryId: string;       // dénormalisé depuis la sous-catégorie, pratique pour les agrégats
+  subcategoryId: string;    // obligatoire : le prévu se saisit toujours au niveau sous-catégorie
+  plannedAmountCents: number;   // entier, en centimes ; > 0
   sourceRuleId?: string;   // récurrence à l'origine de la ligne, le cas échéant
 }
 ```
 
-- Une ligne par couple (catégorie [, sous-catégorie]) et par mois. **Unicité à garantir.**
-- Le prévisionnel du MVP se définit **au niveau catégorie**. La granularité sous-catégorie est prévue dans le modèle mais pas exposée dans l'UI v3.
+- Une ligne par couple (sous-catégorie, mois). **Unicité à garantir.**
+- **Décision corrigée (2026-10-23)** : le prévisionnel se saisit **au niveau sous-catégorie**, comme en v2
+  (`budget_lines.subcategory_id` y est déjà la clé de saisie, `category_id` n'étant qu'une dénormalisation
+  pratique). Le prévu d'une catégorie est **toujours calculé**, jamais stocké : c'est la somme des `BudgetLine`
+  de ses sous-catégories (§ 3). Corrige la décision du 2026-10-22, qui inversait le niveau de saisie.
+- Dans le tableau du Budget Mensuel, la ligne de sous-catégorie porte le champ `plannedAmountCents` modifiable ;
+  la ligne de catégorie n'affiche qu'un total agrégé en lecture seule (prévu et réel), jamais de saisie directe.
+- Corollaire : une catégorie **sans sous-catégorie** ne peut recevoir aucun montant prévu (voir § 2, `Category`).
 
 ### `RecurringRule` — l'automatisation du prévu
 
@@ -102,7 +130,7 @@ interface RecurringRule {
   label: string;
   categoryId: string;
   subcategoryId?: string;
-  amount: number;
+  amountCents: number;
   dayOfMonth?: number;     // indicatif, pour l'affichage des échéances
   startMonth: string;      // 'YYYY-MM'
   endMonth?: string;       // absent = sans fin
@@ -117,13 +145,15 @@ Une règle **ne crée jamais de transaction**. Elle pré-remplit les `BudgetLine
 ```ts
 interface BudgetMonth {
   monthKey: string;              // 'YYYY-MM' — identifiant naturel
-  openingBalance: number;        // entier, en centimes ; peut être négatif
+  openingBalanceCents: number;   // entier, en centimes ; peut être négatif
   openingBalanceOverridden: boolean;  // true si ajusté à la main
   initialized: boolean;          // true une fois le mois ouvert
 }
 ```
 
-`openingBalance` est **reporté automatiquement** du solde de clôture du mois précédent, et **ajustable manuellement** en cas d'écart avec la banque. `openingBalanceOverridden` sert à ne pas écraser une correction utilisateur lors d'un recalcul.
+`openingBalanceCents` est **reporté automatiquement** du solde de clôture du mois précédent, et **ajustable
+manuellement** en cas d'écart avec la banque. `openingBalanceOverridden` sert à ne pas écraser une correction
+utilisateur lors d'un recalcul.
 
 ### `UserSettings`
 
@@ -152,15 +182,23 @@ revenusPrevus     = Σ BudgetLine  où category.type = 'income'
 revenusReels      = Σ Transaction où type = 'income'
 depensesPrevues   = Σ BudgetLine  où category.type = 'expense'
 depensesReelles   = Σ Transaction où type = 'expense'
+montantNonAlloue  = revenusPrevus - depensesPrevues     // bandeau d'allocation du Budget Mensuel
 
-soldeClotureReel  = openingBalance + revenusReels  - depensesReelles
-soldeCloturePrevu = openingBalance + revenusPrevus - depensesPrevues
+soldeClotureReel  = openingBalanceCents + revenusReels  - depensesReelles
+soldeCloturePrevu = openingBalanceCents + revenusPrevus - depensesPrevues
 
 resteADepenser    = depensesPrevues - depensesReelles   // « ce qu'il me reste dans mon budget »
 disponibleReel    = soldeClotureReel                    // « ce que j'ai réellement en poche »
 
-ecartLigne(l)     = reelDeLaLigne(l) - l.plannedAmount
-tauxConsommation  = reelDeLaLigne(l) / l.plannedAmount
+// Niveau sous-catégorie (BudgetLine) — granularité de saisie
+ecartLigne(l)       = reelDeLaLigne(l) - l.plannedAmountCents
+tauxConsommation(l) = reelDeLaLigne(l) / l.plannedAmountCents
+
+// Niveau catégorie — toujours agrégé depuis ses sous-catégories, jamais saisi
+prevuCategorie(c)   = Σ BudgetLine  où categoryId = c.id
+reelCategorie(c)    = Σ Transaction où categoryId = c.id
+ecartCategorie(c)   = reelCategorie(c) - prevuCategorie(c)
+tauxCategorie(c)    = reelCategorie(c) / prevuCategorie(c)
 ```
 
 > **Décision** : la v1 appelait « reste à vivre » la formule `revenus - dépenses réelles`, ce qui mélangeait deux notions. On distingue désormais **reste à dépenser** (budget restant) et **disponible réel** (trésorerie).
@@ -179,7 +217,7 @@ Seuils centralisés dans une constante, jamais en dur dans un composant.
 ## 4. Cycle de vie d'un mois
 
 ```
-1. OUVERTURE   openingBalance ← solde de clôture du mois précédent
+1. OUVERTURE   openingBalanceCents ← solde de clôture du mois précédent
                BudgetLine ← générées depuis les RecurringRule actives
                (+ option « reprendre le budget du mois précédent »)
 
@@ -191,6 +229,12 @@ Seuils centralisés dans une constante, jamais en dur dans un composant.
 ```
 
 Un mois n'est **jamais verrouillé** : l'utilisateur peut corriger un mois passé. Le report se recalcule en cascade, sauf sur les mois dont l'ouverture a été ajustée manuellement.
+
+**Portée de la cascade (décision 2026-10-22)** : au changement d'un mois M, le solde recalculé se propage aux mois
+suivants, mois par mois, tant que `openingBalanceOverridden` est `false`. Dès qu'un mois suivant a
+`openingBalanceOverridden: true`, la cascade s'arrête à cet endroit : son solde d'ouverture reste la valeur
+ajustée à la main, et les mois encore après lui ne sont pas recalculés non plus (ils dépendent de ce solde ajusté,
+pas de la chaîne d'origine).
 
 ## 5. Conventions techniques
 
@@ -222,7 +266,7 @@ Services prévus : `CategoryService`, `TransactionService`, `BudgetService`, `Re
 
 | v2 | v3 | Raison |
 |---|---|---|
-| `accounts` + `solde_initial` | `BudgetMonth.openingBalance` | Multi-comptes hors périmètre ; le solde mensuel suffit |
+| `accounts` + `solde_initial` | `BudgetMonth.openingBalanceCents` | Multi-comptes hors périmètre ; le solde mensuel suffit |
 | `transactions.is_planned` | supprimé | Le prévu s'exprime en `BudgetLine` |
 | `transactions.type` à 4 valeurs | 2 valeurs | Épargne et crédits sont des catégories de dépense |
 | `budget_lines.actual_amount` | supprimé | Toujours recalculé depuis les transactions |
@@ -235,7 +279,9 @@ Services prévus : `CategoryService`, `TransactionService`, `BudgetService`, `Re
 
 ## 8. Questions ouvertes
 
-- Recalcul en cascade du solde d'ouverture : jusqu'où remonter, et que faire des mois ajustés manuellement ?
-- Suppression d'une catégorie ou d'une sous-catégorie qui porte des transactions : interdite, archivée, ou réaffectée ?
-- Granularité du prévisionnel : faut-il exposer le niveau sous-catégorie dans l'UI v3, maintenant que toute transaction en porte une ?
 - Les libellés de catégories sont saisis par l'utilisateur, donc non traduisibles. Que deviennent les catégories par défaut proposées à l'inscription quand l'utilisateur change de langue ?
+
+> Résolues le 2026-10-22 : suppression/archivage d'une catégorie ou sous-catégorie portant des transactions (§ 2),
+> formule du montant non alloué (§ 3), portée de la cascade du solde d'ouverture (§ 4). Granularité du
+> prévisionnel tranchée le 2026-10-23 : saisie au niveau sous-catégorie, catégorie toujours agrégée (§ 2,
+> `BudgetLine` ; corrige l'inverse écrit par erreur le 2026-10-22).

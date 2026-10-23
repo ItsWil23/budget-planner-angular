@@ -1,7 +1,7 @@
 # Vision produit — Budget Planner v3
 
 > Source de vérité produit. Toute décision de design ou d'implémentation doit pouvoir se justifier par ce document.
-> Dernière mise à jour : 2026-10-20
+> Dernière mise à jour : 2026-10-23
 
 ---
 
@@ -260,6 +260,10 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-09-28 | Aider abandonné (échecs répétés à appliquer les modifications, puis un commit ayant écrasé plusieurs fichiers `.scss` de production) ; remplacé par Continue (déjà installé, Qwen3-Coder 30B via Ollama) ; fichiers `.aider*` supprimés du repo |
 | 2026-09-28 | Continue abandonné à son tour (mêmes échecs d'application) ; remplacé par **Claude Code** (extension VS Code, Ollama via shim API Anthropic, `qwen3-coder:14b`) ; `CLAUDE.md` ajouté en miroir de `AGENTS.md` |
 | 2026-09-28 | Tâche `lot0-01-tokens-styles-scss` validée : tokens de design posés dans `src/styles.scss`, conformes à la spec |
+| 2026-10-22 | Catégorie ou sous-catégorie portant des transactions : suppression bloquée, remplacée par un archivage (`archived`), jamais de suppression silencieuse de l'historique |
+| 2026-10-22 | Bouton d'ajout dans la topbar : affiché pour Catégories (pas de sélecteur de mois sur cette page) ; reste hors topbar pour Transactions (sélecteur de mois déjà présent dans l'espace disponible) |
+| 2026-10-22 | Budget Mensuel : le prévu reste saisi au niveau catégorie uniquement ; les sous-catégories n'apparaissent qu'en lecture seule, pour la ventilation du réel |
+| 2026-10-23 | **Correction du 2026-10-22, qui inversait le niveau de saisie** : le prévu se saisit **au niveau sous-catégorie**, comme en v2 (`budget_lines.subcategory_id`) ; le prévu et le réel de la catégorie sont toujours des totaux calculés, jamais saisis directement |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 
