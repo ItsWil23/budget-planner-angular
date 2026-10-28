@@ -98,8 +98,8 @@ catégories traité au lot 4 (§ 7).
 
 0. [x] `chore/strict-typescript` : activer `strict` et `strictTemplates` dans la configuration TypeScript. Fait le
    2026-10-23 (PR en cours). Dette relevée en revue du 2026-10-22.
-1. `feat/lot1-budget-models` : modèles `BudgetLine`, `RecurringRule`, `BudgetMonth`, type `BudgetLineStatus`,
-   constante des seuils et fonction pure de statut, avec tests.
+1. [x] `feat/lot1-budget-models` : modèles `BudgetLine`, `RecurringRule`, `BudgetMonth`, type `BudgetLineStatus`,
+   constante des seuils et fonction pure de statut, avec tests. Fait le 2026-10-28 (PR en cours).
 2. `TransactionService` : `monthKey` dérivé de `date`, sélection des transactions d'un mois, correction du
    stockage d'`amountEuros` en plus d'`amountCents` dans l'état (revue du 2026-10-22), mocks de transactions
    étalés sur plusieurs mois.
