@@ -46,7 +46,7 @@ Ne pas créer de skill maison dupliquant `workflow.md` ou `AGENTS.md`.
 
 ```
 1. Choisir la tâche      → dans .ai/roadmap.md, une tâche = un point d'un lot (jamais un lot entier)
-2. Spec                  → le PM crée une tâche courte dans tasks/active/TASK-XXX-nom.md (format § 3)
+2. Spec                  → le PM crée une tâche courte dans .ai/tasks/active/TASK-XXX-nom.md (format § 3)
 3. Branche               → toi crées feat/<nom> depuis main à jour
 4. Implémentation        → l'IA dev travaille à partir du fichier de tâche, avec l'agent adapté (§ 1),
                              et ajoute les tests nécessaires
@@ -58,7 +58,7 @@ Ne pas créer de skill maison dupliquant `workflow.md` ou `AGENTS.md`.
                              documents de référence, puis relance les validations (§ 5)
 8. Itération             → corrections sur la même branche, puis nouvelles validations et revues si nécessaire
 9. Autorisation          → le PM demande l'autorisation explicite de l'utilisateur avant tout commit
-10. Clôture et PR         → après validation, le PM commit, déplace le fichier de tasks/active/ vers tasks/done/,
+10. Clôture et PR         → après validation, le PM commit, déplace le fichier de .ai/tasks/active/ vers .ai/tasks/done/,
                              commit ce déplacement sur la même branche, puis crée la pull request
 11. Merge                → l'utilisateur effectue le squash & merge dans main, puis supprime la branche
 12. Mise à jour           → je mets à jour .ai/roadmap.md (statut) et .ai/product-vision.md si une décision a été
@@ -93,7 +93,7 @@ Lot : <n° du lot dans roadmap.md>
 <sections précises de PRD.md / ARCHITECTURE.md / DESIGN_SYSTEM.md / domain-model.md concernées>
 ```
 
-Cette spec courte est conservée dans `tasks/active/TASK-XXX-nom.md` et transmise à l'IA dev avec les fichiers
+Cette spec courte est conservée dans `.ai/tasks/active/TASK-XXX-nom.md` et transmise à l'IA dev avec les fichiers
 concernés. Le fichier de tâche reste la référence jusqu'à son archivage selon le § 2.
 
 > **Piège rencontré (2026-09-25, avec Aider en terminal)** : ne jamais coller une spec longue directement dans un
