@@ -129,7 +129,7 @@ interface RecurringRule {
   id: string;
   label: string;
   categoryId: string;
-  subcategoryId?: string;
+  subcategoryId: string;   // obligatoire : une règle génère des BudgetLine, qui exigent une sous-catégorie
   amountCents: number;
   dayOfMonth?: number;     // indicatif, pour l'affichage des échéances
   startMonth: string;      // 'YYYY-MM'
