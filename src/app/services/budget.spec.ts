@@ -1,13 +1,17 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { RecurringRule } from '../models/recurring-rule';
 import { BudgetService } from './budget';
 import { CategoryService } from './category';
 import { MoneyService } from './money';
+import { RecurringRuleService } from './recurring-rule';
 
 describe('Budget Service', () => {
   let service: BudgetService;
+  let recurringRuleService: RecurringRuleService;
 
   beforeEach(() => {
-    service = new BudgetService(new MoneyService(), new CategoryService());
+    recurringRuleService = new RecurringRuleService();
+    service = new BudgetService(new MoneyService(), new CategoryService(), recurringRuleService);
   });
 
   it('démarre avec un état vide', () => {
@@ -122,5 +126,130 @@ describe('Budget Service', () => {
 
     expect(october).toHaveLength(0);
     expect(service.lines()).toHaveLength(1);
+  });
+
+  describe('openMonth', () => {
+    const buildRule = (overrides: Partial<RecurringRule>): RecurringRule => ({
+      id: 'rule-test',
+      label: 'Règle de test',
+      categoryId: 'cat-2',
+      subcategoryId: 'sub-2',
+      amountCents: 85000,
+      startMonth: '2026-07',
+      active: true,
+      ...overrides,
+    });
+
+    it('crée une ligne par règle active du mois de juillet, avec sourceRuleId', () => {
+      const result = service.openMonth('2026-07');
+
+      expect(result).toEqual({ monthKey: '2026-07', created: 3, skipped: 0, ignoredRuleIds: [] });
+      expect(service.lines()).toEqual([
+        expect.objectContaining({ subcategoryId: 'sub-1', plannedAmountCents: 245000, sourceRuleId: 'rule-1' }),
+        expect.objectContaining({ subcategoryId: 'sub-2', plannedAmountCents: 85000, sourceRuleId: 'rule-2' }),
+        expect.objectContaining({ subcategoryId: 'sub-3', plannedAmountCents: 3999, sourceRuleId: 'rule-3' }),
+      ]);
+    });
+
+    it('n’applique pas la règle inactive ni la règle terminée en octobre', () => {
+      const result = service.openMonth('2026-10');
+
+      expect(result).toEqual({ monthKey: '2026-10', created: 2, skipped: 0, ignoredRuleIds: [] });
+      expect(service.lines().map(line => line.sourceRuleId)).toEqual(['rule-1', 'rule-2']);
+    });
+
+    it('retient la première règle valide par sous-catégorie et ignore les suivantes', () => {
+      const ruleA = buildRule({ id: 'rule-a', amountCents: 85000 });
+      const ruleB = buildRule({ id: 'rule-b', amountCents: 1000 });
+      vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([ruleA, ruleB]);
+
+      const result = service.openMonth('2026-07');
+
+      expect(result).toEqual({ monthKey: '2026-07', created: 1, skipped: 0, ignoredRuleIds: ['rule-b'] });
+      expect(service.lines()).toEqual([
+        expect.objectContaining({ subcategoryId: 'sub-2', plannedAmountCents: 85000, sourceRuleId: 'rule-a' }),
+      ]);
+    });
+
+    it.each([0, -1, 85000.5])(
+      'ignore une règle à montant invalide (%s) sans créer de ligne',
+      amountCents => {
+        const rule = buildRule({ id: 'rule-invalid', amountCents });
+        vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([rule]);
+
+        const result = service.openMonth('2026-07');
+
+        expect(result).toEqual({
+          monthKey: '2026-07',
+          created: 0,
+          skipped: 0,
+          ignoredRuleIds: ['rule-invalid'],
+        });
+        expect(service.lines()).toEqual([]);
+      },
+    );
+
+    it('est idempotent : une seconde ouverture ne change rien et garde les mêmes id', () => {
+      service.openMonth('2026-07');
+      const firstIds = service.lines().map(line => line.id);
+
+      const second = service.openMonth('2026-07');
+
+      expect(second).toEqual({ monthKey: '2026-07', created: 0, skipped: 0, ignoredRuleIds: [] });
+      expect(service.lines().map(line => line.id)).toEqual(firstIds);
+      expect(service.months()).toHaveLength(1);
+    });
+
+    it('n’écrase pas une ligne saisie avant ouverture et la compte comme ignorée', () => {
+      service.setPlannedAmount('2026-07', 'sub-2', 900);
+
+      const result = service.openMonth('2026-07');
+
+      expect(result).toEqual({ monthKey: '2026-07', created: 2, skipped: 1, ignoredRuleIds: [] });
+      expect(service.plannedCentsFor('2026-07', 'sub-2')).toBe(90000);
+      expect(service.lines().find(line => line.subcategoryId === 'sub-2')?.sourceRuleId).toBeUndefined();
+    });
+
+    it('ne recrée pas une ligne mise à 0 par l’utilisateur après ouverture', () => {
+      service.openMonth('2026-07');
+      service.setPlannedAmount('2026-07', 'sub-2', 0);
+
+      const result = service.openMonth('2026-07');
+
+      expect(result.created).toBe(0);
+      expect(service.plannedCentsFor('2026-07', 'sub-2')).toBe(0);
+    });
+
+    it('ignore et signale une règle dont la sous-catégorie est inconnue', () => {
+      const rule = buildRule({ id: 'rule-99', subcategoryId: 'sub-99' });
+      vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([rule]);
+
+      const result = service.openMonth('2026-07');
+
+      expect(result).toEqual({ monthKey: '2026-07', created: 0, skipped: 0, ignoredRuleIds: ['rule-99'] });
+      expect(service.lines()).toEqual([]);
+    });
+
+    it('ignore et signale une règle dont le categoryId ne correspond pas à la sous-catégorie', () => {
+      const rule = buildRule({ id: 'rule-mismatch', categoryId: 'cat-1', subcategoryId: 'sub-2' });
+      vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([rule]);
+
+      const result = service.openMonth('2026-07');
+
+      expect(result).toEqual({ monthKey: '2026-07', created: 0, skipped: 0, ignoredRuleIds: ['rule-mismatch'] });
+      expect(service.lines()).toEqual([]);
+    });
+
+    it('refuse un mois invalide', () => {
+      expect(() => service.openMonth('2026-13')).toThrow('Invalid month key format');
+    });
+
+    it('indique si un mois est ouvert', () => {
+      expect(service.isMonthOpened('2026-07')).toBe(false);
+
+      service.openMonth('2026-07');
+
+      expect(service.isMonthOpened('2026-07')).toBe(true);
+    });
   });
 });
