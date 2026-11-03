@@ -1,7 +1,7 @@
 # Vision produit — Budget Planner v3
 
 > Source de vérité produit. Toute décision de design ou d'implémentation doit pouvoir se justifier par ce document.
-> Dernière mise à jour : 2026-10-23
+> Dernière mise à jour : 2026-11-03
 
 ---
 
@@ -264,6 +264,7 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-10-22 | Bouton d'ajout dans la topbar : affiché pour Catégories (pas de sélecteur de mois sur cette page) ; reste hors topbar pour Transactions (sélecteur de mois déjà présent dans l'espace disponible) |
 | 2026-10-22 | Budget Mensuel : le prévu reste saisi au niveau catégorie uniquement ; les sous-catégories n'apparaissent qu'en lecture seule, pour la ventilation du réel |
 | 2026-10-23 | **Correction du 2026-10-22, qui inversait le niveau de saisie** : le prévu se saisit **au niveau sous-catégorie**, comme en v2 (`budget_lines.subcategory_id`) ; le prévu et le réel de la catégorie sont toujours des totaux calculés, jamais saisis directement |
+| 2026-11-03 | Règles récurrentes : `startMonth` et `endMonth` sont inclusifs ; une règle sans `endMonth` est active sans fin |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 
