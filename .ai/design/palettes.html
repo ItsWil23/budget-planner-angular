@@ -156,6 +156,7 @@
     font-size: 11px; padding: 4px 10px; border-radius: 999px;
     background: var(--ok-soft); color: var(--ok);
   }
+  .pill--warn { background: var(--warn-soft); color: var(--warn); }
 
   .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .card {
@@ -173,10 +174,12 @@
   }
   .line span:first-child { flex: 1; }
   .ratio { font-size: 12px; color: var(--muted); }
+  .ratio--warn { color: var(--warn); }
   .ratio--over { color: var(--over); }
 
   .bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
   .bar i { display: block; height: 100%; background: var(--ok); border-radius: 999px; }
+  .bar--warn i { background: var(--warn); }
   .bar--over i { background: var(--over); }
 
   .tx {
@@ -200,7 +203,8 @@
   </p>
   <p>
     Règles communes : revenus colorés et signés «&nbsp;+&nbsp;», dépenses en couleur de texte par défaut et signées «&nbsp;−&nbsp;»,
-    vert réservé à la santé budgétaire, rouge réservé au dépassement. Cartes à bordure d'un pixel, sans ombre.
+    vert pour « sous le budget », ambre pour « proche de la limite » (80–100 %), rouge pour « dépassé ».
+    Cartes à bordure d'un pixel, sans ombre.
     Chiffres en graisse normale, labels en petites majuscules sourdes.
   </p>
   <p>
@@ -296,6 +300,8 @@
             <span class="label">Budget par catégorie</span>
             <div class="line"><span>Courses</span><span class="ratio">320 / 400 €</span></div>
             <div class="bar"><i style="width:80%"></i></div>
+            <div class="line"><span>Internet</span><span class="ratio ratio--warn">89 / 100 €</span><span class="pill pill--warn">89 %</span></div>
+            <div class="bar bar--warn"><i style="width:89%"></i></div>
             <div class="line"><span>Loisirs</span><span class="ratio ratio--over">215 / 150 €</span></div>
             <div class="bar bar--over"><i style="width:100%"></i></div>
           </div>
@@ -318,11 +324,13 @@ const semantics = {
   dark: {
     income: '#7dd3a0',
     ok: '#7dd3a0', 'ok-soft': 'rgba(125,211,160,.14)',
+    warn: '#e8c56b', 'warn-soft': 'rgba(232,197,107,.14)',
     over: '#f17c7c', 'over-soft': 'rgba(241,124,124,.15)'
   },
   light: {
     income: '#15803d',
     ok: '#15803d', 'ok-soft': 'rgba(21,128,61,.12)',
+    warn: '#946000', 'warn-soft': 'rgba(148,96,0,.10)',
     over: '#c93c37', 'over-soft': 'rgba(201,60,55,.10)'
   }
 };
@@ -522,7 +530,7 @@ function render() {
     stage.style.setProperty('--mesh', buildMesh(vars.hues, blobs));
 
     const sw = section.querySelector('.swatches');
-    for (const key of ['stage', 'surface', 'border', 'accent', 'income', 'over']) {
+    for (const key of ['stage', 'surface', 'border', 'accent', 'income', 'warn', 'over']) {
       const i = document.createElement('i');
       i.style.background = vars[key];
       i.title = key + ' · ' + vars[key];

@@ -4,7 +4,7 @@
 > [`.ai/product-vision.md`](./.ai/product-vision.md) § 11. Aucune couleur, taille ou espacement ne doit être écrit
 > en dur dans un composant : tout passe par les tokens de ce document.
 > Exploration visuelle : [`.ai/design/palettes.html`](./.ai/design/palettes.html), [`.ai/design/fonts.html`](./.ai/design/fonts.html).
-> Dernière mise à jour : 2026-10-20
+> Dernière mise à jour : 2026-11-03
 
 ---
 
@@ -140,17 +140,31 @@ vient exclusivement de la luminance et de la bordure.
 ### 4.3 Couleurs sémantiques — invariantes, quelle que soit la palette
 
 ```css
---color-income:      #7dd3a0;  /* clair : #15803d */
---color-ok:          #7dd3a0;  /* clair : #15803d */
+/* Thème sombre (valeurs par défaut) */
+--color-income:      #7dd3a0;
+--color-ok:          #7dd3a0;
 --color-ok-soft:      rgba(125,211,160,.14);
---color-over:        #f17c7c;  /* clair : #c93c37 */
+--color-over:        #f17c7c;
 --color-over-soft:    rgba(241,124,124,.15);
---color-warn:        #e8c56b;  /* à valider visuellement — statut « on-track » 80–100 % */
+--color-warn:        #e8c56b;
 --color-warn-soft:    rgba(232,197,107,.14);
+
+/* Thème clair (valeurs validées visuellement le 2026-11-03) */
+[data-theme='light'] {
+  --color-income:      #15803d;
+  --color-ok:          #15803d;
+  --color-ok-soft:      rgba(21,128,61,.12);
+  --color-over:        #c93c37;
+  --color-over-soft:    rgba(201,60,55,.10);
+  --color-warn:        #946000;
+  --color-warn-soft:    rgba(148,96,0,.10);
+}
 ```
 
-> `--color-warn` n'a pas encore été testé sur maquette — à valider avant implémentation du composant barre de
-> progression (statut `on-track`, voir `domain-model.md` § 3).
+Le contraste des tokens clairs sur `--surface-card: #ffffff` est ≥ 4.5:1 pour les couleurs de texte :
+`--color-income` / `--color-ok` 5.02:1, `--color-over` 5.02:1, `--color-warn` 5.34:1. Les tokens sémantiques
+varient selon le thème, mais restent invariants quelle que soit la palette. `--color-warn` représente le statut
+`on-track` (80–100 % ; `domain-model.md` § 3) et a été validé visuellement en thème clair et sombre le 2026-11-03.
 
 ### 4.4 Palettes — choix utilisateur
 
