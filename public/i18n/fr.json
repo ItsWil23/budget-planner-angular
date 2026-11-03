@@ -131,7 +131,13 @@
     "title": "Dashboard"
   },
   "budgetMensuel": {
-    "title": "Budget Mensuel"
+    "title": "Budget Mensuel",
+    "allocation": {
+      "label": "Allocation du mois",
+      "income": "Revenus prévus",
+      "expense": "Dépenses prévues",
+      "unallocated": "Montant non alloué"
+    }
   },
   "settings": {
     "title": "Paramètres"

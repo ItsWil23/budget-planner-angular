@@ -1,0 +1,60 @@
+:host {
+  display: block;
+}
+
+.allocation {
+  padding: var(--space-lg);
+  background-color: var(--surface-card);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.metrics {
+  display: grid;
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-md);
+}
+
+.metric-label,
+.metric-value {
+  margin: 0;
+}
+
+.metric-label {
+  font: var(--text-caption);
+}
+
+.metric-value {
+  font: var(--num-emphasis);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+@media (min-width: 768px) {
+  .allocation {
+    padding: var(--space-xl);
+  }
+
+  .metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-xl);
+  }
+
+  .metric {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-xs);
+  }
+
+  .metric-value {
+    text-align: center;
+  }
+}

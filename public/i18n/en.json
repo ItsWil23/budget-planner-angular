@@ -131,7 +131,13 @@
     "title": "Dashboard"
   },
   "budgetMensuel": {
-    "title": "Monthly budget"
+    "title": "Monthly budget",
+    "allocation": {
+      "label": "Monthly allocation",
+      "income": "Planned income",
+      "expense": "Planned expenses",
+      "unallocated": "Unallocated amount"
+    }
   },
   "settings": {
     "title": "Settings"
