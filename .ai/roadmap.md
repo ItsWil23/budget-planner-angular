@@ -105,8 +105,9 @@ catégories traité au lot 4 (§ 7).
 3. [x] `RecurringRuleService` : lecture seule, règles actives d'un mois ; pas d'interface de gestion dans cette tâche.
    Fait le 2026-11-03.
 4. [x] `BudgetService` (4a) : état des `BudgetLine`, unicité par mois/sous-catégorie, saisie du prévu (euros vers
-  centimes). Fait le 2026-11-03 (PR en cours).
-  `BudgetService` (4b) : ouverture idempotente d'un mois depuis les `RecurringRule` actives (après merge de la 4a).
+  centimes). Fait le 2026-11-03 (PR #40).
+  [x] `BudgetService` (4b) : ouverture idempotente d'un mois depuis les `RecurringRule` actives. Fait le
+  2026-11-03 (PR en cours).
 5. `BudgetService` (2/3) : réel et statut par sous-catégorie et par catégorie agrégée (`domain-model.md` § 3),
    totaux du bandeau d'allocation.
 6. `BudgetService` (3/3) : solde d'ouverture reporté et ajustable, portée de la cascade décidée le 2026-10-22.
