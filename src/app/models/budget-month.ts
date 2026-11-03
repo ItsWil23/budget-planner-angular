@@ -4,3 +4,10 @@ export interface BudgetMonth {
   openingBalanceOverridden: boolean;
   initialized: boolean;
 }
+
+export interface OpenMonthResult {
+  monthKey: string;
+  created: number;
+  skipped: number;
+  ignoredRuleIds: string[];
+}
