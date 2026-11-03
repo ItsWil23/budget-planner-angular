@@ -265,6 +265,7 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-10-22 | Budget Mensuel : le prévu reste saisi au niveau catégorie uniquement ; les sous-catégories n'apparaissent qu'en lecture seule, pour la ventilation du réel |
 | 2026-10-23 | **Correction du 2026-10-22, qui inversait le niveau de saisie** : le prévu se saisit **au niveau sous-catégorie**, comme en v2 (`budget_lines.subcategory_id`) ; le prévu et le réel de la catégorie sont toujours des totaux calculés, jamais saisis directement |
 | 2026-11-03 | Règles récurrentes : `startMonth` et `endMonth` sont inclusifs ; une règle sans `endMonth` est active sans fin |
+| 2026-11-03 | Solde d'ouverture : report de la clôture réelle du mois précédent initialisé ; ouverture à 0 si le mois précédent n'est pas initialisé. Un override manuel reste fixe, puis la cascade reprend depuis sa clôture réelle jusqu'au prochain override ; l'override peut être effacé pour revenir au calcul automatique. Les changements de transactions recalculent la cascade, les changements de prévu non. |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 

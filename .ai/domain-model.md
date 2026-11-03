@@ -232,11 +232,14 @@ Seuils centralisés dans une constante, jamais en dur dans un composant.
 
 Un mois n'est **jamais verrouillé** : l'utilisateur peut corriger un mois passé. Le report se recalcule en cascade, sauf sur les mois dont l'ouverture a été ajustée manuellement.
 
-**Portée de la cascade (décision 2026-10-22)** : au changement d'un mois M, le solde recalculé se propage aux mois
-suivants, mois par mois, tant que `openingBalanceOverridden` est `false`. Dès qu'un mois suivant a
-`openingBalanceOverridden: true`, la cascade s'arrête à cet endroit : son solde d'ouverture reste la valeur
-ajustée à la main, et les mois encore après lui ne sont pas recalculés non plus (ils dépendent de ce solde ajusté,
-pas de la chaîne d'origine).
+**Portée de la cascade (décision 2026-11-03)** : si le mois calendaire précédent est initialisé, l'ouverture
+automatique d'un mois vaut la clôture réelle de ce mois précédent ; si le précédent n'est pas initialisé, elle vaut
+`0` centime. Un mois dont `openingBalanceOverridden` vaut `true` conserve son ouverture manuelle fixe. La
+propagation reprend au mois suivant à partir de la clôture réelle de ce mois ajusté, et continue jusqu'au prochain
+mois ajusté. Effacer l'ajustement remet `openingBalanceOverridden` à `false` et l'ouverture au calcul automatique.
+Les transactions modifient la clôture réelle et recalculent les ouvertures automatiques en aval ; les changements de
+`BudgetLine` n'ont aucun effet sur le report réel. Une ouverture à `0` n'initialise pas automatiquement les mois
+antérieurs.
 
 ## 5. Conventions techniques
 

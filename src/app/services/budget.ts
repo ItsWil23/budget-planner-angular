@@ -46,6 +46,28 @@ function buildFigures(plannedAmountCents: number, actualAmountCents: number): Bu
   };
 }
 
+interface MonthlyActualTotals {
+  incomeCents: number;
+  expenseCents: number;
+}
+
+interface ResolvedMonths {
+  months: BudgetMonth[];
+  closingCentsByMonthKey: ReadonlyMap<string, number>;
+}
+
+function netCents(totals: MonthlyActualTotals | undefined): number {
+  return totals ? totals.incomeCents - totals.expenseCents : 0;
+}
+
+function previousMonthKey(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  const monthIndex = year * 12 + (month - 1) - 1;
+  const previousYear = Math.floor(monthIndex / 12);
+  const previousMonth = (monthIndex % 12) + 1;
+  return `${String(previousYear).padStart(4, '0')}-${String(previousMonth).padStart(2, '0')}`;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -54,10 +76,50 @@ export class BudgetService {
   private readonly _months = signal<BudgetMonth[]>([]);
 
   readonly lines = this._lines.asReadonly();
-  readonly months = this._months.asReadonly();
+  readonly months = computed<BudgetMonth[]>(() => this.resolvedMonths().months);
+
+  private readonly actualTotalsByMonthKey = computed<Map<string, MonthlyActualTotals>>(() => {
+    const totals = new Map<string, MonthlyActualTotals>();
+    for (const transaction of this.transactionService.transactions()) {
+      const current = totals.get(transaction.monthKey) ?? { incomeCents: 0, expenseCents: 0 };
+      if (transaction.type === 'income') {
+        current.incomeCents += transaction.amountCents;
+      } else {
+        current.expenseCents += transaction.amountCents;
+      }
+      totals.set(transaction.monthKey, current);
+    }
+    return totals;
+  });
+
+  private readonly resolvedMonths = computed<ResolvedMonths>(() => {
+    const totalsByMonthKey = this.actualTotalsByMonthKey();
+    const closingCentsByMonthKey = new Map<string, number>();
+    const months: BudgetMonth[] = [];
+
+    // Parcours par ordre croissant : si M-1 est initialisé, il a déjà été traité juste avant M.
+    const sortedMonths = [...this._months()].sort((left, right) =>
+      left.monthKey.localeCompare(right.monthKey),
+    );
+    for (const month of sortedMonths) {
+      const automaticOpeningCents = closingCentsByMonthKey.get(previousMonthKey(month.monthKey)) ?? 0;
+      const openingBalanceCents = month.openingBalanceOverridden
+        ? month.openingBalanceCents
+        : automaticOpeningCents;
+
+      closingCentsByMonthKey.set(
+        month.monthKey,
+        openingBalanceCents + netCents(totalsByMonthKey.get(month.monthKey)),
+      );
+      months.push({ ...month, openingBalanceCents });
+    }
+
+    return { months, closingCentsByMonthKey };
+  });
 
   readonly monthSummary = computed<BudgetMonthSummary>(() => {
     const monthKey = this.monthContextService.monthKey();
+
     const monthLines = this._lines().filter(line => line.monthKey === monthKey);
     const monthTransactions: Transaction[] = this.transactionService
       .transactions()
@@ -117,6 +179,8 @@ export class BudgetService {
       incomePlannedCents,
       expensePlannedCents,
       unallocatedCents: incomePlannedCents - expensePlannedCents,
+      openingBalanceCents: this.openingCentsFor(monthKey),
+      actualClosingBalanceCents: this.closingCentsFor(monthKey),
     };
   });
 
@@ -239,9 +303,10 @@ export class BudgetService {
       this._lines.update(lines => [...lines, ...generatedLines]);
     }
 
+    const openingBalanceCents = this.automaticOpeningCentsFor(monthKey);
     this._months.update(months => [
       ...months,
-      { monthKey, openingBalanceCents: 0, openingBalanceOverridden: false, initialized: true },
+      { monthKey, openingBalanceCents, openingBalanceOverridden: false, initialized: true },
     ]);
 
     return result;
@@ -249,6 +314,77 @@ export class BudgetService {
 
   isMonthOpened(monthKey: string): boolean {
     return this._months().some(month => month.monthKey === monthKey && month.initialized);
+  }
+
+  openingBalanceCentsFor(monthKey: string): number {
+    this.assertValidMonthKey(monthKey);
+    return this.openingCentsFor(monthKey);
+  }
+
+  actualClosingBalanceCentsFor(monthKey: string): number {
+    this.assertValidMonthKey(monthKey);
+    return this.closingCentsFor(monthKey);
+  }
+
+  setOpeningBalanceOverride(monthKey: string, openingBalanceCents: number): BudgetMonth {
+    this.assertValidMonthKey(monthKey);
+    this.assertMonthInitialized(monthKey);
+    if (!Number.isInteger(openingBalanceCents)) {
+      throw new Error('Invalid opening balance');
+    }
+
+    this._months.update(months =>
+      months.map(month =>
+        month.monthKey === monthKey
+          ? { ...month, openingBalanceCents, openingBalanceOverridden: true }
+          : month,
+      ),
+    );
+
+    return this.resolvedMonth(monthKey);
+  }
+
+  clearOpeningBalanceOverride(monthKey: string): BudgetMonth {
+    this.assertValidMonthKey(monthKey);
+    this.assertMonthInitialized(monthKey);
+
+    const openingBalanceCents = this.automaticOpeningCentsFor(monthKey);
+    this._months.update(months =>
+      months.map(month =>
+        month.monthKey === monthKey
+          ? { ...month, openingBalanceCents, openingBalanceOverridden: false }
+          : month,
+      ),
+    );
+
+    return this.resolvedMonth(monthKey);
+  }
+
+  private openingCentsFor(monthKey: string): number {
+    const month = this.resolvedMonths().months.find(current => current.monthKey === monthKey);
+    return month ? month.openingBalanceCents : this.automaticOpeningCentsFor(monthKey);
+  }
+
+  private automaticOpeningCentsFor(monthKey: string): number {
+    return this.resolvedMonths().closingCentsByMonthKey.get(previousMonthKey(monthKey)) ?? 0;
+  }
+
+  private closingCentsFor(monthKey: string): number {
+    return this.openingCentsFor(monthKey) + netCents(this.actualTotalsByMonthKey().get(monthKey));
+  }
+
+  private resolvedMonth(monthKey: string): BudgetMonth {
+    const month = this.resolvedMonths().months.find(current => current.monthKey === monthKey);
+    if (!month) {
+      throw new Error('Budget month not initialized');
+    }
+    return month;
+  }
+
+  private assertMonthInitialized(monthKey: string): void {
+    if (!this.isMonthOpened(monthKey)) {
+      throw new Error('Budget month not initialized');
+    }
   }
 
   private isValidRuleAmount(rule: RecurringRule): boolean {
