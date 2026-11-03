@@ -1,0 +1,43 @@
+:host {
+  display: block;
+}
+
+.progress-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.track {
+  flex: 1;
+  min-width: 0;
+  height: var(--size-progress-track);
+  overflow: hidden;
+  background-color: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+
+  &.under {
+    background-color: var(--color-ok);
+  }
+
+  &.on-track {
+    background-color: var(--color-warn);
+  }
+
+  &.over {
+    background-color: var(--color-over);
+  }
+}
+
+.percent {
+  font: var(--num-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

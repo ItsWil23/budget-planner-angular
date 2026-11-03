@@ -1,0 +1,14 @@
+<div class="progress-bar">
+  <div
+    class="track"
+    role="progressbar"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    [attr.aria-valuenow]="ariaValueNow()"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-valuetext]="ariaValueText()"
+  >
+    <span class="fill" [class]="status()" [style.width.%]="fillWidth()"></span>
+  </div>
+  <span class="percent">{{ percentLabel() }}</span>
+</div>

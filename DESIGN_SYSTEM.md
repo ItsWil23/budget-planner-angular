@@ -363,6 +363,7 @@ si aucun token existant ne convient — jamais une taille en dur pour un seul co
 --size-bar-thickness: 2px;
 --size-focus-ring: 2px;
 --size-focus-offset: 2px;
+--size-progress-track: 6px;  /* hauteur de la piste du composant de progression */
 --duration-slow: 320ms;   /* transition du hamburger */
 ```
 
@@ -428,7 +429,6 @@ Traits fins (style *line icons*, ex. Lucide/Feather), `stroke-width` cohérent, 
 ## 12. Ce que ce document ne couvre pas encore
 
 - Palette catégorielle complète (8–10 teintes) — à produire avant la reprise de l'écran Catégories.
-- `--color-warn` non validé visuellement.
 - Composants avancés du Dashboard v3.1 (catalogue de widgets, drag & drop) — hors périmètre tant que le Dashboard
   fixe n'est pas livré.
 - Design de la landing page (hors application connectée) — patterns déjà actés dans le journal `refonte-angular.md`
