@@ -1,7 +1,7 @@
 # Modèle de domaine — Budget Planner v3
 
 > Contrat de données de référence. Le front est codé contre ce modèle ; le backend (phase B) devra le respecter.
-> Dernière mise à jour : 2026-10-23
+> Dernière mise à jour : 2026-11-03
 
 ---
 
@@ -92,7 +92,7 @@ interface Transaction {
   categoryId: string;
   subcategoryId: string;   // obligatoire
   type: CategoryType;      // dérivé de la catégorie, jamais saisi
-  createdAt: string;
+  createdAt: string;       // horodatage ISO complet, fixé à l'ajout
 }
 ```
 
@@ -133,12 +133,14 @@ interface RecurringRule {
   amountCents: number;
   dayOfMonth?: number;     // indicatif, pour l'affichage des échéances
   startMonth: string;      // 'YYYY-MM'
-  endMonth?: string;       // absent = sans fin
+  endMonth?: string;       // inclusif : active le mois de endMonth ; absent = sans fin
   active: boolean;
 }
 ```
 
 Une règle **ne crée jamais de transaction**. Elle pré-remplit les `BudgetLine` à l'ouverture d'un mois. L'utilisateur peut modifier ou supprimer la ligne générée sans toucher à la règle.
+
+`startMonth` et `endMonth` sont **inclusifs** : une règle est active de `startMonth` à `endMonth` compris, et sans fin si `endMonth` est absent. Une règle `active: false` n'est jamais appliquée. Ces règles sont portées par `RecurringRuleService.activeRulesForMonth()`.
 
 ### `BudgetMonth` — le contexte
 
