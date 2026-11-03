@@ -111,9 +111,9 @@ catégories traité au lot 4 (§ 7).
 5. [x] `BudgetService` : réel et statut par sous-catégorie et par catégorie agrégée (`domain-model.md` § 3),
    totaux du bandeau d'allocation. Fait le 2026-11-03 (PR #42).
 6. [x] `BudgetService` : solde d'ouverture reporté depuis la clôture réelle, ajustable, avec cascade qui reprend après
-  un mois override et retour au calcul automatique. Fait le 2026-11-03 (PR en cours).
-7. Formateur monétaire centralisé (pipe), basé sur `SettingsService` (devise, locale), signes `+`/`−`
-   (`DESIGN_SYSTEM.md` § 4.1).
+   un mois override et retour au calcul automatique. Fait le 2026-11-03 (PR #43).
+7. [x] Formateur monétaire centralisé (`MoneyPipe`), basé sur `SettingsService` (devise, locale), signes `+`/`−`
+   (`DESIGN_SYSTEM.md` § 4.1). Fait le 2026-11-03 (PR en cours).
 8. Tokens sémantiques en thème clair + validation visuelle de `--color-warn` (`DESIGN_SYSTEM.md` § 4.3) —
    nécessite une validation visuelle avant implémentation.
 9. Composant `ui/progress-bar`.

@@ -1,15 +1,17 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { Category, Subcategory } from '../../../models/category';
 import { TransactionPresentation } from '../../../models/transactions';
-import { DatePipe, CurrencyPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { SettingsService } from '../../../services/settings';
+import { MoneyPipe } from '../money-pipe/money-pipe';
 
 @Component({
   selector: 'app-transaction-list',
   imports: [
     DatePipe,
-    CurrencyPipe,
     TranslocoPipe,
+    MoneyPipe,
   ],
   templateUrl: './transaction-list.html',
   styleUrl: './transaction-list.scss',
@@ -22,6 +24,8 @@ export class TransactionList {
 
   @Output() editTransaction = new EventEmitter<TransactionPresentation>();
   @Output() deleteTransaction = new EventEmitter<string>();
+
+  protected readonly settings = inject(SettingsService).settings;
 
   protected getCategoryById(categoryId: string): Category {
     const foundCategory: Category | undefined = this.categories.find(

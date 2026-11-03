@@ -16,6 +16,6 @@ export type TransactionInput = Omit<Transaction, 'id' | 'monthKey' | 'amountCent
   amountEuros: number;
 };
 
-export type TransactionPresentation = Omit<Transaction, 'amountCents'> & {
+export type TransactionPresentation = Transaction & {
   amountEuros: number;
 };
