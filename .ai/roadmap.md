@@ -100,9 +100,8 @@ catégories traité au lot 4 (§ 7).
    2026-10-23 (PR #34). Dette relevée en revue du 2026-10-22.
 1. [x] `feat/lot1-budget-models` : modèles `BudgetLine`, `RecurringRule`, `BudgetMonth`, type `BudgetLineStatus`,
    constante des seuils et fonction pure de statut, avec tests. Fait le 2026-10-28 (PR #35).
-2. `TransactionService` : `monthKey` dérivé de `date`, sélection des transactions d'un mois, correction du
-   stockage d'`amountEuros` en plus d'`amountCents` dans l'état (revue du 2026-10-22), mocks de transactions
-   étalés sur plusieurs mois.
+2. [x] `TransactionService` : `monthKey` dérivé de `date`, sélection des transactions d'un mois, `amountEuros` retiré
+   de l'état, mocks étalés sur `2026-07` à `2026-12`. Fait le 2026-11-03.
 3. `RecurringRuleService` : lecture seule, règles actives d'un mois ; pas d'interface de gestion dans cette tâche.
 4. `BudgetService` (1/3) : état des `BudgetLine`, unicité par mois/sous-catégorie, saisie du prévu (euros vers
    centimes), ouverture idempotente d'un mois depuis les `RecurringRule` actives.
