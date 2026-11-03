@@ -50,7 +50,6 @@ export class TransactionForm {
     if (validForm.amountEuros === null) return;
     const newTransactionType = this.getCategoryById(validForm.categoryId).type;
     const newTransaction: TransactionInput = {
-      id: crypto.randomUUID(),
       ...validForm,
       amountEuros: validForm.amountEuros,
       type: newTransactionType,
