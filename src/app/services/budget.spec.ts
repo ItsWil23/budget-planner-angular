@@ -1,17 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RecurringRule } from '../models/recurring-rule';
+import { BudgetCategorySummary, BudgetMonthSummary, BudgetSubcategorySummary } from '../models/budget-summary';
 import { BudgetService } from './budget';
 import { CategoryService } from './category';
 import { MoneyService } from './money';
+import { MonthContextService } from './month-context';
 import { RecurringRuleService } from './recurring-rule';
+import { TransactionService } from './transaction';
 
 describe('Budget Service', () => {
   let service: BudgetService;
+  let categoryService: CategoryService;
   let recurringRuleService: RecurringRuleService;
+  let transactionService: TransactionService;
+  let monthContext: MonthContextService;
 
   beforeEach(() => {
+    categoryService = new CategoryService();
     recurringRuleService = new RecurringRuleService();
-    service = new BudgetService(new MoneyService(), new CategoryService(), recurringRuleService);
+    transactionService = new TransactionService(new MoneyService());
+    monthContext = new MonthContextService();
+    service = new BudgetService(
+      new MoneyService(),
+      categoryService,
+      recurringRuleService,
+      transactionService,
+      monthContext,
+    );
   });
 
   it('démarre avec un état vide', () => {
@@ -250,6 +265,248 @@ describe('Budget Service', () => {
       service.openMonth('2026-07');
 
       expect(service.isMonthOpened('2026-07')).toBe(true);
+    });
+  });
+
+  describe('monthSummary', () => {
+    type SummaryAmountKey = 'plannedAmountCents' | 'actualAmountCents' | 'varianceCents';
+
+    const findCategory = (summary: BudgetMonthSummary, categoryId: string): BudgetCategorySummary => {
+      const category = summary.categories.find(item => item.categoryId === categoryId);
+      if (!category) {
+        throw new Error(`Missing category ${categoryId}`);
+      }
+      return category;
+    };
+
+    const findSubcategory = (
+      summary: BudgetMonthSummary,
+      subcategoryId: string,
+    ): BudgetSubcategorySummary => {
+      const subcategory = summary.categories
+        .flatMap(category => category.subcategories)
+        .find(item => item.subcategoryId === subcategoryId);
+      if (!subcategory) {
+        throw new Error(`Missing subcategory ${subcategoryId}`);
+      }
+      return subcategory;
+    };
+
+    const sumOf = (items: BudgetSubcategorySummary[], key: SummaryAmountKey): number =>
+      items.reduce((total, item) => total + item[key], 0);
+
+    beforeEach(() => {
+      monthContext.setMonth('2026-07');
+    });
+
+    it('calcule les réels de juillet depuis les transactions des mocks', () => {
+      const summary = service.monthSummary();
+
+      expect(summary.monthKey).toBe('2026-07');
+      expect(findSubcategory(summary, 'sub-1')).toEqual(
+        expect.objectContaining({
+          categoryId: 'cat-1',
+          categoryType: 'income',
+          plannedAmountCents: 0,
+          actualAmountCents: 245000,
+          varianceCents: 245000,
+        }),
+      );
+      expect(findSubcategory(summary, 'sub-2').actualAmountCents).toBe(85000);
+      expect(findCategory(summary, 'cat-1').actualAmountCents).toBe(245000);
+      expect(findCategory(summary, 'cat-2').actualAmountCents).toBe(85000);
+      expect(findCategory(summary, 'cat-3').actualAmountCents).toBe(0);
+    });
+
+    it('garde toutes les catégories dans l’ordre du CategoryService, y compris cat-4 vide', () => {
+      const summary = service.monthSummary();
+
+      expect(summary.categories.map(category => category.categoryId)).toEqual(
+        categoryService.categories().map(category => category.id),
+      );
+      expect(findCategory(summary, 'cat-4')).toEqual({
+        categoryId: 'cat-4',
+        categoryType: 'expense',
+        plannedAmountCents: 0,
+        actualAmountCents: 0,
+        varianceCents: 0,
+        consumptionRate: undefined,
+        status: undefined,
+        subcategories: [],
+      });
+    });
+
+    it('donne un réel à 0, un écart négatif, un taux 0 et le statut under à un prévu sans transaction', () => {
+      service.setPlannedAmount('2026-07', 'sub-5', 100);
+      const summary = service.monthSummary();
+
+      expect(findSubcategory(summary, 'sub-5')).toEqual(
+        expect.objectContaining({
+          plannedAmountCents: 10000,
+          actualAmountCents: 0,
+          varianceCents: -10000,
+          consumptionRate: 0,
+          status: 'under',
+        }),
+      );
+      expect(findCategory(summary, 'cat-3')).toEqual(
+        expect.objectContaining({
+          plannedAmountCents: 10000,
+          actualAmountCents: 0,
+          varianceCents: -10000,
+          consumptionRate: 0,
+          status: 'under',
+        }),
+      );
+    });
+
+    it('garde une sous-catégorie avec réel sans prévu, taux et statut indéfinis', () => {
+      monthContext.setMonth('2026-08');
+      const summary = service.monthSummary();
+
+      expect(findSubcategory(summary, 'sub-3')).toEqual(
+        expect.objectContaining({
+          plannedAmountCents: 0,
+          actualAmountCents: 3999,
+          varianceCents: 3999,
+          consumptionRate: undefined,
+          status: undefined,
+        }),
+      );
+    });
+
+    it('agrège le réel d’une catégorie dont le prévu total vaut 0, taux et statut indéfinis', () => {
+      monthContext.setMonth('2026-08');
+      const category = findCategory(service.monthSummary(), 'cat-2');
+
+      expect(category).toEqual(
+        expect.objectContaining({
+          plannedAmountCents: 0,
+          actualAmountCents: 11239,
+          varianceCents: 11239,
+          consumptionRate: undefined,
+          status: undefined,
+        }),
+      );
+    });
+
+    it('calcule le ratio et le statut d’un revenu : salaire de juillet 245000 pour prévu 200000 est over', () => {
+      service.setPlannedAmount('2026-07', 'sub-1', 2000);
+      const summary = service.monthSummary();
+      const expected = {
+        plannedAmountCents: 200000,
+        actualAmountCents: 245000,
+        varianceCents: 45000,
+        consumptionRate: 1.225,
+        status: 'over',
+      };
+
+      expect(findSubcategory(summary, 'sub-1')).toEqual(
+        expect.objectContaining({ categoryType: 'income', ...expected }),
+      );
+      expect(findCategory(summary, 'cat-1')).toEqual(expect.objectContaining(expected));
+    });
+
+    it.each([
+      { subcategoryId: 'sub-2', plannedEuros: 1062.5, expected: 'under' },
+      { subcategoryId: 'sub-2', plannedEuros: 1000, expected: 'on-track' },
+      { subcategoryId: 'sub-2', plannedEuros: 850, expected: 'on-track' },
+      { subcategoryId: 'sub-2', plannedEuros: 700, expected: 'over' },
+      { subcategoryId: 'sub-1', plannedEuros: 4000, expected: 'under' },
+      { subcategoryId: 'sub-1', plannedEuros: 3062.5, expected: 'under' },
+      { subcategoryId: 'sub-1', plannedEuros: 3000, expected: 'on-track' },
+      { subcategoryId: 'sub-1', plannedEuros: 2000, expected: 'over' },
+    ])(
+      'applique les seuils de statut à $subcategoryId prévu $plannedEuros € → $expected',
+      ({ subcategoryId, plannedEuros, expected }) => {
+        service.setPlannedAmount('2026-07', subcategoryId, plannedEuros);
+
+        expect(findSubcategory(service.monthSummary(), subcategoryId).status).toBe(expected);
+      },
+    );
+
+    it('agrège une catégorie comme la somme de ses sous-catégories', () => {
+      monthContext.setMonth('2026-08');
+      service.setPlannedAmount('2026-08', 'sub-3', 50);
+      service.setPlannedAmount('2026-08', 'sub-4', 100);
+      const category = findCategory(service.monthSummary(), 'cat-2');
+      const subcategories = category.subcategories;
+
+      expect(subcategories.map(subcategory => subcategory.subcategoryId)).toEqual([
+        'sub-2',
+        'sub-3',
+        'sub-4',
+      ]);
+      expect(category).toEqual(
+        expect.objectContaining({
+          plannedAmountCents: 15000,
+          actualAmountCents: 11239,
+          varianceCents: -3761,
+          status: 'under',
+        }),
+      );
+      expect(sumOf(subcategories, 'plannedAmountCents')).toBe(category.plannedAmountCents);
+      expect(sumOf(subcategories, 'actualAmountCents')).toBe(category.actualAmountCents);
+      expect(sumOf(subcategories, 'varianceCents')).toBe(category.varianceCents);
+    });
+
+    it('calcule le bandeau d’allocation : revenus prévus, dépenses prévues et non alloué', () => {
+      service.setPlannedAmount('2026-07', 'sub-1', 2000);
+      service.setPlannedAmount('2026-07', 'sub-2', 1000);
+      service.setPlannedAmount('2026-07', 'sub-5', 300);
+      const summary = service.monthSummary();
+
+      expect(summary.incomePlannedCents).toBe(200000);
+      expect(summary.expensePlannedCents).toBe(130000);
+      expect(summary.unallocatedCents).toBe(70000);
+    });
+
+    it('autorise un montant non alloué négatif dans le bandeau', () => {
+      service.setPlannedAmount('2026-07', 'sub-1', 1000);
+      service.setPlannedAmount('2026-07', 'sub-2', 1500);
+      const summary = service.monthSummary();
+
+      expect(summary.incomePlannedCents).toBe(100000);
+      expect(summary.expensePlannedCents).toBe(150000);
+      expect(summary.unallocatedCents).toBe(-50000);
+    });
+
+    it('se met à jour quand MonthContextService change le mois', () => {
+      expect(service.monthSummary().monthKey).toBe('2026-07');
+
+      monthContext.setMonth('2026-08');
+
+      expect(service.monthSummary().monthKey).toBe('2026-08');
+      expect(findCategory(service.monthSummary(), 'cat-2').actualAmountCents).toBe(11239);
+    });
+
+    it('se met à jour quand les transactions ou les lignes prévues changent', () => {
+      expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(85000);
+
+      transactionService.add({
+        label: 'Loyer supplémentaire',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-07-15',
+        type: 'expense',
+        amountEuros: 10,
+      });
+      expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
+
+      service.setPlannedAmount('2026-07', 'sub-2', 1000);
+      expect(findSubcategory(service.monthSummary(), 'sub-2')).toEqual(
+        expect.objectContaining({ plannedAmountCents: 100000, status: 'on-track' }),
+      );
+
+      transactionService.add({
+        label: 'Loyer d’août',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-08-10',
+        type: 'expense',
+        amountEuros: 5,
+      });
+      expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
     });
   });
 });

@@ -1,12 +1,50 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { BudgetLine } from '../models/budget-line';
 import { BudgetMonth, OpenMonthResult } from '../models/budget-month';
+import { BudgetLineStatus, getBudgetLineStatus } from '../models/budget-status';
+import {
+  BudgetCategorySummary,
+  BudgetMonthSummary,
+  BudgetSubcategorySummary,
+} from '../models/budget-summary';
 import { RecurringRule } from '../models/recurring-rule';
+import { Transaction } from '../models/transactions';
 import { CategoryService } from './category';
 import { MoneyService } from './money';
+import { MonthContextService } from './month-context';
 import { RecurringRuleService } from './recurring-rule';
+import { TransactionService } from './transaction';
 
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+type BudgetFigures = Pick<
+  BudgetCategorySummary,
+  'plannedAmountCents' | 'actualAmountCents' | 'varianceCents' | 'consumptionRate' | 'status'
+>;
+
+function sumBy<T>(items: readonly T[], getAmountCents: (item: T) => number): number {
+  return items.reduce((total, item) => total + getAmountCents(item), 0);
+}
+
+function buildFigures(plannedAmountCents: number, actualAmountCents: number): BudgetFigures {
+  const figures = {
+    plannedAmountCents,
+    actualAmountCents,
+    varianceCents: actualAmountCents - plannedAmountCents,
+  };
+
+  // Sans prévu, le taux et le statut ne sont pas définissables.
+  if (plannedAmountCents <= 0) {
+    return { ...figures, consumptionRate: undefined, status: undefined };
+  }
+
+  const status: BudgetLineStatus = getBudgetLineStatus(actualAmountCents, plannedAmountCents);
+  return {
+    ...figures,
+    consumptionRate: actualAmountCents / plannedAmountCents,
+    status,
+  };
+}
 
 @Injectable({
   providedIn: 'root',
@@ -18,10 +56,76 @@ export class BudgetService {
   readonly lines = this._lines.asReadonly();
   readonly months = this._months.asReadonly();
 
+  readonly monthSummary = computed<BudgetMonthSummary>(() => {
+    const monthKey = this.monthContextService.monthKey();
+    const monthLines = this._lines().filter(line => line.monthKey === monthKey);
+    const monthTransactions: Transaction[] = this.transactionService
+      .transactions()
+      .filter(transaction => transaction.monthKey === monthKey);
+    const subcategories = this.categoryService.subcategories();
+
+    const categories = this.categoryService.categories().map((category): BudgetCategorySummary => {
+      const categoryLines = monthLines.filter(line => line.categoryId === category.id);
+      const categoryTransactions = monthTransactions.filter(
+        transaction => transaction.categoryId === category.id,
+      );
+
+      const subcategorySummaries = subcategories
+        .filter(subcategory => subcategory.categoryId === category.id)
+        .map((subcategory): BudgetSubcategorySummary => {
+          const plannedAmountCents = sumBy(
+            monthLines.filter(line => line.subcategoryId === subcategory.id),
+            line => line.plannedAmountCents,
+          );
+          const actualAmountCents = sumBy(
+            categoryTransactions.filter(
+              transaction => transaction.subcategoryId === subcategory.id,
+            ),
+            transaction => transaction.amountCents,
+          );
+          return {
+            categoryId: category.id,
+            subcategoryId: subcategory.id,
+            categoryType: category.type,
+            ...buildFigures(plannedAmountCents, actualAmountCents),
+          };
+        });
+
+      return {
+        categoryId: category.id,
+        categoryType: category.type,
+        ...buildFigures(
+          sumBy(categoryLines, line => line.plannedAmountCents),
+          sumBy(categoryTransactions, transaction => transaction.amountCents),
+        ),
+        subcategories: subcategorySummaries,
+      };
+    });
+
+    const incomePlannedCents = sumBy(
+      categories.filter(category => category.categoryType === 'income'),
+      category => category.plannedAmountCents,
+    );
+    const expensePlannedCents = sumBy(
+      categories.filter(category => category.categoryType === 'expense'),
+      category => category.plannedAmountCents,
+    );
+
+    return {
+      monthKey,
+      categories,
+      incomePlannedCents,
+      expensePlannedCents,
+      unallocatedCents: incomePlannedCents - expensePlannedCents,
+    };
+  });
+
   constructor(
     private readonly moneyService: MoneyService,
     private readonly categoryService: CategoryService,
     private readonly recurringRuleService: RecurringRuleService,
+    private readonly transactionService: TransactionService,
+    private readonly monthContextService: MonthContextService,
   ) {}
 
   setPlannedAmount(monthKey: string, subcategoryId: string, amountEuros: number): BudgetLine | null {
