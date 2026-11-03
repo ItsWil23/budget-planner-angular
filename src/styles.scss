@@ -146,6 +146,13 @@ body {
 /* ===== Thème clair : neutres communs à toutes les palettes ===== */
 [data-theme='light'] {
   --overlay-scrim: rgba(0, 0, 0, 0.4);
+  --color-income: #15803d;
+  --color-ok: #15803d;
+  --color-ok-soft: rgba(21, 128, 61, 0.12);
+  --color-over: #c93c37;
+  --color-over-soft: rgba(201, 60, 55, 0.1);
+  --color-warn: #946000;
+  --color-warn-soft: rgba(148, 96, 0, 0.1);
   --surface-app: #fbfbfd;
   --surface-card: #ffffff;
   --border: #e7e7ee;
