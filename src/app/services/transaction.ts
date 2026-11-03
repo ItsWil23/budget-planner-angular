@@ -20,11 +20,36 @@ export class TransactionService {
     })),
   );
 
-  // Méthode d'ajout pour les transactions
-  add(transaction: TransactionInput): void {
-    this._transactions.update(transactions => [
-      ...transactions,
-      { ...transaction, amountCents: this.moneyService.toCents(transaction.amountEuros) },
-    ]);
+  // Méthode d'ajout pour les transactions : génère id, monthKey et createdAt
+  add(input: TransactionInput): Transaction {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
+      throw new Error('Invalid date format');
+    }
+
+    const amountCents = this.moneyService.toCents(input.amountEuros);
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+      throw new Error('Invalid amount');
+    }
+
+    const transaction: Transaction = {
+      id: crypto.randomUUID(),
+      label: input.label,
+      categoryId: input.categoryId,
+      subcategoryId: input.subcategoryId,
+      date: input.date,
+      monthKey: input.date.slice(0, 7),
+      amountCents,
+      type: input.type,
+      createdAt: new Date().toISOString(),
+    };
+
+    this._transactions.update(transactions => [...transactions, transaction]);
+    return transaction;
+  }
+
+  transactionsForMonth(monthKey: string): TransactionPresentation[] {
+    return this.presentationTransactions().filter(
+      (transaction: TransactionPresentation) => transaction.monthKey === monthKey,
+    );
   }
 }

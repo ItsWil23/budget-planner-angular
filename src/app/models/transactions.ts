@@ -6,11 +6,13 @@ export interface Transaction {
   categoryId: string;
   subcategoryId: string;
   date: string;
+  monthKey: string;
   amountCents: number;
   type: CategoryType;
+  createdAt: string;
 }
 
-export type TransactionInput = Omit<Transaction, 'amountCents'> & {
+export type TransactionInput = Omit<Transaction, 'id' | 'monthKey' | 'amountCents' | 'createdAt'> & {
   amountEuros: number;
 };
 
