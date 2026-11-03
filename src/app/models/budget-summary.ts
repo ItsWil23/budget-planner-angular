@@ -29,4 +29,6 @@ export interface BudgetMonthSummary {
   incomePlannedCents: number;
   expensePlannedCents: number;
   unallocatedCents: number;
+  openingBalanceCents: number;
+  actualClosingBalanceCents: number;
 }

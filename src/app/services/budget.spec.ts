@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BudgetMonth } from '../models/budget-month';
 import { RecurringRule } from '../models/recurring-rule';
 import { BudgetCategorySummary, BudgetMonthSummary, BudgetSubcategorySummary } from '../models/budget-summary';
 import { BudgetService } from './budget';
@@ -507,6 +508,217 @@ describe('Budget Service', () => {
         amountEuros: 5,
       });
       expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
+    });
+  });
+
+  describe('solde d’ouverture et report', () => {
+    const monthOf = (monthKey: string): BudgetMonth | undefined =>
+      service.months().find(month => month.monthKey === monthKey);
+
+    it('ouvre juillet sans juin initialisé à 0 et calcule sa clôture réelle', () => {
+      service.openMonth('2026-07');
+
+      expect(monthOf('2026-07')).toEqual(
+        expect.objectContaining({
+          openingBalanceCents: 0,
+          openingBalanceOverridden: false,
+          initialized: true,
+        }),
+      );
+      expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(160000);
+    });
+
+    it('reporte la clôture réelle de juillet sur l’ouverture d’août', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+
+      expect(monthOf('2026-08')?.openingBalanceCents).toBe(160000);
+      expect(service.openingBalanceCentsFor('2026-08')).toBe(160000);
+    });
+
+    it('ne change pas la clôture réelle quand seul le prévu change', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+
+      service.setPlannedAmount('2026-07', 'sub-2', 2000);
+
+      expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(160000);
+      expect(monthOf('2026-08')?.openingBalanceCents).toBe(160000);
+    });
+
+    it('recalcule la clôture de juillet et l’ouverture d’août après une nouvelle transaction', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+
+      transactionService.add({
+        label: 'Achat imprévu',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-07-15',
+        type: 'expense',
+        amountEuros: 100,
+      });
+
+      expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(150000);
+      expect(monthOf('2026-08')?.openingBalanceCents).toBe(150000);
+    });
+
+    it('conserve un ajustement manuel négatif et recalcule la clôture réelle du mois ajusté', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+
+      const adjusted = service.setOpeningBalanceOverride('2026-08', -5000);
+
+      expect(adjusted).toEqual(
+        expect.objectContaining({
+          openingBalanceCents: -5000,
+          openingBalanceOverridden: true,
+        }),
+      );
+      expect(monthOf('2026-08')?.openingBalanceCents).toBe(-5000);
+      expect(service.actualClosingBalanceCentsFor('2026-08')).toBe(15761);
+    });
+
+    it('fait suivre septembre et les mois suivants depuis la clôture d’août, sans toucher à l’ajustement d’août', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+      service.openMonth('2026-09');
+      service.openMonth('2026-10');
+      service.setOpeningBalanceOverride('2026-08', -5000);
+
+      expect(monthOf('2026-09')?.openingBalanceCents).toBe(15761);
+      expect(monthOf('2026-10')?.openingBalanceCents).toBe(251131);
+
+      transactionService.add({
+        label: 'Dépense de juillet',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-07-20',
+        type: 'expense',
+        amountEuros: 10,
+      });
+
+      expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(159000);
+      expect(monthOf('2026-08')?.openingBalanceCents).toBe(-5000);
+      expect(monthOf('2026-09')?.openingBalanceCents).toBe(15761);
+      expect(monthOf('2026-10')?.openingBalanceCents).toBe(251131);
+    });
+
+    it('garde deux ajustements fixes et reprend le report après chacun', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+      service.openMonth('2026-09');
+      service.openMonth('2026-10');
+      service.openMonth('2026-11');
+      service.setOpeningBalanceOverride('2026-08', -5000);
+      service.setOpeningBalanceOverride('2026-10', 100000);
+
+      transactionService.add({
+        label: 'Dépense de juillet',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-07-20',
+        type: 'expense',
+        amountEuros: 10,
+      });
+
+      expect(monthOf('2026-08')?.openingBalanceCents).toBe(-5000);
+      expect(monthOf('2026-09')?.openingBalanceCents).toBe(15761);
+      expect(monthOf('2026-10')?.openingBalanceCents).toBe(100000);
+      expect(monthOf('2026-11')?.openingBalanceCents).toBe(338150);
+    });
+
+    it('efface un ajustement et remet le report automatique sur les mois suivants', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+      service.openMonth('2026-09');
+      service.setOpeningBalanceOverride('2026-08', -5000);
+
+      const cleared = service.clearOpeningBalanceOverride('2026-08');
+
+      expect(cleared).toEqual(
+        expect.objectContaining({ openingBalanceCents: 160000, openingBalanceOverridden: false }),
+      );
+      expect(monthOf('2026-09')?.openingBalanceCents).toBe(180761);
+    });
+
+    it('refuse d’ajuster ou d’effacer un mois non initialisé', () => {
+      expect(() => service.setOpeningBalanceOverride('2026-08', 0)).toThrow(
+        'Budget month not initialized',
+      );
+      expect(() => service.clearOpeningBalanceOverride('2026-08')).toThrow(
+        'Budget month not initialized',
+      );
+      expect(service.months()).toEqual([]);
+    });
+
+    it('refuse une ouverture non entière sans modifier l’état', () => {
+      service.openMonth('2026-07');
+      const before = service.months();
+
+      expect(() => service.setOpeningBalanceOverride('2026-07', 1.5)).toThrow(
+        'Invalid opening balance',
+      );
+      expect(service.months()).toEqual(before);
+    });
+
+    it('ouvre septembre à 0 sans août, puis recalcule la chaîne à l’ouverture d’août', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-09');
+
+      expect(monthOf('2026-09')?.openingBalanceCents).toBe(0);
+
+      service.openMonth('2026-08');
+
+      expect(monthOf('2026-08')?.openingBalanceCents).toBe(160000);
+      expect(monthOf('2026-09')?.openingBalanceCents).toBe(180761);
+    });
+
+    it('lit le report d’un mois non initialisé sans l’initialiser', () => {
+      service.openMonth('2026-07');
+      const monthsBefore = service.months();
+
+      expect(service.openingBalanceCentsFor('2026-08')).toBe(160000);
+      expect(service.actualClosingBalanceCentsFor('2026-08')).toBe(
+        service.openingBalanceCentsFor('2026-08') + 32000 - (3999 + 7240),
+      );
+      expect(service.actualClosingBalanceCentsFor('2026-08')).toBe(180761);
+      expect(service.isMonthOpened('2026-08')).toBe(false);
+      expect(service.months()).toEqual(monthsBefore);
+      expect(service.months()).toHaveLength(1);
+    });
+
+    it('expose dans monthSummary les soldes d’ouverture et de clôture réelle, réactifs', () => {
+      service.openMonth('2026-07');
+      monthContext.setMonth('2026-07');
+
+      expect(service.monthSummary()).toEqual(
+        expect.objectContaining({ openingBalanceCents: 0, actualClosingBalanceCents: 160000 }),
+      );
+
+      monthContext.setMonth('2026-08');
+      expect(service.monthSummary()).toEqual(
+        expect.objectContaining({ openingBalanceCents: 160000, actualClosingBalanceCents: 180761 }),
+      );
+
+      service.openMonth('2026-08');
+      service.setOpeningBalanceOverride('2026-08', -5000);
+      expect(service.monthSummary()).toEqual(
+        expect.objectContaining({ openingBalanceCents: -5000, actualClosingBalanceCents: 15761 }),
+      );
+
+      transactionService.add({
+        label: 'Dépense d’août',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-08-20',
+        type: 'expense',
+        amountEuros: 10,
+      });
+      expect(service.monthSummary().actualClosingBalanceCents).toBe(
+        service.actualClosingBalanceCentsFor('2026-08'),
+      );
+      expect(service.monthSummary().actualClosingBalanceCents).toBe(14761);
     });
   });
 });
