@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budget Planner - comparer les mises en page</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f0f1f2;
+      --ink: #17191d;
+      --muted: #656a72;
+      --surface: #ffffff;
+      --app: #fbfbfd;
+      --border: #e2e4e8;
+      --track: #e7e9ed;
+      --accent: #c2562a;
+      --accent-soft: rgba(194, 86, 42, .1);
+      --income: #15803d;
+      --ok: #15803d;
+      --ok-soft: rgba(21, 128, 61, .12);
+      --warn: #946000;
+      --warn-soft: rgba(148, 96, 0, .1);
+      --over: #c93c37;
+      --over-soft: rgba(201, 60, 55, .1);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 28px;
+      --radius: 14px;
+      --radius-full: 999px;
+      --num: 500 15px/1.35 "Plus Jakarta Sans", "Segoe UI", sans-serif;
+      --body: 400 14px/1.45 "Plus Jakarta Sans", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font: var(--body);
+    }
+    button, select { font: inherit; }
+    button { color: inherit; }
+    .shell { max-width: 1500px; margin: 0 auto; padding: 28px; }
+    .intro { max-width: 820px; margin-bottom: 22px; }
+    h1 { margin: 0 0 6px; font-size: 24px; font-weight: 600; }
+    .intro p { margin: 0; color: var(--muted); }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: var(--space-3) var(--space-5);
+      padding: var(--space-4) 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .control { display: grid; gap: var(--space-2); }
+    .control label, .control-title { font-size: 12px; color: var(--muted); }
+    .segmented { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+    .segmented button {
+      min-height: 36px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .segmented button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+    button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    select { min-height: 42px; padding: 6px 32px 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink); }
+
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--space-5); margin-top: var(--space-5); }
+    .preview-area { min-width: 0; }
+    .preview-frame {
+      width: 100%;
+      min-height: 640px;
+      padding: var(--space-5);
+      overflow: auto;
+      border: 1px solid #cfd2d7;
+      border-radius: 10px;
+      background: var(--app);
+      transition: width 180ms ease;
+      container-type: inline-size;
+    }
+    .preview-frame.mobile { width: 390px; max-width: 100%; min-height: 760px; margin-inline: auto; padding: var(--space-3); }
+    .preview-frame[data-theme="dark"] {
+      --page: #0f0e10;
+      --app: #0f0e10;
+      --surface: #1b181b;
+      --ink: #eae7e8;
+      --muted: #94898d;
+      --border: #2f2a2e;
+      --track: #2f2a2e;
+      --accent: #e8926b;
+      --accent-soft: rgba(232, 146, 107, .15);
+      --income: #7dd3a0;
+      --ok: #7dd3a0;
+      --ok-soft: rgba(125, 211, 160, .14);
+      --warn: #e8c56b;
+      --warn-soft: rgba(232, 197, 107, .14);
+      --over: #f17c7c;
+      --over-soft: rgba(241, 124, 124, .15);
+    }
+    .preview-topbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      min-height: 48px;
+      margin-bottom: var(--space-4);
+      padding: var(--space-2) var(--space-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .preview-brand { font-weight: 600; }
+    .preview-month { margin-left: auto; color: var(--muted); }
+    .allocation {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .allocation-item { display: flex; justify-content: space-between; gap: var(--space-2); }
+    .allocation-label { color: var(--muted); font-size: 12px; }
+    .allocation-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .allocation-item:first-child .allocation-value { color: var(--income); }
+
+    .budget-content { min-width: 0; }
+    .category-grid.balanced { columns: 2; column-gap: var(--space-3); }
+    .category-grid.balanced .category-card { display: inline-block; width: 100%; margin: 0 0 var(--space-3); break-inside: avoid; }
+    .category-grid.split { display: grid; grid-template-columns: repeat(var(--column-count), minmax(0, 1fr)); align-items: start; gap: var(--space-3); }
+    .category-column { display: grid; align-content: start; gap: var(--space-3); min-width: 0; }
+    .category-column-title { margin: 0; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .category-stack { display: grid; gap: var(--space-3); min-width: 0; }
+    .category-card, .ledger, .accordion-list { min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+    .category-card { padding: var(--space-4); }
+    .category-head, .ledger-head, .accordion-summary { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+    .category-head { position: sticky; top: 0; z-index: 2; justify-content: space-between; margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; background: var(--surface); }
+    .category-card > summary { list-style: none; cursor: pointer; }
+    .category-card > summary::-webkit-details-marker { display: none; }
+    .category-card > summary::after { display: none; }
+    .category-card > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .category-heading { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+    .category-card > summary .category-heading { flex: 1; }
+    .disclosure { flex: none; width: 8px; height: 8px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(-45deg); }
+    .category-card[open] > summary .disclosure { transform: rotate(45deg); }
+    .category-title { min-width: 0; margin: 0; font-size: 15px; font-weight: 600; }
+    .type-tag { flex: none; padding: 3px 7px; border-radius: var(--radius-full); background: var(--app); color: var(--muted); font-size: 11px; }
+    .category-total { display: grid; grid-template-columns: auto auto; gap: 2px var(--space-2); text-align: end; font-size: 11px; color: var(--muted); }
+    .category-total strong { color: var(--ink); font: var(--num); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .sub-list { display: grid; }
+    .sub-row {
+      display: grid;
+      grid-template-columns: minmax(82px, 1.2fr) minmax(64px, .9fr) minmax(64px, .9fr) minmax(72px, 1.1fr);
+      align-items: center;
+      gap: var(--space-1);
+      min-width: 0;
+      min-height: 36px;
+      padding: 5px 0;
+      border-top: 1px solid var(--border);
+    }
+    .sub-name { min-width: 0; overflow-wrap: anywhere; }
+    .cell-label { display: none; }
+    .money { text-align: end; white-space: nowrap; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .money.income { color: var(--income); }
+    .progress-cell { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+    .track { flex: 1; min-width: 20px; height: 6px; overflow: hidden; border-radius: var(--radius-full); background: var(--track); }
+    .fill { height: 100%; border-radius: var(--radius-full); background: var(--ok); }
+    .fill.on-track { background: var(--warn); }
+    .fill.over { background: var(--over); }
+    .rate { flex: none; min-width: 38px; text-align: end; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .rate.on-track { color: var(--warn); }
+    .rate.over { color: var(--over); }
+    .unplanned { color: var(--muted); text-align: end; font-size: 11px; }
+
+    .ledger { overflow: hidden; }
+    .ledger-head {
+      justify-content: space-between;
+      padding: 9px var(--space-3);
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--app) 65%, var(--surface));
+    }
+    .ledger-head .category-title { font-size: 13px; }
+    .ledger .sub-list { padding-inline: var(--space-3); }
+
+    .accordion-list { overflow: hidden; }
+    .accordion-category + .accordion-category { border-top: 1px solid var(--border); }
+    .accordion-category > summary { list-style: none; cursor: pointer; }
+    .accordion-category > summary::-webkit-details-marker { display: none; }
+    .accordion-summary { justify-content: space-between; padding: 11px var(--space-3); }
+    .accordion-summary-start { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+    .disclosure { flex: none; width: 8px; height: 8px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(-45deg); }
+    details[open] .disclosure { transform: rotate(45deg); }
+    .accordion-category .sub-list { padding: 0 var(--space-3) var(--space-2); }
+
+    .analysis { padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+    .analysis h2 { margin: 0 0 var(--space-3); font-size: 16px; }
+    .analysis h3 { margin: var(--space-3) 0 var(--space-1); color: var(--muted); font-size: 12px; font-weight: 500; }
+    .analysis p, .analysis ul { margin: 0; }
+    .analysis ul { padding-left: 18px; }
+    .analysis-note { margin-top: var(--space-3) !important; color: var(--muted); font-size: 12px; }
+    .effort { display: inline-flex; margin-top: var(--space-3); padding: 4px 8px; border-radius: var(--radius-full); background: var(--accent-soft); color: var(--accent); font-size: 12px; }
+    .prototype-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+    .control-value { min-height: 42px; display: flex; align-items: center; font-size: 13px; font-weight: 500; }
+    .mobile-mode-control { display: none; }
+    .mobile-mode-control.visible { display: grid; }
+    .category-jump { display: none; }
+
+    .preview-frame.mobile .preview-topbar { padding-inline: var(--space-2); font-size: 12px; }
+    .preview-frame.mobile .allocation { grid-template-columns: 1fr; gap: var(--space-2); padding: var(--space-3); }
+    .preview-frame.mobile .allocation-item { align-items: baseline; }
+    .preview-frame.mobile .category-grid.balanced { columns: 1; }
+    .preview-frame.mobile .category-grid.split { columns: 1; grid-template-columns: minmax(0, 1fr); }
+    .preview-frame.mobile .category-card { padding: var(--space-3); }
+    .preview-frame.mobile .category-head { top: 48px; margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) var(--space-2); padding: var(--space-2); }
+    .preview-frame.mobile .category-title { font-size: 13px; }
+    .preview-frame.mobile .category-total { gap: 2px 6px; }
+    .preview-frame.mobile .category-jump { position: sticky; top: 0; z-index: 4; display: flex; gap: var(--space-2); margin: 0 calc(-1 * var(--space-3)) var(--space-3); padding: var(--space-2) var(--space-3); overflow-x: auto; border-block: 1px solid var(--border); background: var(--surface); scrollbar-width: thin; }
+    .category-jump a { flex: none; min-height: 36px; display: flex; align-items: center; padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--app); color: var(--ink); font-size: 12px; text-decoration: none; white-space: nowrap; }
+    .category-jump a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .preview-frame.mobile .category-column-title { margin-top: var(--space-2); }
+    .preview-frame.mobile .category-card { scroll-margin-top: 100px; }
+    .preview-frame.mobile .sub-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px var(--space-2); }
+    .preview-frame.mobile .sub-name { grid-column: 1 / -1; }
+    .preview-frame.mobile .cell-label { display: inline; color: var(--muted); font-size: 11px; }
+    .preview-frame.mobile .planned-cell, .preview-frame.mobile .actual-cell { display: flex; justify-content: space-between; gap: var(--space-2); }
+    .preview-frame.mobile .progress-cell { grid-column: 1 / -1; }
+    .preview-frame.mobile .ledger-head { padding-inline: var(--space-2); }
+    .preview-frame.mobile .ledger .sub-list { padding-inline: var(--space-2); }
+    .preview-frame.mobile .accordion-summary { padding-inline: var(--space-2); }
+    .preview-frame.mobile .accordion-category .sub-list { padding-inline: var(--space-2); }
+    @media (max-width: 980px) {
+      .workspace { grid-template-columns: minmax(0, 1fr); }
+      .analysis { order: 2; }
+    }
+    @media (max-width: 700px) {
+      .category-grid.split { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .shell { padding: 16px; }
+      .controls { gap: 10px; }
+      .control { flex: 1 1 150px; }
+      .preview-frame { padding: 10px; }
+    }
+    @container (max-width: 1379px) {
+      .category-grid.split { display: block; columns: 2; column-gap: var(--space-3); }
+      .category-grid.split .category-column, .category-grid.split .category-stack { display: contents; }
+      .category-grid.split .category-column-title { display: none; }
+      .category-grid.split .category-card { display: inline-block; width: 100%; margin: 0 0 var(--space-3); break-inside: avoid; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="intro">
+      <h1>Budget mensuel : comparer les mises en page</h1>
+      <p>Six catégories de 3 à 15 lignes. Comparez leur répartition sur ordinateur et mobile.</p>
+    </header>
+
+    <section class="controls" aria-label="Commandes de comparaison">
+      <div class="control">
+        <span class="control-title">Organisation desktop</span>
+        <div class="segmented" role="group" aria-label="Choisir une structure">
+          <button type="button" data-layout="balanced" aria-pressed="true">Colonnes équilibrées</button>
+          <button type="button" data-layout="split" aria-pressed="false">Grandes catégories à part</button>
+        </div>
+      </div>
+      <div class="control">
+        <span class="control-title">Jeu de données</span>
+        <strong class="control-value" id="count-value">6 catégories · 2 petites · 2 moyennes · 2 grandes</strong>
+      </div>
+      <div class="control">
+        <span class="control-title">Écran</span>
+        <div class="segmented" role="group" aria-label="Choisir la largeur">
+          <button type="button" data-viewport="desktop" aria-pressed="true">Desktop</button>
+          <button type="button" data-viewport="mobile" aria-pressed="false">Mobile 375 px</button>
+        </div>
+      </div>
+      <div class="control mobile-mode-control" id="mobile-mode-control">
+        <span class="control-title">Cartes mobiles</span>
+        <div class="segmented" role="group" aria-label="Comportement des cartes mobiles">
+          <button type="button" data-mobile-mode="expanded" aria-pressed="false">Toujours ouvertes</button>
+          <button type="button" data-mobile-mode="collapsible" aria-pressed="true">Repliables</button>
+        </div>
+      </div>
+      <div class="control">
+        <span class="control-title">Thème</span>
+        <div class="segmented" role="group" aria-label="Choisir le theme">
+          <button type="button" data-theme-choice="light" aria-pressed="true">Clair</button>
+          <button type="button" data-theme-choice="dark" aria-pressed="false">Sombre</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <section class="preview-area" aria-label="Apercu de la page budget">
+        <div class="preview-frame" data-theme="light" id="preview">
+          <div class="preview-topbar">
+            <span class="preview-brand">Budget mensuel</span>
+            <span class="preview-month">‹&nbsp; Juillet 2026 &nbsp;›</span>
+          </div>
+          <section class="allocation" aria-label="Allocation du mois">
+            <div class="allocation-item"><span class="allocation-label">Revenus prévus</span><strong class="allocation-value" id="income-total"></strong></div>
+            <div class="allocation-item"><span class="allocation-label">Dépenses prévues</span><strong class="allocation-value" id="expense-total"></strong></div>
+            <div class="allocation-item"><span class="allocation-label">Montant non alloué</span><strong class="allocation-value" id="unallocated-total"></strong></div>
+          </section>
+          <nav class="category-jump" id="category-jump" aria-label="Accès direct aux catégories"></nav>
+          <div class="budget-content" id="budget-content"></div>
+        </div>
+        <p class="prototype-note">D : petites ≤ 5 lignes, moyennes 6–10, grandes ≥ 11. Cible de composition : 18 lignes pures par colonne.</p>
+      </section>
+
+      <aside class="analysis" id="analysis" aria-live="polite"></aside>
+    </div>
+  </main>
+
+  <script>
+    const categories = [
+      { name: 'Revenus', type: 'income', subs: [['Salaire net', 320000, 320000], ['Prime', 12000, 0], ['Remboursements', 4000, 0]] },
+      { name: 'Charges fixes', type: 'expense', subs: [['Loyer', 85000, 85000], ['Électricité', 8000, 8500], ['Eau', 2500, 2200], ['Internet', 4000, 4000], ['Téléphone', 2500, 2500], ['Assurance logement', 2000, 2000], ['Assurance auto', 4500, 0], ['Crédit auto', 12000, 12000], ['Frais bancaires', 1000, 1000], ['Garde d’enfants', 10000, 8000], ['Mutuelle', 12000, 12000], ['Impôts mensualisés', 8000, 8000]] },
+      { name: 'Dépenses variables', type: 'expense', subs: [['Courses alimentaires', 30000, 28000], ['Marché', 5000, 6200], ['Restaurants', 8000, 12000], ['Cafés', 2500, 2200], ['Carburant', 10000, 8800], ['Transports en commun', 5000, 4500], ['Vêtements', 5000, 7200], ['Pharmacie', 3000, 3000], ['Médecin', 2000, 0], ['Sorties', 5000, 6000], ['Maison', 4000, 2500], ['Animaux', 3000, 2700], ['Cadeaux', 2000, 0], ['Imprévus', 5000, 0], ['Déjeuners au travail', 4000, 3000]] },
+      { name: 'Épargne', type: 'expense', subs: [['Précaution', 20000, 20000], ['Vacances', 10000, 6000], ['Projets', 5000, 0], ['Retraite', 8000, 8000], ['Achat voiture', 5000, 0]] },
+      { name: 'Abonnements', type: 'expense', subs: [['Vidéo', 1200, 1200], ['Musique', 1000, 1000], ['Presse', 900, 0], ['Stockage en ligne', 800, 800], ['Téléphone secondaire', 500, 500], ['Application sport', 700, 700], ['Jeux en ligne', 1100, 0], ['Autre abonnement', 600, 0]] },
+      { name: 'Loisirs', type: 'expense', subs: [['Sport', 3000, 3000], ['Culture', 2500, 0], ['Livres', 1500, 1500], ['Loisirs créatifs', 8000, 4000], ['Week-ends', 5000, 0], ['Cinéma', 2000, 1200], ['Musées', 1000, 0], ['Autres loisirs', 2500, 0]] },
+    ];
+
+    const options = {
+      balanced: {
+        title: 'B — Colonnes équilibrées',
+        summary: 'Les cartes s’équilibrent en colonnes indépendantes, sans imposer aux petites catégories la hauteur des grandes.',
+        pros: ['Chaque catégorie garde un cadre net.', 'Pas de grandes zones vides à côté des longues listes.', 'L’ordre des catégories est conservé.'],
+        cons: ['La lecture suit une colonne à la fois.', 'Les cartes courtes et longues créent un rythme vertical irrégulier.'],
+        effort: 'Complexité moyenne',
+      },
+      split: {
+        title: 'D — Colonnes par taille',
+        summary: 'Les petites catégories se regroupent à gauche, les moyennes se combinent par paires si elles tiennent, puis les grandes occupent chacune une colonne à droite.',
+        pros: ['Les colonnes ont la même largeur.', 'Les catégories de 8 lignes peuvent partager une colonne.', 'Les catégories les plus longues restent isolées à droite.'],
+        cons: ['Les catégories sont regroupées par taille plutôt que par ordre d’origine.', 'Le seuil et la capacité de colonne restent à valider visuellement.'],
+        effort: 'Complexité moyenne',
+      },
+    };
+
+    const state = { layout: 'balanced', viewport: 'desktop', theme: 'light', mobileMode: 'collapsible' };
+    const preview = document.getElementById('preview');
+    const content = document.getElementById('budget-content');
+    const categoryJump = document.getElementById('category-jump');
+    const analysis = document.getElementById('analysis');
+    const mobileModeControl = document.getElementById('mobile-mode-control');
+    const collapsedCategories = new Set();
+    const rowCapacity = 18;
+    const frenchMoney = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 });
+    const sign = String.fromCharCode(8722);
+
+    function categoryTotal(category, index) {
+      return category.subs.reduce((sum, sub) => sum + sub[index], 0);
+    }
+
+    function formatMoney(cents, type) {
+      if (cents === 0) return frenchMoney.format(0);
+      const value = type === 'income' ? Math.abs(cents) : type === 'expense' ? -Math.abs(cents) : cents;
+      return frenchMoney.format(value / 100).replace('-', sign);
+    }
+
+    function getStatus(planned, actual) {
+      if (!planned) return null;
+      const rate = actual / planned;
+      return rate <= .8 ? 'under' : rate <= 1 ? 'on-track' : 'over';
+    }
+
+    function sumTotals(list, index, type) {
+      return list.filter(category => category.type === type).reduce((sum, category) => sum + categoryTotal(category, index), 0);
+    }
+
+    function updateAllocation(list) {
+      const income = sumTotals(list, 1, 'income');
+      const expenses = sumTotals(list, 1, 'expense');
+      document.getElementById('income-total').textContent = formatMoney(income, 'income');
+      document.getElementById('expense-total').textContent = formatMoney(expenses, 'expense');
+      document.getElementById('unallocated-total').textContent = formatMoney(income - expenses);
+    }
+
+    function makeRow(category, sub) {
+      const row = document.createElement('div');
+      row.className = 'sub-row';
+      const planned = sub[1];
+      const actual = sub[2];
+      const status = getStatus(planned, actual);
+      const rate = planned ? actual / planned : null;
+      const name = document.createElement('span');
+      name.className = 'sub-name';
+      name.textContent = sub[0];
+      row.appendChild(name);
+
+      const plannedCell = document.createElement('span');
+      plannedCell.className = 'money planned-cell';
+      plannedCell.innerHTML = `<span class="cell-label">Prévu</span><span>${formatMoney(planned, category.type)}</span>`;
+      row.appendChild(plannedCell);
+
+      const actualCell = document.createElement('span');
+      actualCell.className = `money actual-cell ${category.type === 'income' && actual > 0 ? 'income' : ''}`;
+      actualCell.innerHTML = `<span class="cell-label">Réel</span><span>${formatMoney(actual, category.type)}</span>`;
+      row.appendChild(actualCell);
+
+      const progress = document.createElement('div');
+      progress.className = 'progress-cell';
+      if (status) {
+        progress.innerHTML = `<div class="track" role="progressbar" aria-label="${sub[0]}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(Math.round(rate * 100), 100)}" aria-valuetext="${Math.round(rate * 100)} % consomme, ${status}"><i class="fill ${status}" style="width:${Math.min(rate * 100, 100)}%"></i></div><span class="rate ${status}">${Math.round(rate * 100)} %</span>`;
+      } else {
+        progress.innerHTML = '<span class="unplanned">Réel sans prévu</span>';
+      }
+      row.appendChild(progress);
+      return row;
+    }
+
+    function makeCategoryHead(category, collapsible) {
+      const header = document.createElement(collapsible ? 'summary' : 'header');
+      header.className = 'category-head';
+      const titleWrap = document.createElement(collapsible ? 'span' : 'div');
+      titleWrap.className = 'category-heading';
+      const title = document.createElement(collapsible ? 'span' : 'h3');
+      title.className = 'category-title';
+      if (collapsible) {
+        title.setAttribute('role', 'heading');
+        title.setAttribute('aria-level', '3');
+        const disclosure = document.createElement('span');
+        disclosure.className = 'disclosure';
+        disclosure.setAttribute('aria-hidden', 'true');
+        titleWrap.appendChild(disclosure);
+      }
+      title.textContent = category.name;
+      const tag = document.createElement('span');
+      tag.className = 'type-tag';
+      tag.textContent = category.type === 'income' ? 'Revenu' : 'Dépense';
+      titleWrap.append(title, tag);
+      header.appendChild(titleWrap);
+
+      const totals = document.createElement(collapsible ? 'span' : 'div');
+      totals.className = 'category-total';
+      const plannedLabel = document.createElement('span');
+      plannedLabel.textContent = 'Prévu';
+      const planned = document.createElement('strong');
+      planned.textContent = formatMoney(categoryTotal(category, 1), category.type);
+      const actualLabel = document.createElement('span');
+      actualLabel.textContent = 'Réel';
+      const actual = document.createElement('strong');
+      actual.textContent = formatMoney(categoryTotal(category, 2), category.type);
+      totals.append(plannedLabel, planned, actualLabel, actual);
+      header.appendChild(totals);
+      return header;
+    }
+
+    function makeSubList(category) {
+      const list = document.createElement('div');
+      list.className = 'sub-list';
+      for (const sub of category.subs) list.appendChild(makeRow(category, sub));
+      return list;
+    }
+
+    function makeCategoryCard(category) {
+      const collapsible = state.viewport === 'mobile' && state.mobileMode === 'collapsible';
+      const card = document.createElement(collapsible ? 'details' : 'section');
+      card.className = 'category-card';
+      card.id = `category-${categories.indexOf(category)}`;
+      card.dataset.categoryName = category.name;
+      if (collapsible) {
+        card.open = !collapsedCategories.has(category.name);
+        card.addEventListener('toggle', () => {
+          if (card.open) collapsedCategories.delete(category.name);
+          else collapsedCategories.add(category.name);
+        });
+      }
+      card.append(makeCategoryHead(category, collapsible), makeSubList(category));
+      return card;
+    }
+
+    function makeCategoryColumn(columnData) {
+      const column = document.createElement('section');
+      column.className = 'category-column';
+      const heading = document.createElement('h3');
+      heading.className = 'category-column-title';
+      const labels = { small: 'Petites catégories', medium: 'Catégories moyennes', large: 'Grande catégorie' };
+      heading.textContent = `${labels[columnData.type]} · ${columnData.rows} lignes`;
+      const stack = document.createElement('div');
+      stack.className = 'category-stack';
+      columnData.categories.forEach(category => stack.appendChild(makeCategoryCard(category)));
+      column.append(heading, stack);
+      return column;
+    }
+
+    function packColumns(items, type, maxCategories) {
+      const columns = [];
+      for (const category of items) {
+        const rowCount = category.subs.length;
+        const lastColumn = columns[columns.length - 1];
+        if (lastColumn && lastColumn.categories.length < maxCategories && lastColumn.rows + rowCount <= rowCapacity) {
+          lastColumn.categories.push(category);
+          lastColumn.rows += rowCount;
+        } else {
+          columns.push({ type, categories: [category], rows: rowCount });
+        }
+      }
+      return columns;
+    }
+
+    function getSizeColumns(list) {
+      const small = list.filter(category => category.subs.length <= 5);
+      const medium = list.filter(category => category.subs.length >= 6 && category.subs.length <= 10);
+      const large = list.filter(category => category.subs.length >= 11);
+      const mediumColumns = [];
+      for (let index = 0; index < medium.length;) {
+        const pair = medium.slice(index, index + 2);
+        if (pair.length === 2 && pair[0].subs.length + pair[1].subs.length <= rowCapacity) {
+          mediumColumns.push({ type: 'medium', categories: pair, rows: pair[0].subs.length + pair[1].subs.length });
+        } else if (pair.length === 2) {
+          pair.sort((first, second) => first.subs.length - second.subs.length);
+          pair.forEach(category => mediumColumns.push({ type: 'medium', categories: [category], rows: category.subs.length }));
+        } else {
+          mediumColumns.push({ type: 'medium', categories: pair, rows: pair[0].subs.length });
+        }
+        index += pair.length;
+      }
+      const largeColumns = [...large]
+        .sort((first, second) => first.subs.length - second.subs.length)
+        .map(category => ({ type: 'large', categories: [category], rows: category.subs.length }));
+      return [...packColumns(small, 'small', 3), ...mediumColumns, ...largeColumns];
+    }
+
+    function renderCards(list, layout) {
+      const grid = document.createElement('div');
+      grid.className = `category-grid ${layout}`;
+      if (layout === 'balanced') {
+        list.forEach(category => grid.appendChild(makeCategoryCard(category)));
+      } else {
+        const columns = getSizeColumns(list);
+        grid.style.setProperty('--column-count', String(columns.length));
+        columns.forEach(column => grid.appendChild(makeCategoryColumn(column)));
+      }
+      content.appendChild(grid);
+    }
+
+    function renderCategoryJump(list, layout) {
+      categoryJump.replaceChildren();
+      const ordered = layout === 'split'
+        ? [...list.filter(category => category.subs.length >= 8), ...list.filter(category => category.subs.length < 8)]
+        : list;
+      ordered.forEach(category => {
+        const link = document.createElement('a');
+        link.href = `#category-${categories.indexOf(category)}`;
+        link.textContent = category.name;
+        categoryJump.appendChild(link);
+      });
+    }
+
+    function renderAnalysis(layout) {
+      const option = options[layout];
+      analysis.replaceChildren();
+      const title = document.createElement('h2');
+      title.textContent = option.title;
+      const summary = document.createElement('p');
+      summary.textContent = option.summary;
+      const prosTitle = document.createElement('h3');
+      prosTitle.textContent = 'Points forts';
+      const pros = document.createElement('ul');
+      option.pros.forEach(item => { const li = document.createElement('li'); li.textContent = item; pros.appendChild(li); });
+      const consTitle = document.createElement('h3');
+      consTitle.textContent = 'Points de vigilance';
+      const cons = document.createElement('ul');
+      option.cons.forEach(item => { const li = document.createElement('li'); li.textContent = item; cons.appendChild(li); });
+      const effort = document.createElement('span');
+      effort.className = 'effort';
+      effort.textContent = option.effort;
+      const note = document.createElement('p');
+      note.className = 'analysis-note';
+      if (state.viewport === 'mobile') {
+        note.textContent = state.mobileMode === 'expanded'
+          ? 'Mobile : B, cartes ouvertes. Les raccourcis rejoignent directement chaque catégorie.'
+          : 'Mobile : B, cartes ouvertes au départ ; touchez l’en-tête entier pour replier ou réafficher les lignes.';
+      } else {
+        note.textContent = layout === 'split'
+          ? 'Seuils : petites ≤ 5 ; moyennes 6–10, deux au plus ; grandes ≥ 11, une par colonne. Capacité de combinaison : 18 lignes pures.'
+          : 'Les en-têtes restent visibles pendant le défilement dans l’aperçu.';
+      }
+      analysis.append(title, summary, prosTitle, pros, consTitle, cons, effort, note);
+    }
+
+    function render() {
+      const layout = state.viewport === 'mobile' ? 'balanced' : state.layout;
+      preview.classList.toggle('mobile', state.viewport === 'mobile');
+      preview.dataset.theme = state.theme;
+      preview.dataset.layout = layout;
+      const list = categories;
+      updateAllocation(list);
+      renderCategoryJump(list, layout);
+      content.replaceChildren();
+      renderCards(list, layout);
+      renderAnalysis(layout);
+      document.querySelectorAll('[data-layout]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.layout === state.layout)));
+      document.querySelectorAll('[data-viewport]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.viewport === state.viewport)));
+      document.querySelectorAll('[data-theme-choice]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.themeChoice === state.theme)));
+      document.querySelectorAll('[data-mobile-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mobileMode === state.mobileMode)));
+      mobileModeControl.classList.toggle('visible', state.viewport === 'mobile');
+    }
+
+    document.querySelectorAll('[data-layout]').forEach(button => button.addEventListener('click', () => { state.layout = button.dataset.layout; render(); }));
+    document.querySelectorAll('[data-viewport]').forEach(button => button.addEventListener('click', () => { state.viewport = button.dataset.viewport; render(); }));
+    document.querySelectorAll('[data-theme-choice]').forEach(button => button.addEventListener('click', () => { state.theme = button.dataset.themeChoice; render(); }));
+    document.querySelectorAll('[data-mobile-mode]').forEach(button => button.addEventListener('click', () => {
+      state.mobileMode = button.dataset.mobileMode;
+      if (state.mobileMode === 'expanded') collapsedCategories.clear();
+      render();
+    }));
+    categoryJump.addEventListener('click', event => {
+      const link = event.target.closest('a');
+      if (!link) return;
+      const target = document.getElementById(link.hash.slice(1));
+      if (target?.tagName === 'DETAILS') {
+        target.open = true;
+        collapsedCategories.delete(target.dataset.categoryName);
+      }
+    });
+    render();
+  </script>
+</body>
+</html>

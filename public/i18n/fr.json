@@ -137,6 +137,21 @@
       "income": "Revenus prévus",
       "expense": "Dépenses prévues",
       "unallocated": "Montant non alloué"
+    },
+    "table": {
+      "label": "Suivi par catégorie",
+      "columns": {
+        "subcategory": "Sous-catégories",
+        "planned": "Prévu",
+        "actual": "Réel"
+      },
+      "noSubcategory": "À compléter : aucune sous-catégorie configurée.",
+      "realWithoutPlanned": "Réel sans prévu",
+      "shortcuts": "Accès rapide aux catégories",
+      "progress": {
+        "label": "Progression de {{ name }}",
+        "value": "Réel {{ actual }} sur {{ planned }} prévus"
+      }
     }
   },
   "settings": {

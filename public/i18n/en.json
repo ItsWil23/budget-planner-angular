@@ -137,6 +137,21 @@
       "income": "Planned income",
       "expense": "Planned expenses",
       "unallocated": "Unallocated amount"
+    },
+    "table": {
+      "label": "Category tracking",
+      "columns": {
+        "subcategory": "Subcategories",
+        "planned": "Planned",
+        "actual": "Actual"
+      },
+      "noSubcategory": "To complete: no subcategory configured.",
+      "realWithoutPlanned": "Actual without planned",
+      "shortcuts": "Quick access to categories",
+      "progress": {
+        "label": "Progress of {{ name }}",
+        "value": "Actual {{ actual }} of {{ planned }} planned"
+      }
     }
   },
   "settings": {
