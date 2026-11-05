@@ -1,5 +1,11 @@
 :host {
   display: block;
+  /* Doit rester égal à MIN_COLUMN_WIDTH_PX (budget-mensuel.ts) : colonnes de la disposition B. */
+  --table-column-min: 240px;
+  /* Hauteur de la topbar mobile (topbar.scss) : cible tactile, padding space-sm et bordures. */
+  --topbar-height: calc(var(--size-touch-min) + 2 * var(--space-sm) + 2 * var(--border-width));
+  /* Hauteur de la rangée de raccourcis : cible tactile et padding space-xs. */
+  --shortcuts-height: calc(var(--size-touch-min) + 2 * var(--space-xs));
 }
 
 .allocation {
@@ -56,5 +62,232 @@
 
   .metric-value {
     text-align: center;
+  }
+}
+
+.table-section {
+  display: grid;
+  gap: var(--space-lg);
+  margin-block-start: var(--space-lg);
+}
+
+.shortcuts-nav {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background-color: var(--surface-card);
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.shortcuts {
+  display: flex;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: var(--space-xs);
+  list-style: none;
+}
+
+.shortcuts > li {
+  flex: none;
+}
+
+.shortcut {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-lg);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-full);
+  background-color: var(--surface-card);
+  color: var(--color-text);
+  font: var(--text-caption);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+}
+
+.balanced {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.card {
+  background-color: var(--surface-card);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  /* Sous la topbar, la rangée de raccourcis et leurs espacements (mobile). */
+  scroll-margin-top: calc(var(--topbar-height) + var(--shortcuts-height) + 2 * var(--space-lg));
+}
+
+.balanced .card {
+  break-inside: avoid;
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
+  min-height: var(--size-touch-min);
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--surface-app);
+  border-bottom: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+details:not([open]) > summary.card-head {
+  border-bottom: 0;
+  border-radius: var(--radius-lg);
+}
+
+summary.card-head {
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    flex: none;
+    width: var(--space-sm);
+    height: var(--space-sm);
+    margin-inline-end: var(--space-xs);
+    border-inline-end: var(--size-bar-thickness) solid var(--color-text-muted);
+    border-bottom: var(--size-bar-thickness) solid var(--color-text-muted);
+    transform: rotate(-45deg);
+    transition: transform 150ms ease;
+  }
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: calc(var(--size-focus-offset) * -1);
+  }
+}
+
+details[open] > summary.card-head::before {
+  transform: rotate(45deg);
+}
+
+.card-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: var(--text-emphasis);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.card-totals {
+  display: flex;
+  gap: var(--space-lg);
+  margin-inline-start: auto;
+}
+
+.total {
+  display: grid;
+  justify-items: end;
+}
+
+.total-label,
+.amount-label {
+  font: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.total-value,
+.amount-value {
+  font: var(--num-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.lines {
+  margin: 0;
+  padding: 0 var(--space-lg) var(--space-xs);
+  list-style: none;
+}
+
+.line {
+  display: grid;
+  gap: var(--space-xs);
+  padding-block: var(--space-sm);
+  border-top: var(--border-width) solid var(--border);
+}
+
+.line-name {
+  font: var(--text-body);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.line-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-lg);
+}
+
+.amount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.note {
+  margin: 0;
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
+  font: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.card > .note {
+  padding-block-start: 0;
+}
+
+@media (min-width: 1024px) {
+  .shortcuts-nav {
+    position: static;
+  }
+
+  .balanced {
+    display: block;
+    columns: var(--table-column-min);
+    column-gap: var(--space-lg);
+  }
+
+  .balanced .card {
+    margin-block-end: var(--space-lg);
+  }
+
+  .card {
+    scroll-margin-top: calc(var(--topbar-height) + var(--space-lg));
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(var(--column-count, 1), minmax(0, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .column {
+    display: grid;
+    gap: var(--space-lg);
+    align-content: start;
+    min-width: 0;
+  }
+
+  .columns .card-head {
+    position: sticky;
+    top: 0;
   }
 }
