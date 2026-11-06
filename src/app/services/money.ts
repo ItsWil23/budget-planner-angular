@@ -8,6 +8,13 @@
  */
 
 import { Injectable } from '@angular/core';
+import type { UserSettings } from '../models/user-settings';
+
+/**
+ * Intl.NumberFormat accepte une chaîne décimale exacte depuis ES2023 ; la lib ES2022 du projet ne
+ * déclare pas cette signature, d'où ce type local (sans cast).
+ */
+type ExactDecimalFormatter = { format(value: number | bigint | string): string };
 
 /** Erreur de saisie d'un montant en euros : format invalide, ou centimes hors des entiers sûrs. */
 export type EurosInputError = 'invalid' | 'tooLarge';
@@ -69,6 +76,40 @@ export class MoneyService {
   }
 
   /**
+   * Formate des centimes entiers sûrs en montant monétaire localisé, sans passer par un flottant en euros.
+   *
+   * Le montant décimal exact est transmis à Intl sous forme de chaîne. Le moins est émis en ASCII
+   * (tiret) : la substitution vers le moins typographique relève de l'affichage.
+   *
+   * @param amountCents - Montant en centimes (entier sûr, signé ou non)
+   * @param settings - Devise et locale d'affichage
+   * @param signDisplay - 'always' pour préfixer aussi les montants positifs
+   * @returns Le montant formaté
+   * @throws Error('Invalid amount') si la valeur n'est pas un entier sûr
+   *
+   * @example
+   * formatCents(3999, { currency: 'EUR', locale: 'fr-FR' }) // '39,99 €'
+   */
+  public formatCents(
+    amountCents: number,
+    settings: Pick<UserSettings, 'currency' | 'locale'>,
+    signDisplay: 'auto' | 'always' = 'auto',
+  ): string {
+    if (!Number.isSafeInteger(amountCents)) {
+      throw new Error('Invalid amount');
+    }
+
+    const formatter: ExactDecimalFormatter = new Intl.NumberFormat(settings.locale, {
+      style: 'currency',
+      currency: settings.currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      signDisplay,
+    });
+    return formatter.format(this.toExactDecimal(amountCents));
+  }
+
+  /**
    * Convertit une saisie décimale en euros en centimes entiers, sans passer par un nombre flottant.
    *
    * La conversion se fait sur la chaîne saisie (BigInt), donc les centimes sont exacts. Une saisie
@@ -117,6 +158,16 @@ export class MoneyService {
     const fractionDigits = (magnitude % 100n).toString().padStart(2, '0').replace(/0+$/, '');
     if (!fractionDigits) return `${sign}${integerDigits}`;
     return `${sign}${integerDigits}${this.decimalSeparatorOf(locale)}${fractionDigits}`;
+  }
+
+  /** Écrit les centimes sûrs comme décimal exact à deux chiffres, ex. -1250 → '-12.50'. */
+  private toExactDecimal(amountCents: number): string {
+    // Object.is : -0 reste négatif pour conserver l'affichage existant d'un zéro signé.
+    const negative = amountCents < 0 || Object.is(amountCents, -0);
+    const magnitude = BigInt(Math.abs(amountCents));
+    const euros = magnitude / 100n;
+    const cents = (magnitude % 100n).toString().padStart(2, '0');
+    return `${negative ? '-' : ''}${euros}.${cents}`;
   }
 
   private decimalSeparatorOf(locale: string): string {

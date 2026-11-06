@@ -183,6 +183,51 @@ describe('Money Service', () => {
     });
   });
 
+  describe('formatCents', () => {
+    const eur = { currency: 'EUR', locale: 'fr-FR' };
+    const usd = { currency: 'USD', locale: 'en-US' };
+
+    it('formate EUR fr-FR avec groupement, deux décimales et symbole après le montant', () => {
+      expect(service.formatCents(123456, eur)).toBe('1\u202f234,56\u00a0€');
+      expect(service.formatCents(3999, eur)).toBe('39,99\u00a0€');
+    });
+
+    it('formate USD en-US avec symbole devant et point décimal', () => {
+      expect(service.formatCents(123456, usd)).toBe('$1,234.56');
+    });
+
+    it('préfixe les montants positifs avec signDisplay always et garde le tiret ASCII pour les négatifs', () => {
+      expect(service.formatCents(123456, usd, 'always')).toBe('+$1,234.56');
+      expect(service.formatCents(-1250, usd)).toBe('-$12.50');
+      expect(service.formatCents(-1250, eur, 'always')).toBe('-12,50\u00a0€');
+    });
+
+    it('conserve le signe d’un zéro négatif comme l’ancien formatage Intl', () => {
+      expect(service.formatCents(-0, usd)).toBe('-$0.00');
+      expect(service.formatCents(-0, usd, 'always')).toBe('-$0.00');
+      expect(service.formatCents(0, usd, 'always')).toBe('+$0.00');
+    });
+
+    it.each([
+      { cents: 9007199254740989, fr: '90\u202f071\u202f992\u202f547\u202f409,89\u00a0€', en: '$90,071,992,547,409.89' },
+      { cents: 9007199254740990, fr: '90\u202f071\u202f992\u202f547\u202f409,90\u00a0€', en: '$90,071,992,547,409.90' },
+      { cents: 9007199254740991, fr: '90\u202f071\u202f992\u202f547\u202f409,91\u00a0€', en: '$90,071,992,547,409.91' },
+      { cents: -9007199254740989, fr: '-90\u202f071\u202f992\u202f547\u202f409,89\u00a0€', en: '-$90,071,992,547,409.89' },
+      { cents: -9007199254740990, fr: '-90\u202f071\u202f992\u202f547\u202f409,90\u00a0€', en: '-$90,071,992,547,409.90' },
+      { cents: -9007199254740991, fr: '-90\u202f071\u202f992\u202f547\u202f409,91\u00a0€', en: '-$90,071,992,547,409.91' },
+    ])('formate exactement les centimes à la frontière $cents', ({ cents, fr, en }) => {
+      expect(service.formatCents(cents, eur)).toBe(fr);
+      expect(service.formatCents(cents, usd)).toBe(en);
+    });
+
+    it.each([10.5, 0.49, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1, -(Number.MAX_SAFE_INTEGER + 1)])(
+      'refuse %s avec « Invalid amount »',
+      cents => {
+        expect(() => service.formatCents(cents, eur)).toThrow(new Error('Invalid amount'));
+      },
+    );
+  });
+
   describe('Valeurs limites', () => {
     it('gère des centimes négatifs très grands en valeur absolue', () => {
       const result = service.toCents(-999.99);

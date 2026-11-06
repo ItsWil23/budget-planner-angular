@@ -16,21 +16,11 @@ export class MoneyPipe implements PipeTransform {
     settings: Pick<UserSettings, 'currency' | 'locale'>,
     type?: CategoryType,
   ): string {
-    if (!Number.isInteger(amountCents)) {
-      throw new Error('Invalid amount');
-    }
-
     const signedCents: number = this.signedCents(amountCents, type);
-    const formatter = new Intl.NumberFormat(settings.locale, {
-      style: 'currency',
-      currency: settings.currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      signDisplay: type ? 'always' : 'auto',
-    });
+    const formatted = this.moneyService.formatCents(signedCents, settings, type ? 'always' : 'auto');
 
     // Intl émet un tiret ASCII ; le signe affiché est le moins typographique U+2212 (DESIGN_SYSTEM § 4.1).
-    return formatter.format(this.moneyService.toEuros(signedCents)).replace('-', MINUS_SIGN);
+    return formatted.replace('-', MINUS_SIGN);
   }
 
   private signedCents(amountCents: number, type?: CategoryType): number {
