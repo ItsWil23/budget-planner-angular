@@ -138,6 +138,23 @@
       "expense": "Planned expenses",
       "unallocated": "Unallocated amount"
     },
+    "openingBalance": {
+      "title": "Opening balance",
+      "amountLabel": "Amount",
+      "indicativeLabel": "Indicative automatic opening",
+      "unprepared": "Month not prepared",
+      "automatic": "Automatic",
+      "manual": "Adjusted manually",
+      "unpreparedHelp": "Preparing the month initialises it and proposes the active recurring lines. Changing month does not open it.",
+      "prepare": "Prepare month",
+      "adjust": "Adjust",
+      "reset": "Return to automatic calculation",
+      "fieldLabel": "Adjusted opening balance, in euros",
+      "toggleSign": "Switch sign (positive or negative)",
+      "editHint": "Enter saves, Escape cancels.",
+      "amountInvalid": "Invalid amount: enter an amount in euros, with at most two decimals (e.g. -12.50).",
+      "amountTooLarge": "Amount too large to be saved: enter a smaller value."
+    },
     "table": {
       "label": "Category tracking",
       "columns": {

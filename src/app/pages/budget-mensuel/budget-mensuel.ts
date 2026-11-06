@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { MoneyPipe } from '../../components/ui/money-pipe/money-pipe';
+import { OpeningBalance } from '../../components/ui/opening-balance/opening-balance';
 import { ProgressBar } from '../../components/ui/progress-bar/progress-bar';
 import { BudgetLineStatus } from '../../models/budget-status';
 import { CategoryType } from '../../models/category';
@@ -73,8 +74,8 @@ export type PlannedDraft =
   | { readonly valid: true; readonly amountEuros: number }
   | { readonly valid: false };
 
-/**
- * Valide le brouillon d'un prévu saisi en euros (virgule ou point décimal). Vide ou zéro vaut 0,
+  /**
+   * Valide le brouillon d'un prévu saisi en euros (virgule ou point décimal). Vide ou zéro vaut 0,
  * ce qui supprime le prévu. Le motif limite à deux décimales : tout montant non nul vaut donc au moins 0,01.
  */
 export function parsePlannedDraft(raw: string): PlannedDraft {
@@ -167,7 +168,7 @@ function nameLookup(items: readonly { id: string; name: string }[]): (id: string
 
 @Component({
   selector: 'app-budget-mensuel',
-  imports: [MoneyPipe, NgTemplateOutlet, ProgressBar, TranslocoPipe],
+  imports: [MoneyPipe, NgTemplateOutlet, OpeningBalance, ProgressBar, TranslocoPipe],
   templateUrl: './budget-mensuel.html',
   styleUrl: './budget-mensuel.scss',
 })
@@ -190,6 +191,16 @@ export class BudgetMensuel {
   protected readonly editingId = signal<string | null>(null);
   protected readonly editDraft = signal('');
   protected readonly editError = signal(false);
+
+  protected readonly isOpened = computed(() => this.budget.isMonthOpened(this.monthContext.monthKey()));
+  protected readonly openingBalanceCents = computed(() => this.monthSummary().openingBalanceCents);
+  protected readonly openingOverridden = computed(
+    () =>
+      this.budget
+        .months()
+        .find(month => month.monthKey === this.monthContext.monthKey())?.openingBalanceOverridden === true,
+  );
+  protected readonly openingEditable = computed(() => this.formatEditableEuros(this.openingBalanceCents()));
 
   protected readonly categories = computed<CategoryView[]>(() => {
     const categoryName = nameLookup(this.categoryService.categories());
@@ -312,11 +323,23 @@ export class BudgetMensuel {
 
   private draftOf(plannedCents: number): string {
     if (plannedCents <= 0) return '';
-    const formatter = new Intl.NumberFormat(this.settings().locale, {
-      useGrouping: false,
-      maximumFractionDigits: 2,
-    });
-    return formatter.format(this.moneyService.toEuros(plannedCents));
+    return this.formatEditableEuros(plannedCents);
+  }
+
+  private formatEditableEuros(amountCents: number): string {
+    return this.moneyService.toEditableString(amountCents, this.settings().locale);
+  }
+
+  protected saveOpeningBalance(openingBalanceCents: number): void {
+    this.budget.setOpeningBalanceOverride(this.monthContext.monthKey(), openingBalanceCents);
+  }
+
+  protected prepareMonth(): void {
+    this.budget.openMonth(this.monthContext.monthKey());
+  }
+
+  protected clearOpeningOverride(): void {
+    this.budget.clearOpeningBalanceOverride(this.monthContext.monthKey());
   }
 
   protected openCard(event: Event, categoryId: string): void {

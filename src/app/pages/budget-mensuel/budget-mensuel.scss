@@ -1,11 +1,17 @@
 :host {
   display: block;
+  container: budget-page / inline-size;
   /* Doit rester égal à MIN_COLUMN_WIDTH_PX (budget-mensuel.ts) : colonnes de la disposition B. */
   --table-column-min: 320px;
   /* Hauteur de la topbar mobile (topbar.scss) : cible tactile, padding space-sm et bordures. */
   --topbar-height: calc(var(--size-touch-min) + 2 * var(--space-sm) + 2 * var(--border-width));
   /* Hauteur de la rangée de raccourcis : cible tactile et padding space-xs. */
   --shortcuts-height: calc(var(--size-touch-min) + 2 * var(--space-xs));
+}
+
+.overview {
+  display: grid;
+  gap: var(--space-md);
 }
 
 .allocation {
@@ -44,6 +50,10 @@
 }
 
 @media (min-width: 768px) {
+  .overview {
+    gap: var(--space-lg);
+  }
+
   .allocation {
     padding: var(--space-xl);
   }
@@ -62,6 +72,24 @@
 
   .metric-value {
     text-align: center;
+  }
+}
+
+/* Seuil : sous ce seuil, le montant du solde et le badge d'état passent sur deux lignes. */
+@container budget-page (min-width: 800px) {
+  .overview {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: stretch;
+  }
+
+  .overview-opening {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .allocation {
+    grid-column: 2;
+    grid-row: 1;
   }
 }
 

@@ -138,6 +138,23 @@
       "expense": "Dépenses prévues",
       "unallocated": "Montant non alloué"
     },
+    "openingBalance": {
+      "title": "Solde d'ouverture",
+      "amountLabel": "Montant",
+      "indicativeLabel": "Ouverture automatique indicative",
+      "unprepared": "Mois non préparé",
+      "automatic": "Automatique",
+      "manual": "Ajusté manuellement",
+      "unpreparedHelp": "Préparer le mois l'initialise et propose les lignes récurrentes actives. Changer de mois ne l'ouvre pas.",
+      "prepare": "Préparer le mois",
+      "adjust": "Ajuster",
+      "reset": "Revenir au calcul automatique",
+      "fieldLabel": "Solde d'ouverture ajusté, en euros",
+      "toggleSign": "Basculer le signe (positif ou négatif)",
+      "editHint": "Entrée enregistre, Échap annule.",
+      "amountInvalid": "Montant invalide : saisissez un montant en euros, avec deux décimales maximum (ex. -12,50).",
+      "amountTooLarge": "Montant trop grand pour être enregistré : saisissez une valeur plus petite."
+    },
     "table": {
       "label": "Suivi par catégorie",
       "columns": {
