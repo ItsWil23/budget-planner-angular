@@ -1,0 +1,84 @@
+<section class="opening" aria-labelledby="budget-opening-title">
+  <div class="opening-header">
+    <h2 id="budget-opening-title">{{ 'budgetMensuel.openingBalance.title' | transloco }}</h2>
+    @if (opened()) {
+      <span class="opening-badge" [class.opening-badge-manual]="overridden()">
+        {{ (overridden() ? 'budgetMensuel.openingBalance.manual' : 'budgetMensuel.openingBalance.automatic') | transloco }}
+      </span>
+    } @else {
+      <span class="opening-badge opening-badge-unprepared">{{ 'budgetMensuel.openingBalance.unprepared' | transloco }}</span>
+    }
+  </div>
+  @if (opened()) {
+    <dl>
+      <div class="opening-item">
+        <dt class="opening-label">{{ 'budgetMensuel.openingBalance.amountLabel' | transloco }}</dt>
+        <dd class="opening-value">
+          @if (editing()) {
+            <span class="opening-edit">
+              <input
+                #openingInput
+                type="text"
+                inputmode="decimal"
+                enterkeyhint="done"
+                autocomplete="off"
+                class="opening-input"
+                [id]="fieldId"
+                [value]="draft()"
+                [attr.aria-label]="'budgetMensuel.openingBalance.fieldLabel' | transloco"
+                [attr.aria-invalid]="editError() ? 'true' : null"
+                [attr.aria-describedby]="editError() ? errorId + ' ' + hintId : hintId"
+                (keydown.enter)="onCommit(openingInput.value)"
+                (keydown.escape)="onCancel()"
+                (blur)="onEditorBlur($event)"
+              />
+              <button
+                type="button"
+                class="opening-sign"
+                [attr.aria-label]="'budgetMensuel.openingBalance.toggleSign' | transloco"
+                (mousedown)="$event.preventDefault()"
+                (click)="onToggleSign(openingInput)"
+                (blur)="onEditorBlur($event)"
+              >
+                <svg class="opening-sign-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M4 4.5h8M8 1.5v6M4 12.5h8" />
+                </svg>
+              </button>
+            </span>
+            <span class="opening-hint" [id]="hintId">{{ 'budgetMensuel.openingBalance.editHint' | transloco }}</span>
+            @if (editError()) {
+              <span class="opening-error" role="alert" [id]="errorId">{{ (editError() === 'tooLarge' ? 'budgetMensuel.openingBalance.amountTooLarge' : 'budgetMensuel.openingBalance.amountInvalid') | transloco }}</span>
+            }
+          } @else {
+            {{ balanceCents() | money: settings() }}
+          }
+        </dd>
+      </div>
+    </dl>
+    @if (!editing()) {
+      <div class="opening-actions">
+        <button type="button" class="opening-action" [id]="adjustId" (click)="onAdjust()">
+          {{ 'budgetMensuel.openingBalance.adjust' | transloco }}
+        </button>
+        @if (overridden()) {
+          <button type="button" class="opening-action opening-action-secondary" (click)="onReset()">
+            {{ 'budgetMensuel.openingBalance.reset' | transloco }}
+          </button>
+        }
+      </div>
+    }
+  } @else {
+    <dl>
+      <div class="opening-item">
+        <dt class="opening-label">{{ 'budgetMensuel.openingBalance.indicativeLabel' | transloco }}</dt>
+        <dd class="opening-value">{{ balanceCents() | money: settings() }}</dd>
+      </div>
+    </dl>
+    <p class="opening-help">{{ 'budgetMensuel.openingBalance.unpreparedHelp' | transloco }}</p>
+    <div class="opening-actions">
+      <button type="button" class="opening-action opening-action-primary" (click)="onPrepare()">
+        {{ 'budgetMensuel.openingBalance.prepare' | transloco }}
+      </button>
+    </div>
+  }
+</section>

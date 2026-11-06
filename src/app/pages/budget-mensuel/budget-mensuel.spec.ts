@@ -7,6 +7,7 @@ import { BudgetService } from '../../services/budget';
 import { CategoryService } from '../../services/category';
 import { MoneyService } from '../../services/money';
 import { MonthContextService } from '../../services/month-context';
+import { RecurringRuleService } from '../../services/recurring-rule';
 import { SettingsService } from '../../services/settings';
 import { TransactionService } from '../../services/transaction';
 import { BudgetMensuel, buildCategoryColumns, sizeGroupOf, type ColumnSpec } from './budget-mensuel';
@@ -34,6 +35,23 @@ const FR_TRANSLATIONS = {
       shortcuts: 'Accès rapide aux catégories',
       progress: { label: 'Progression de {{ name }}', value: 'Réel {{ actual }} sur {{ planned }} prévus' },
     },
+    openingBalance: {
+      title: "Solde d'ouverture",
+      amountLabel: 'Montant',
+      indicativeLabel: 'Ouverture automatique indicative',
+      unprepared: 'Mois non préparé',
+      automatic: 'Automatique',
+      manual: 'Ajusté manuellement',
+      unpreparedHelp: "Préparer le mois l'initialise et propose les lignes récurrentes actives. Changer de mois ne l'ouvre pas.",
+      prepare: 'Préparer le mois',
+      adjust: 'Ajuster',
+      reset: 'Revenir au calcul automatique',
+      fieldLabel: "Solde d'ouverture ajusté, en euros",
+      toggleSign: 'Basculer le signe (positif ou négatif)',
+      editHint: 'Entrée enregistre, Échap annule.',
+      amountInvalid: 'Montant invalide : saisissez un montant en euros, avec deux décimales maximum (ex. -12,50).',
+      amountTooLarge: 'Montant trop grand pour être enregistré : saisissez une valeur plus petite.',
+    },
   },
 };
 
@@ -56,6 +74,23 @@ const EN_TRANSLATIONS = {
       clearPlanned: 'Clear planned amount for {{ name }}',
       shortcuts: 'Quick access to categories',
       progress: { label: 'Progress of {{ name }}', value: 'Actual {{ actual }} of {{ planned }} planned' },
+    },
+    openingBalance: {
+      title: 'Opening balance',
+      amountLabel: 'Amount',
+      indicativeLabel: 'Indicative automatic opening',
+      unprepared: 'Month not prepared',
+      automatic: 'Automatic',
+      manual: 'Adjusted manually',
+      unpreparedHelp: 'Preparing the month initialises it and proposes the active recurring lines. Changing month does not open it.',
+      prepare: 'Prepare month',
+      adjust: 'Adjust',
+      reset: 'Return to automatic calculation',
+      fieldLabel: 'Adjusted opening balance, in euros',
+      toggleSign: 'Switch sign (positive or negative)',
+      editHint: 'Enter saves, Escape cancels.',
+      amountInvalid: 'Invalid amount: enter an amount in euros, with at most two decimals (e.g. -12.50).',
+      amountTooLarge: 'Amount too large to be saved: enter a smaller value.',
     },
   },
 };
@@ -1030,6 +1065,364 @@ describe('BudgetMensuel', () => {
         openEditor();
         const name = subcategoryNameOf(subcategoryIdOf('expense'));
         expect(clearButton()?.getAttribute('aria-label')).toBe(`Clear planned amount for ${name}`);
+      });
+    });
+  });
+
+  describe('opening balance', () => {
+    function openingSection(): HTMLElement | null {
+      return fixture.nativeElement.querySelector('.opening');
+    }
+
+    function openingButton(selector: string): HTMLButtonElement | null {
+      return openingSection()?.querySelector<HTMLButtonElement>(selector) ?? null;
+    }
+
+    function prepareButton(): HTMLButtonElement | null {
+      return openingButton('.opening-action-primary');
+    }
+
+    function adjustButton(): HTMLButtonElement | null {
+      return openingButton('#budget-opening-adjust');
+    }
+
+    function resetButton(): HTMLButtonElement | null {
+      return openingButton('.opening-action-secondary');
+    }
+
+    function signButton(): HTMLButtonElement | null {
+      return openingButton('.opening-sign');
+    }
+
+    function openingInput(): HTMLInputElement | null {
+      return openingSection()?.querySelector<HTMLInputElement>('input.opening-input') ?? null;
+    }
+
+    function errorElement(): HTMLElement | null {
+      return openingSection()?.querySelector<HTMLElement>('.opening-error') ?? null;
+    }
+
+    function statusText(): string {
+      return openingSection()?.querySelector('.opening-badge')?.textContent?.trim() ?? '';
+    }
+
+    /** Valeur du montant ouvert ou indicatif (unique rangée `.opening-item`). */
+    function itemValue(index: number): string {
+      const items = openingSection()?.querySelectorAll<HTMLElement>('.opening-item');
+      return items?.[index]?.querySelector('dd')?.textContent?.trim() ?? '';
+    }
+
+    function openedAmountText(): string {
+      return itemValue(0);
+    }
+
+    function indicativeText(): string {
+      return itemValue(0);
+    }
+
+    function openEditor(): HTMLInputElement {
+      adjustButton()?.click();
+      fixture.detectChanges();
+      const input = openingInput();
+      if (!input) {
+        throw new Error('Opening balance input is not rendered');
+      }
+      return input;
+    }
+
+    function press(input: HTMLInputElement, key: string): void {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    function spyOnSetOpeningBalanceOverride() {
+      return vi.spyOn(TestBed.inject(BudgetService), 'setOpeningBalanceOverride');
+    }
+
+    function monthOf(monthKey: string) {
+      return TestBed.inject(BudgetService).months().find(month => month.monthKey === monthKey);
+    }
+
+    describe('before preparation', () => {
+      it('does not open a month when rendered or when the selected month changes', () => {
+        const spy = vi.spyOn(TestBed.inject(BudgetService), 'openMonth');
+        expect(prepareButton()).not.toBeNull();
+        expect(adjustButton()).toBeNull();
+        expect(resetButton()).toBeNull();
+
+        TestBed.inject(MonthContextService).setMonth('2026-08');
+        fixture.detectChanges();
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(TestBed.inject(BudgetService).isMonthOpened('2026-08')).toBe(false);
+        expect(prepareButton()).not.toBeNull();
+      });
+
+      it('shows the indicative opening as zero when the previous month is not initialised', () => {
+        expect(TestBed.inject(BudgetService).isMonthOpened('2026-06')).toBe(false);
+        expect(statusText()).toBe('Mois non préparé');
+        expect(indicativeText()).toBe(expected(0));
+      });
+
+      it('prepares the month only through the explicit action', async () => {
+        const spy = vi.spyOn(TestBed.inject(BudgetService), 'openMonth');
+        prepareButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH);
+        expect(TestBed.inject(BudgetService).isMonthOpened(TEST_MONTH)).toBe(true);
+        expect(prepareButton()).toBeNull();
+        expect(adjustButton()).not.toBeNull();
+        expect(statusText()).toBe('Automatique');
+        expect(document.activeElement).toBe(adjustButton());
+      });
+
+      it('labels the unprepared state in English', async () => {
+        TestBed.inject(TranslocoService).setActiveLang('en');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(openingSection()?.querySelector('h2')?.textContent?.trim()).toBe('Opening balance');
+        expect(statusText()).toBe('Month not prepared');
+        expect(prepareButton()?.textContent?.trim()).toBe('Prepare month');
+      });
+    });
+
+    describe('preparation with recurring rules', () => {
+      function plannedButtonFor(subcategoryId: string): HTMLButtonElement | null {
+        return fixture.nativeElement.querySelector(`#budget-planned-${subcategoryId}`);
+      }
+
+      it('shows active recurring rules as planned lines after preparation', async () => {
+        prepareButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(plannedButtonFor('sub-1')?.textContent?.trim()).toBe(expected(245000, 'income'));
+        expect(plannedButtonFor('sub-2')?.textContent?.trim()).toBe(expected(85000));
+        expect(plannedButtonFor('sub-3')?.textContent?.trim()).toBe(expected(3999));
+        expect(metricValues()).toEqual([
+          expected(245000, 'income'),
+          expected(88999, 'expense'),
+          expected(156001),
+        ]);
+      });
+
+      it('keeps planned lines unset when no recurring rule is active', async () => {
+        vi.spyOn(TestBed.inject(RecurringRuleService), 'activeRulesForMonth').mockReturnValue([]);
+        prepareButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(TestBed.inject(BudgetService).isMonthOpened(TEST_MONTH)).toBe(true);
+        expect(plannedButtonFor('sub-1')?.textContent?.trim()).toBe('Non renseigné');
+        expect(plannedButtonFor('sub-2')?.textContent?.trim()).toBe('Non renseigné');
+        expect(metricValues()).toEqual([expected(0), expected(0), expected(0)]);
+      });
+    });
+
+    describe('when prepared', () => {
+      let budget: BudgetService;
+
+      beforeEach(() => {
+        budget = TestBed.inject(BudgetService);
+        budget.openMonth(TEST_MONTH);
+        fixture.detectChanges();
+      });
+
+      it('shows the opening balance through MoneyPipe in the automatic state', () => {
+        expect(openedAmountText()).toBe(expected(0));
+        expect(statusText()).toBe('Automatique');
+        expect(prepareButton()).toBeNull();
+        expect(resetButton()).toBeNull();
+      });
+
+      it('prefills the editor with the current balance and focuses it', async () => {
+        const input = openEditor();
+        await fixture.whenStable();
+        expect(input.value).toBe('0');
+        expect(document.activeElement).toBe(input);
+      });
+
+      it('saves a positive amount in cents through BudgetService', async () => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = '12,5';
+        press(input, 'Enter');
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, 1250);
+        expect(openingInput()).toBeNull();
+        expect(openedAmountText()).toBe(expected(1250));
+        expect(statusText()).toBe('Ajusté manuellement');
+        expect(resetButton()).not.toBeNull();
+      });
+
+      it('saves a typed negative amount in cents through BudgetService', async () => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = `${MINUS_SIGN}7.25`;
+        press(input, 'Enter');
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, -725);
+        expect(openedAmountText()).toBe(expected(-725));
+      });
+
+      it('toggles the sign of the draft with the sign control before saving', async () => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = '12.5';
+        signButton()?.click();
+        fixture.detectChanges();
+        expect(input.value).toBe('-12.5');
+        expect(document.activeElement).toBe(input);
+
+        press(input, 'Enter');
+        await fixture.whenStable();
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, -1250);
+      });
+
+      it('saves a manual zero as an override distinct from automatic mode', async () => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = '0';
+        press(input, 'Enter');
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, 0);
+        expect(monthOf(TEST_MONTH)?.openingBalanceOverridden).toBe(true);
+        expect(statusText()).toBe('Ajusté manuellement');
+        expect(resetButton()).not.toBeNull();
+      });
+
+      it('normalises a typed -0 to a positive zero before saving', async () => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = '-0';
+        press(input, 'Enter');
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(Object.is(spy.mock.calls[0][1], 0)).toBe(true);
+      });
+
+      it.each(['', 'abc', '1.234', '-', '12,345'])(
+        'rejects "%s" with a localised error without calling the service',
+        async raw => {
+          const spy = spyOnSetOpeningBalanceOverride();
+          const input = openEditor();
+          input.value = raw;
+          press(input, 'Enter');
+          await fixture.whenStable();
+
+          expect(spy).not.toHaveBeenCalled();
+          expect(openingInput()).not.toBeNull();
+          expect(openingInput()?.getAttribute('aria-invalid')).toBe('true');
+          expect(errorElement()?.getAttribute('role')).toBe('alert');
+          expect(errorElement()?.textContent?.trim()).toBe(
+            'Montant invalide : saisissez un montant en euros, avec deux décimales maximum (ex. -12,50).',
+          );
+        },
+      );
+
+      it.each([
+        { label: 'an input that overflows to Infinity', raw: '9'.repeat(400) },
+        { label: 'a negative input that overflows to -Infinity', raw: `-${'9'.repeat(400)}` },
+        { label: 'a finite amount whose cents are not a safe integer', raw: `1${'0'.repeat(300)}` },
+        { label: 'an amount whose cents exceed the safe integer range', raw: '90071992547410' },
+        { label: 'a decimal amount whose exact cents exceed the safe integer range', raw: '90071992547409.92' },
+        { label: 'a negative decimal amount whose exact cents exceed the safe integer range', raw: '-90071992547409.92' },
+      ])(
+        'rejects $label with a localised error without calling the service',
+        async ({ raw }) => {
+          const spy = spyOnSetOpeningBalanceOverride();
+          const input = openEditor();
+          input.value = raw;
+          press(input, 'Enter');
+          await fixture.whenStable();
+
+          expect(spy).not.toHaveBeenCalled();
+          expect(openingInput()).not.toBeNull();
+          expect(openingInput()?.value).toBe(raw);
+          expect(openingInput()?.getAttribute('aria-invalid')).toBe('true');
+          expect(errorElement()?.getAttribute('role')).toBe('alert');
+          expect(errorElement()?.textContent?.trim()).toBe(
+            'Montant trop grand pour être enregistré : saisissez une valeur plus petite.',
+          );
+        },
+      );
+
+      it.each([
+        { raw: '90071992547409', cents: 9007199254740900 },
+        { raw: '90071992547409.89', cents: 9007199254740989 },
+        { raw: '90071992547409.90', cents: 9007199254740990 },
+        { raw: '90071992547409.91', cents: 9007199254740991 },
+        { raw: '-90071992547409.91', cents: -9007199254740991 },
+      ])('saves $raw as the exact $cents cents when they stay safe', async ({ raw, cents }) => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = raw;
+        press(input, 'Enter');
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy.mock.calls[0]).toEqual([TEST_MONTH, cents]);
+        expect(openingInput()).toBeNull();
+      });
+
+      it('cancels on Escape without saving', () => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = '5';
+        press(input, 'Escape');
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(openingInput()).toBeNull();
+        expect(openedAmountText()).toBe(expected(0));
+      });
+
+      it('cancels on blur without saving', () => {
+        const spy = spyOnSetOpeningBalanceOverride();
+        const input = openEditor();
+        input.value = '5';
+        input.dispatchEvent(new FocusEvent('blur', { relatedTarget: null }));
+        fixture.detectChanges();
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(openingInput()).toBeNull();
+        expect(openedAmountText()).toBe(expected(0));
+      });
+
+      it('returns to automatic calculation through clearOpeningBalanceOverride', async () => {
+        budget.setOpeningBalanceOverride(TEST_MONTH, 5000);
+        fixture.detectChanges();
+        expect(statusText()).toBe('Ajusté manuellement');
+
+        const spy = vi.spyOn(budget, 'clearOpeningBalanceOverride');
+        resetButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH);
+        expect(monthOf(TEST_MONTH)?.openingBalanceOverridden).toBe(false);
+        expect(statusText()).toBe('Automatique');
+        expect(openedAmountText()).toBe(expected(0));
+        expect(resetButton()).toBeNull();
+      });
+
+      it('labels the prepared state and the editor in English', async () => {
+        TestBed.inject(TranslocoService).setActiveLang('en');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(statusText()).toBe('Automatic');
+        expect(adjustButton()?.textContent?.trim()).toBe('Adjust');
+        const input = openEditor();
+        expect(input.getAttribute('aria-label')).toBe('Adjusted opening balance, in euros');
+        expect(signButton()?.getAttribute('aria-label')).toBe('Switch sign (positive or negative)');
       });
     });
   });

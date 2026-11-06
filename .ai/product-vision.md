@@ -1,7 +1,7 @@
 # Vision produit — Budget Planner v3
 
 > Source de vérité produit. Toute décision de design ou d'implémentation doit pouvoir se justifier par ce document.
-> Dernière mise à jour : 2026-11-05
+> Dernière mise à jour : 2026-11-06
 
 ---
 
@@ -272,6 +272,7 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-11-05 | Cards du Budget Mensuel : revenus affichés avec `+`, dépenses en valeurs positives sans `−` ; le bandeau d'allocation et les transactions conservent leurs signes. Les couleurs de progression income suivent le sens favorable (sous la cible défavorable, au-dessus favorable) sans modifier les calculs métier. |
 | 2026-11-05 | Budget Mensuel : la progression reste par sous-catégorie, pas de barre agrégée dans l'en-tête de catégorie ; les colonnes Prévu/Réel sont alignées entre en-têtes et lignes. |
 | 2026-11-05 | Édition du prévu : Entrée valide, Échap/blur annulent le brouillon ; la croix est une action immédiate de réinitialisation du prévu et n'est pas annulée par une perte de focus ultérieure. |
+| 2026-11-06 | Budget Mensuel : le sélecteur de mois navigue sans initialiser le mois ; l'utilisateur déclenche explicitement « Préparer le mois », qui ouvre le BudgetMonth et propose les lignes des récurrences actives. L'ajustement du solde d'ouverture est disponible après préparation ; l'override peut être remis au calcul automatique. |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 

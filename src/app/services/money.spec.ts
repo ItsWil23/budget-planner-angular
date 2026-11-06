@@ -82,6 +82,107 @@ describe('Money Service', () => {
     });
   });
 
+  describe('parseEurosInput', () => {
+    it('convertit une saisie exacte en centimes (virgule ou point)', () => {
+      expect(service.parseEurosInput('39,99')).toEqual({ valid: true, cents: 3999 });
+      expect(service.parseEurosInput('-12.50')).toEqual({ valid: true, cents: -1250 });
+      expect(service.parseEurosInput('10')).toEqual({ valid: true, cents: 1000 });
+      expect(service.parseEurosInput('0.5')).toEqual({ valid: true, cents: 50 });
+    });
+
+    it('accepte le signe moins typographique et les espaces autour', () => {
+      expect(service.parseEurosInput(' \u22125 ')).toEqual({ valid: true, cents: -500 });
+    });
+
+    it('renvoie un zéro positif pour « -0 »', () => {
+      expect(service.parseEurosInput('-0')).toEqual({ valid: true, cents: 0 });
+    });
+
+    it.each(['', 'abc', '1.234', '-', '12,345', '1,2,3', '.5'])(
+      'refuse « %s » comme format invalide',
+      raw => {
+        expect(service.parseEurosInput(raw)).toEqual({ valid: false, error: 'invalid' });
+      },
+    );
+
+    it.each([
+      { raw: '90071992547409.89', cents: 9007199254740989 },
+      { raw: '90071992547409.90', cents: 9007199254740990 },
+      { raw: '90071992547409.91', cents: 9007199254740991 },
+      { raw: '-90071992547409.89', cents: -9007199254740989 },
+      { raw: '-90071992547409.90', cents: -9007199254740990 },
+      { raw: '-90071992547409.91', cents: -9007199254740991 },
+    ])('convertit exactement $raw en $cents centimes à la frontière', ({ raw, cents }) => {
+      expect(service.parseEurosInput(raw)).toEqual({ valid: true, cents });
+    });
+
+    it.each(['90071992547409.92', '-90071992547409.92', '90071992547410'])(
+      'refuse %s quand ses centimes dépassent les entiers sûrs',
+      raw => {
+        expect(service.parseEurosInput(raw)).toEqual({ valid: false, error: 'tooLarge' });
+      },
+    );
+
+    it('refuse une saisie extrêmement longue sans erreur de conversion', () => {
+      expect(service.parseEurosInput('9'.repeat(400))).toEqual({ valid: false, error: 'tooLarge' });
+      expect(service.parseEurosInput(`-${'9'.repeat(400)}`)).toEqual({ valid: false, error: 'tooLarge' });
+    });
+  });
+
+  describe('toEditableString', () => {
+    it('formate les centimes en euros avec virgule et sans séparateur de milliers', () => {
+      expect(service.toEditableString(3999, 'fr-FR')).toBe('39,99');
+      expect(service.toEditableString(123456789, 'fr-FR')).toBe('1234567,89');
+    });
+
+    it('retire les zéros décimaux inutiles et garde le signe', () => {
+      expect(service.toEditableString(0, 'fr-FR')).toBe('0');
+      expect(service.toEditableString(1000, 'fr-FR')).toBe('10');
+      expect(service.toEditableString(1050, 'fr-FR')).toBe('10,5');
+      expect(service.toEditableString(1005, 'fr-FR')).toBe('10,05');
+      expect(service.toEditableString(-5, 'fr-FR')).toBe('-0,05');
+      expect(service.toEditableString(-1000, 'fr-FR')).toBe('-10');
+    });
+
+    it('utilise le séparateur décimal de la locale', () => {
+      expect(service.toEditableString(-1250, 'en-US')).toBe('-12.5');
+      expect(service.toEditableString(1299, 'en-US')).toBe('12.99');
+    });
+
+    it.each([9007199254740989, 9007199254740990, 9007199254740991])(
+      'se relit exactement en centimes à la frontière : %s',
+      cents => {
+        expect(service.toEditableString(cents, 'fr-FR')).toMatch(/^\d+(,\d{1,2})?$/);
+        expect(service.parseEurosInput(service.toEditableString(cents, 'fr-FR'))).toEqual({
+          valid: true,
+          cents,
+        });
+        expect(service.parseEurosInput(service.toEditableString(cents, 'en-US'))).toEqual({
+          valid: true,
+          cents,
+        });
+      },
+    );
+
+    it.each([-9007199254740989, -9007199254740990, -9007199254740991])(
+      'se relit exactement en centimes à la frontière négative : %s',
+      cents => {
+        expect(service.parseEurosInput(service.toEditableString(cents, 'fr-FR'))).toEqual({
+          valid: true,
+          cents,
+        });
+        expect(service.parseEurosInput(service.toEditableString(cents, 'en-US'))).toEqual({
+          valid: true,
+          cents,
+        });
+      },
+    );
+
+    it('affiche 9007199254740991 centimes sans perte de chiffre', () => {
+      expect(service.toEditableString(9007199254740991, 'fr-FR')).toBe('90071992547409,91');
+    });
+  });
+
   describe('Valeurs limites', () => {
     it('gère des centimes négatifs très grands en valeur absolue', () => {
       const result = service.toCents(-999.99);
