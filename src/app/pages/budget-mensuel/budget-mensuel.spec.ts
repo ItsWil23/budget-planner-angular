@@ -26,7 +26,11 @@ const FR_TRANSLATIONS = {
       label: 'Suivi par catégorie',
       columns: { subcategory: 'Sous-catégories', planned: 'Prévu', actual: 'Réel' },
       noSubcategory: 'À compléter : aucune sous-catégorie configurée.',
-      realWithoutPlanned: 'Réel sans prévu',
+      plannedUnset: 'Non renseigné',
+      editPlanned: 'Modifier le prévu pour {{ name }} ({{ value }})',
+      plannedFieldLabel: 'Prévu pour {{ name }}',
+      amountInvalid: 'Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum.',
+      clearPlanned: 'Effacer le prévu pour {{ name }}',
       shortcuts: 'Accès rapide aux catégories',
       progress: { label: 'Progression de {{ name }}', value: 'Réel {{ actual }} sur {{ planned }} prévus' },
     },
@@ -45,7 +49,11 @@ const EN_TRANSLATIONS = {
       label: 'Category tracking',
       columns: { subcategory: 'Subcategories', planned: 'Planned', actual: 'Actual' },
       noSubcategory: 'To complete: no subcategory configured.',
-      realWithoutPlanned: 'Actual without planned',
+      plannedUnset: 'Not set',
+      editPlanned: 'Edit planned amount for {{ name }} ({{ value }})',
+      plannedFieldLabel: 'Planned amount for {{ name }}',
+      amountInvalid: 'Invalid amount: enter 0 or an amount of at least €0.01, with at most two decimals.',
+      clearPlanned: 'Clear planned amount for {{ name }}',
       shortcuts: 'Quick access to categories',
       progress: { label: 'Progress of {{ name }}', value: 'Actual {{ actual }} of {{ planned }} planned' },
     },
@@ -115,7 +123,7 @@ describe('BudgetMensuel', () => {
   it('exposes a labelled read-only section', () => {
     const section: HTMLElement | null = fixture.nativeElement.querySelector('section');
     expect(section?.getAttribute('aria-label')).toBe('Allocation du mois');
-    expect(fixture.nativeElement.querySelectorAll('button, input, select, textarea')).toHaveLength(0);
+    expect(section?.querySelectorAll('button, input, select, textarea')).toHaveLength(0);
   });
 
   it('does not open the month automatically', () => {
@@ -429,8 +437,82 @@ describe('BudgetMensuel', () => {
         expect(elementOf('.balanced')).not.toBeNull();
       });
 
+      it('keeps the two-column grid at 1280 px and falls back just below two 320 px columns', () => {
+        renderWith({ desktop: true, width: 936 });
+        expect(elementOf<HTMLElement>('.columns')?.style.getPropertyValue('--column-count')).toBe('2');
+
+        renderWith({ desktop: true, width: 655 });
+        expect(elementOf('.columns')).toBeNull();
+        expect(elementOf('.balanced')).not.toBeNull();
+      });
+
       it('uses the balanced layout below the desktop breakpoint', () => {
         renderWith({ desktop: false, width: categoryCount() * 256 });
+        expect(elementOf('.columns')).toBeNull();
+        expect(elementOf('.balanced')).not.toBeNull();
+      });
+    });
+
+    describe('desktop with three columns', () => {
+      const THREE_COLUMNS_MIN_WIDTH_PX = 992;
+
+      function addSyntheticCategory(id: string, name: string, subcategoryCount: number): void {
+        const categoryService = TestBed.inject(CategoryService);
+        categoryService.addCategory({ id, name, type: 'expense', color: '#777777' });
+        for (let index = 1; index <= subcategoryCount; index += 1) {
+          categoryService.addSubcategory({
+            id: `${id}-sub-${index}`,
+            name: `${name} ${index}`,
+            categoryId: id,
+            icon: 'home',
+          });
+        }
+      }
+
+      /**
+       * Jeu synthétique : une colonne de petites catégories (2 + 2 lignes, empaquetées) et deux grandes
+       * catégories (11 et 12 lignes) isolées. Les catégories d'origine sont retirées car quatre petites
+       * catégories produiraient déjà deux colonnes « petites » à elles seules.
+       */
+      beforeEach(() => {
+        const categoryService = TestBed.inject(CategoryService);
+        for (const category of categoryService.categories()) {
+          categoryService.deleteCategory(category.id);
+        }
+        addSyntheticCategory('small-a', 'Petite A', 2);
+        addSyntheticCategory('small-b', 'Petite B', 2);
+        addSyntheticCategory('large-a', 'Grande A', 11);
+        addSyntheticCategory('large-b', 'Grande B', 12);
+        renderWith({ desktop: true, width: THREE_COLUMNS_MIN_WIDTH_PX });
+      });
+
+      it('renders three columns: the small categories, then one large category per column', () => {
+        const columns = elementsOf<HTMLElement>('.column');
+        expect(elementOf<HTMLElement>('.columns')?.style.getPropertyValue('--column-count')).toBe('3');
+        expect(columns).toHaveLength(3);
+        expect(textsOf(columns[0], '.card-name')).toEqual(['Petite A', 'Petite B']);
+        expect(textsOf(columns[1], '.card-name')).toEqual(['Grande A']);
+        expect(textsOf(columns[2], '.card-name')).toEqual(['Grande B']);
+      });
+
+      it('renders every category exactly once', () => {
+        const names = textsOf(fixture.nativeElement, '.card-name');
+        expect(names).toEqual(['Petite A', 'Petite B', 'Grande A', 'Grande B']);
+        expect(elementsOf('article.card')).toHaveLength(4);
+        for (const id of ['small-a', 'small-b', 'large-a', 'large-b']) {
+          expect(elementsOf(`#budget-category-${id}`)).toHaveLength(1);
+        }
+      });
+
+      it('leaves no column empty', () => {
+        const columns = elementsOf<HTMLElement>('.column');
+        expect(columns.every(column => column.querySelectorAll('article.card').length > 0)).toBe(true);
+      });
+
+      it('only uses the three-column grid when three columns of 320 px fit in the host width', () => {
+        expect(elementOf('.columns')).not.toBeNull();
+
+        renderWith({ desktop: true, width: THREE_COLUMNS_MIN_WIDTH_PX - 1 });
         expect(elementOf('.columns')).toBeNull();
         expect(elementOf('.balanced')).not.toBeNull();
       });
@@ -499,25 +581,64 @@ describe('BudgetMensuel', () => {
         expect(textsOf(card, 'p.note')).toEqual(['À compléter : aucune sous-catégorie configurée.']);
       });
 
-      it('formats card totals and line amounts through MoneyPipe with the sign rule', () => {
+      it('formats expense card totals and line amounts as positive values through MoneyPipe', () => {
         const card = cardOf(categoryIdOf('expense'));
-        expect(textsOf(card, '.total-value')).toEqual([
-          expected(100000, 'expense'),
-          expected(85000, 'expense'),
-        ]);
+        expect(textsOf(card, '.total-value')).toEqual([expected(100000), expected(85000)]);
         const line = lineOf(subcategoryNameOf(subcategoryIdOf('expense')));
-        expect(textsOf(line, '.amount-value')).toEqual([
-          expected(100000, 'expense'),
-          expected(85000, 'expense'),
-        ]);
+        expect(textsOf(line, '.amount-value')).toEqual([expected(100000), expected(85000)]);
+        expect(textsOf(card, '.total-value').join('')).not.toMatch(/[+\u2212-]/);
+      });
+
+      it('keeps the plus sign on positive income card totals and line amounts', () => {
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 3000);
+        renderMobile();
+        const summary = TestBed.inject(BudgetService).monthSummary();
+        const incomeCategory = summary.categories.find(item => item.categoryId === categoryIdOf('income'));
+        const incomeLine = incomeCategory?.subcategories.find(
+          item => item.subcategoryId === subcategoryIdOf('income'),
+        );
+        const card = cardOf(categoryIdOf('income'));
+        expect(textsOf(card, '.total-value')[0]).toBe(
+          expected(incomeCategory?.plannedAmountCents ?? 0, 'income'),
+        );
+        expect(textsOf(lineOf(subcategoryNameOf(subcategoryIdOf('income'))), '.amount-value')[0]).toBe(
+          expected(incomeLine?.plannedAmountCents ?? 0, 'income'),
+        );
+        expect(textsOf(card, '.total-value')[0].startsWith('+')).toBe(true);
       });
 
       it('updates card totals when a planned amount changes', () => {
         TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 2000);
         fixture.detectChanges();
-        expect(textsOf(cardOf(categoryIdOf('expense')), '.total-value')[0]).toBe(
-          expected(200000, 'expense'),
-        );
+        expect(textsOf(cardOf(categoryIdOf('expense')), '.total-value')[0]).toBe(expected(200000));
+      });
+
+      it('renders the card head totals with the Planned and Actual labels', () => {
+        expect(textsOf(cardOf(categoryIdOf('expense')), '.total-label')).toEqual(['Prévu', 'Réel']);
+      });
+
+      it('renders no aggregate progress bar in any card head', () => {
+        expect(elementsOf('.card-head [role="progressbar"]')).toHaveLength(0);
+        expect(elementsOf('.card-head app-progress-bar')).toHaveLength(0);
+      });
+
+      it('renders a visually hidden Planned and Actual label on each line', () => {
+        renderMobile();
+        const line = lineOf(subcategoryNameOf(subcategoryIdOf('expense')));
+        const labels = Array.from(line?.querySelectorAll<HTMLElement>('.amount-label') ?? []);
+        expect(labels.map(label => label.textContent?.trim())).toEqual(['Prévu', 'Réel']);
+        expect(labels.every(label => label.classList.contains('visually-hidden'))).toBe(true);
+      });
+
+      it('aligns the card head and the lines on the same track template', () => {
+        renderMobile();
+        const head = document.querySelector<HTMLElement>('.card-head');
+        const line = lineOf(subcategoryNameOf(subcategoryIdOf('expense')));
+        expect(head).not.toBeNull();
+        expect(line).toBeDefined();
+        const headTracks = getComputedStyle(head as HTMLElement).gridTemplateColumns;
+        expect(headTracks).not.toBe('');
+        expect(getComputedStyle(line as HTMLElement).gridTemplateColumns).toBe(headTracks);
       });
 
       it('renders the English table labels after switching language', () => {
@@ -525,7 +646,7 @@ describe('BudgetMensuel', () => {
         fixture.detectChanges();
         expect(elementOf('section.table-section')?.getAttribute('aria-label')).toBe('Category tracking');
         expect(elementOf('.shortcuts-nav')?.getAttribute('aria-label')).toBe('Quick access to categories');
-        expect(textsOf(elementOf('.card-totals'), '.total-label')[0]).toBe('Planned');
+        expect(textsOf(cardOf(categoryIdOf('expense')), '.total-label')).toEqual(['Planned', 'Actual']);
       });
     });
 
@@ -581,13 +702,334 @@ describe('BudgetMensuel', () => {
         expect(line?.querySelector('.fill')?.classList.contains('over')).toBe(true);
       });
 
-      it('shows the real-without-planned note instead of a progress bar', () => {
+      it('shows Not set in the planned cell without a progress bar when the planned amount is zero', () => {
         TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 0);
         addActual(50);
         renderMobile();
         const line = expenseLine();
-        expect(textsOf(line, 'p.note')).toEqual(['Réel sans prévu']);
+        expect(textsOf(line, '.planned-button')).toEqual(['Non renseigné']);
+        expect(line?.querySelector('p.note')).toBeNull();
         expect(line?.querySelector('[role="progressbar"]')).toBeNull();
+        expect(textsOf(line, '.amount-value')).toContain(expected(90000));
+      });
+
+      describe('income tone', () => {
+        function incomeLine(): HTMLElement | undefined {
+          return lineOf(subcategoryNameOf(subcategoryIdOf('income')));
+        }
+
+        function incomeActualCents(): number {
+          const summary = TestBed.inject(BudgetService).monthSummary();
+          const category = summary.categories.find(item => item.categoryId === categoryIdOf('income'));
+          return category?.subcategories.find(item => item.subcategoryId === subcategoryIdOf('income'))
+            ?.actualAmountCents ?? 0;
+        }
+
+        function setIncomeConsumption(rate: number): void {
+          const plannedCents = Math.round(incomeActualCents() / rate);
+          TestBed.inject(BudgetService).setPlannedAmount(
+            TEST_MONTH,
+            subcategoryIdOf('income'),
+            plannedCents / 100,
+          );
+          renderMobile();
+        }
+
+        beforeEach(() => {
+          TestBed.inject(TransactionService).add({
+            label: 'Test income',
+            categoryId: categoryIdOf('income'),
+            subcategoryId: subcategoryIdOf('income'),
+            date: `${TEST_MONTH}-15`,
+            amountEuros: 100,
+            type: 'income',
+          });
+        });
+
+        it('shows an under-received income in the red tone', () => {
+          setIncomeConsumption(0.5);
+          const line = incomeLine();
+          expect(line?.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('50');
+          expect(line?.querySelector('.fill')?.classList.contains('over')).toBe(true);
+          expect(line?.querySelector('.fill')?.classList.contains('under')).toBe(false);
+        });
+
+        it('keeps the amber tone for an on-track income', () => {
+          setIncomeConsumption(0.9);
+          const line = incomeLine();
+          expect(line?.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('90');
+          expect(line?.querySelector('.fill')?.classList.contains('on-track')).toBe(true);
+        });
+
+        it('shows an over-received income in the green tone', () => {
+          setIncomeConsumption(2);
+          const line = incomeLine();
+          expect(line?.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('100');
+          expect(line?.querySelector('.fill')?.classList.contains('under')).toBe(true);
+          expect(line?.querySelector('.fill')?.classList.contains('over')).toBe(false);
+        });
+      });
+
+    });
+
+    describe('inline planned edit', () => {
+      beforeEach(() => {
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 10.5);
+        renderMobile();
+      });
+
+      function expenseLine(): HTMLElement | undefined {
+        return lineOf(subcategoryNameOf(subcategoryIdOf('expense')));
+      }
+
+      function plannedButton(): HTMLButtonElement | null {
+        return expenseLine()?.querySelector<HTMLButtonElement>('.planned-button') ?? null;
+      }
+
+      function plannedInput(): HTMLInputElement | null {
+        return expenseLine()?.querySelector<HTMLInputElement>('input.planned-input') ?? null;
+      }
+
+      function clearButton(): HTMLButtonElement | null {
+        return expenseLine()?.querySelector<HTMLButtonElement>('.planned-clear') ?? null;
+      }
+
+      function openEditor(): HTMLInputElement {
+        plannedButton()?.click();
+        fixture.detectChanges();
+        const input = plannedInput();
+        if (!input) {
+          throw new Error('Planned input is not rendered');
+        }
+        return input;
+      }
+
+      function press(input: HTMLInputElement, key: string): void {
+        input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+        fixture.detectChanges();
+      }
+
+      function spyOnSetPlannedAmount() {
+        return vi.spyOn(TestBed.inject(BudgetService), 'setPlannedAmount');
+      }
+
+      it('opens with the current planned amount and focuses the input', async () => {
+        const input = openEditor();
+        await fixture.whenStable();
+        expect(input.value).toBe('10,5');
+        expect(document.activeElement).toBe(input);
+      });
+
+      it('saves the amount on Enter through BudgetService.setPlannedAmount', async () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = '12,5';
+        press(input, 'Enter');
+        await fixture.whenStable();
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 12.5);
+        expect(plannedInput()).toBeNull();
+        expect(plannedButton()?.textContent?.trim()).toBe(expected(1250));
+        expect(document.activeElement).toBe(plannedButton());
+      });
+
+      it('accepts the minimum positive amount of 0.01 euro', () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = '0,01';
+        press(input, 'Enter');
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 0.01);
+      });
+
+      it.each(['', '0', '0,00'])('removes the planned amount when the draft is %j', raw => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = raw;
+        press(input, 'Enter');
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        expect(plannedButton()?.textContent?.trim()).toBe('Non renseigné');
+      });
+
+      it.each(['-5', 'abc', '0,001', '1,2,3'])('rejects the draft %j without saving', raw => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = raw;
+        press(input, 'Enter');
+        expect(spy).not.toHaveBeenCalled();
+        expect(plannedInput()?.value).toBe(raw);
+        expect(plannedInput()?.getAttribute('aria-invalid')).toBe('true');
+        expect(elementOf<HTMLElement>('[role="alert"]')?.textContent?.trim()).toBe(
+          'Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum.',
+        );
+      });
+
+      it('cancels on Escape without saving and restores focus to the button', async () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = '99';
+        press(input, 'Escape');
+        await fixture.whenStable();
+        expect(spy).not.toHaveBeenCalled();
+        expect(plannedInput()).toBeNull();
+        expect(plannedButton()?.textContent?.trim()).toBe(expected(1050));
+        expect(document.activeElement).toBe(plannedButton());
+      });
+
+      it('cancels when the input loses focus without saving', () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = '99';
+        input.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(spy).not.toHaveBeenCalled();
+        expect(plannedInput()).toBeNull();
+        expect(plannedButton()?.textContent?.trim()).toBe(expected(1050));
+      });
+
+      it('labels the controls in French and English', async () => {
+        const name = subcategoryNameOf(subcategoryIdOf('expense'));
+        const value = expected(1050);
+        expect(plannedButton()?.getAttribute('aria-label')).toBe(`Modifier le prévu pour ${name} (${value})`);
+
+        TestBed.inject(TranslocoService).setActiveLang('en');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(plannedButton()?.getAttribute('aria-label')).toBe(`Edit planned amount for ${name} (${value})`);
+
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        fixture.detectChanges();
+        expect(plannedButton()?.textContent?.trim()).toBe('Not set');
+      });
+
+      it('keeps the numeric keyboard hints on the planned input', () => {
+        const input = openEditor();
+        expect(input.getAttribute('inputmode')).toBe('decimal');
+        expect(input.getAttribute('enterkeyhint')).toBe('done');
+      });
+
+      it('shows the clear control only while editing', () => {
+        expect(clearButton()).toBeNull();
+        openEditor();
+        const name = subcategoryNameOf(subcategoryIdOf('expense'));
+        expect(clearButton()?.getAttribute('aria-label')).toBe(`Effacer le prévu pour ${name}`);
+      });
+
+      it('prevents the mousedown default so the clear control keeps the input focused', () => {
+        openEditor();
+        const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        clearButton()?.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(true);
+      });
+
+      it('saves zero immediately from the clear control, closes the editor and focuses the button', async () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = '42';
+        clearButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        expect(plannedInput()).toBeNull();
+        expect(clearButton()).toBeNull();
+        expect(plannedButton()?.textContent?.trim()).toBe('Non renseigné');
+        expect(document.activeElement).toBe(plannedButton());
+      });
+
+      it('does not restore the previous amount after the clear control, even on later Escape or blur', async () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        clearButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        press(input, 'Escape');
+        input.dispatchEvent(new FocusEvent('blur', { relatedTarget: null }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        expect(plannedButton()?.textContent?.trim()).toBe('Non renseigné');
+      });
+
+      it('saves zero from the clear control even when the draft holds an invalid value', async () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = '-5';
+        press(input, 'Enter');
+        expect(elementOf<HTMLElement>('[role="alert"]')).not.toBeNull();
+        clearButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(spy).toHaveBeenLastCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        expect(elementOf<HTMLElement>('[role="alert"]')).toBeNull();
+        expect(plannedInput()).toBeNull();
+      });
+
+      it('cancels on Escape from the clear control without saving the draft', async () => {
+        const spy = spyOnSetPlannedAmount();
+        openEditor();
+        clearButton()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(spy).not.toHaveBeenCalled();
+        expect(plannedInput()).toBeNull();
+        expect(plannedButton()?.textContent?.trim()).toBe(expected(1050));
+      });
+
+      it('keeps editing when focus moves from the input to the clear control', () => {
+        const input = openEditor();
+        input.dispatchEvent(new FocusEvent('blur', { relatedTarget: clearButton() }));
+        fixture.detectChanges();
+        expect(plannedInput()).not.toBeNull();
+      });
+
+      it('keeps the unset label on one line and the resting control without a solid fill', () => {
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        fixture.detectChanges();
+        const label = plannedButton()?.querySelector<HTMLElement>('.amount-value');
+        expect(label).not.toBeNull();
+        expect(getComputedStyle(label as HTMLElement).whiteSpace).toBe('nowrap');
+        expect(getComputedStyle(plannedButton() as HTMLButtonElement).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      });
+
+      it('extends the planned button past its track so the amount text aligns with the card head', () => {
+        const style = getComputedStyle(plannedButton() as HTMLButtonElement);
+        expect(style.width).toContain('calc(100% + var(--space-sm) + var(--border-width))');
+        expect(style.minHeight).toBe('var(--size-touch-min)');
+      });
+
+      it('renders the planned input without border or fill while editing', () => {
+        const input = openEditor();
+        const style = getComputedStyle(input);
+        expect(['0', '0px']).toContain(style.borderTopWidth);
+        expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      });
+
+      it('places the clear control in the same container as the input, on the trailing edge', () => {
+        const input = openEditor();
+        const clear = clearButton();
+        expect(clear).not.toBeNull();
+        expect(input.parentElement?.classList.contains('planned-edit')).toBe(true);
+        expect(clear?.parentElement).toBe(input.parentElement);
+        expect(getComputedStyle(clear as HTMLElement).position).toBe('absolute');
+        expect(getComputedStyle(clear as HTMLElement).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      });
+
+      it('keeps the clear control as a real button, not nested inside the input', () => {
+        openEditor();
+        expect(clearButton()?.tagName).toBe('BUTTON');
+        expect(clearButton()?.getAttribute('type')).toBe('button');
+        expect(clearButton()?.querySelector('input')).toBeNull();
+      });
+
+      it('labels the clear control in English', async () => {
+        TestBed.inject(TranslocoService).setActiveLang('en');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        openEditor();
+        const name = subcategoryNameOf(subcategoryIdOf('expense'));
+        expect(clearButton()?.getAttribute('aria-label')).toBe(`Clear planned amount for ${name}`);
       });
     });
   });

@@ -146,7 +146,11 @@
         "actual": "Réel"
       },
       "noSubcategory": "À compléter : aucune sous-catégorie configurée.",
-      "realWithoutPlanned": "Réel sans prévu",
+      "plannedUnset": "Non renseigné",
+      "editPlanned": "Modifier le prévu pour {{ name }} ({{ value }})",
+      "plannedFieldLabel": "Prévu pour {{ name }}",
+      "amountInvalid": "Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum.",
+      "clearPlanned": "Effacer le prévu pour {{ name }}",
       "shortcuts": "Accès rapide aux catégories",
       "progress": {
         "label": "Progression de {{ name }}",

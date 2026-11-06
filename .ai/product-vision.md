@@ -1,7 +1,7 @@
 # Vision produit — Budget Planner v3
 
 > Source de vérité produit. Toute décision de design ou d'implémentation doit pouvoir se justifier par ce document.
-> Dernière mise à jour : 2026-11-03
+> Dernière mise à jour : 2026-11-05
 
 ---
 
@@ -267,6 +267,11 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-11-03 | Règles récurrentes : `startMonth` et `endMonth` sont inclusifs ; une règle sans `endMonth` est active sans fin |
 | 2026-11-03 | Solde d'ouverture : report de la clôture réelle du mois précédent initialisé ; ouverture à 0 si le mois précédent n'est pas initialisé. Un override manuel reste fixe, puis la cascade reprend depuis sa clôture réelle jusqu'au prochain override ; l'override peut être effacé pour revenir au calcul automatique. Les changements de transactions recalculent la cascade, les changements de prévu non. |
 | 2026-11-03 | Couleurs sémantiques validées visuellement en thème clair : revenus/`ok` `#15803d`, dépassement `#c93c37`, `warn` `#946000` ; les couleurs sémantiques varient par thème mais pas par palette |
+| 2026-11-05 | Budget Mensuel : cartes par catégorie en colonnes égales sur desktop, regroupées par taille ; sur mobile, une colonne de cartes repliables ouvertes par défaut avec raccourcis. Le bandeau d'allocation reste dans le flux normal. |
+| 2026-11-05 | Budget Mensuel : un prévu absent ou à zéro s'affiche « Non renseigné » au niveau sous-catégorie ; la cellule Réel n'ajoute pas de libellé séparé « Réel sans prévu ». L'édition inline enregistre avec Entrée ; Échap ou perte de focus annule. |
+| 2026-11-05 | Cards du Budget Mensuel : revenus affichés avec `+`, dépenses en valeurs positives sans `−` ; le bandeau d'allocation et les transactions conservent leurs signes. Les couleurs de progression income suivent le sens favorable (sous la cible défavorable, au-dessus favorable) sans modifier les calculs métier. |
+| 2026-11-05 | Budget Mensuel : la progression reste par sous-catégorie, pas de barre agrégée dans l'en-tête de catégorie ; les colonnes Prévu/Réel sont alignées entre en-têtes et lignes. |
+| 2026-11-05 | Édition du prévu : Entrée valide, Échap/blur annulent le brouillon ; la croix est une action immédiate de réinitialisation du prévu et n'est pas annulée par une perte de focus ultérieure. |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 

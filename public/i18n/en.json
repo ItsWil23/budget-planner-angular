@@ -146,7 +146,11 @@
         "actual": "Actual"
       },
       "noSubcategory": "To complete: no subcategory configured.",
-      "realWithoutPlanned": "Actual without planned",
+      "plannedUnset": "Not set",
+      "editPlanned": "Edit planned amount for {{ name }} ({{ value }})",
+      "plannedFieldLabel": "Planned amount for {{ name }}",
+      "amountInvalid": "Invalid amount: enter 0 or an amount of at least €0.01, with at most two decimals.",
+      "clearPlanned": "Clear planned amount for {{ name }}",
       "shortcuts": "Quick access to categories",
       "progress": {
         "label": "Progress of {{ name }}",

@@ -1,5 +1,14 @@
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, ElementRef, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { MoneyPipe } from '../../components/ui/money-pipe/money-pipe';
 import { ProgressBar } from '../../components/ui/progress-bar/progress-bar';
@@ -7,6 +16,8 @@ import { BudgetLineStatus } from '../../models/budget-status';
 import { CategoryType } from '../../models/category';
 import { BudgetService } from '../../services/budget';
 import { CategoryService } from '../../services/category';
+import { MoneyService } from '../../services/money';
+import { MonthContextService } from '../../services/month-context';
 import { SettingsService } from '../../services/settings';
 
 export type SizeGroup = 'small' | 'medium' | 'large';
@@ -23,7 +34,7 @@ export interface ColumnSpec<T extends SizedItem> {
 
 interface LineProgress {
   readonly rate: number;
-  readonly status: BudgetLineStatus;
+  readonly tone: BudgetLineStatus;
 }
 
 interface LineView {
@@ -53,9 +64,26 @@ const SMALL_MAX_ROWS = 5;
 const MEDIUM_MAX_ROWS = 10;
 // Doit rester égal à --space-lg, l'espace entre colonnes du mode desktop.
 const COLUMN_GAP_PX = 16;
-const MIN_COLUMN_WIDTH_PX = 240;
+const MIN_COLUMN_WIDTH_PX = 320;
 const DESKTOP_QUERY = '(min-width: 1024px)';
 const CARD_ID_PREFIX = 'budget-category-';
+const PLANNED_DRAFT_PATTERN = /^\d+(?:\.\d{1,2})?$/;
+
+export type PlannedDraft =
+  | { readonly valid: true; readonly amountEuros: number }
+  | { readonly valid: false };
+
+/**
+ * Valide le brouillon d'un prévu saisi en euros (virgule ou point décimal). Vide ou zéro vaut 0,
+ * ce qui supprime le prévu. Le motif limite à deux décimales : tout montant non nul vaut donc au moins 0,01.
+ */
+export function parsePlannedDraft(raw: string): PlannedDraft {
+  const normalized = raw.trim().replace(',', '.');
+  if (normalized === '') return { valid: true, amountEuros: 0 };
+  if (!PLANNED_DRAFT_PATTERN.test(normalized)) return { valid: false };
+  const amountEuros = Number(normalized);
+  return { valid: true, amountEuros };
+}
 
 export function sizeGroupOf(rowCount: number): SizeGroup {
   if (rowCount <= SMALL_MAX_ROWS) return 'small';
@@ -106,15 +134,27 @@ export function buildCategoryColumns<T extends SizedItem>(items: readonly T[]): 
   return [...packSmallColumns(bySize('small')), ...pairMediumColumns(bySize('medium')), ...largeColumns];
 }
 
+/**
+ * Pour un revenu, un statut `under` (encaissé en dessous du prévu) est défavorable et `over` favorable :
+ * seul le ton de remplissage est inversé, le statut métier du service reste inchangé.
+ */
+function toneOf(status: BudgetLineStatus, type: CategoryType): BudgetLineStatus {
+  if (type !== 'income') return status;
+  if (status === 'under') return 'over';
+  if (status === 'over') return 'under';
+  return status;
+}
+
 function progressOf(
   plannedCents: number,
+  type: CategoryType,
   consumptionRate: number | undefined,
   status: BudgetLineStatus | undefined,
 ): LineProgress | undefined {
   if (plannedCents <= 0 || consumptionRate === undefined || status === undefined) {
     return undefined;
   }
-  return { rate: consumptionRate, status };
+  return { rate: consumptionRate, tone: toneOf(status, type) };
 }
 
 function nameLookup(items: readonly { id: string; name: string }[]): (id: string) => string {
@@ -137,12 +177,19 @@ export class BudgetMensuel {
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+  private readonly moneyService = inject(MoneyService);
+  private readonly monthContext = inject(MonthContextService);
 
   protected readonly monthSummary = this.budget.monthSummary;
   protected readonly settings = inject(SettingsService).settings;
 
   private readonly hostWidth = signal(0);
   private readonly isDesktop = signal(false);
+
+  protected readonly editingId = signal<string | null>(null);
+  protected readonly editDraft = signal('');
+  protected readonly editError = signal(false);
 
   protected readonly categories = computed<CategoryView[]>(() => {
     const categoryName = nameLookup(this.categoryService.categories());
@@ -160,7 +207,7 @@ export class BudgetMensuel {
         type: line.categoryType,
         plannedCents: line.plannedAmountCents,
         actualCents: line.actualAmountCents,
-        progress: progressOf(line.plannedAmountCents, line.consumptionRate, line.status),
+        progress: progressOf(line.plannedAmountCents, line.categoryType, line.consumptionRate, line.status),
       })),
     }));
   });
@@ -179,12 +226,97 @@ export class BudgetMensuel {
     this.trackDesktopBreakpoint();
   }
 
-  protected signedType(amountCents: number, type: CategoryType): CategoryType | undefined {
-    return amountCents > 0 ? type : undefined;
+  /** Dans les cards, les dépenses sont affichées en positif ; seul un revenu positif garde son « + ». */
+  protected cardSign(amountCents: number, type: CategoryType): CategoryType | undefined {
+    return type === 'income' && amountCents > 0 ? type : undefined;
+  }
+
+  protected cardAmount(amountCents: number): number {
+    return Math.abs(amountCents);
   }
 
   protected cardId(categoryId: string): string {
     return `${CARD_ID_PREFIX}${categoryId}`;
+  }
+
+  protected plannedButtonId(subcategoryId: string): string {
+    return `budget-planned-${subcategoryId}`;
+  }
+
+  protected plannedInputId(subcategoryId: string): string {
+    return `budget-planned-input-${subcategoryId}`;
+  }
+
+  protected plannedErrorId(subcategoryId: string): string {
+    return `budget-planned-error-${subcategoryId}`;
+  }
+
+  protected isEditing(subcategoryId: string): boolean {
+    return this.editingId() === subcategoryId;
+  }
+
+  protected startEdit(line: LineView): void {
+    this.editDraft.set(this.draftOf(line.plannedCents));
+    this.editError.set(false);
+    this.editingId.set(line.id);
+    afterNextRender(() => this.document.getElementById(this.plannedInputId(line.id))?.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  protected commitEdit(line: LineView, raw: string): void {
+    const draft = parsePlannedDraft(raw);
+    if (!draft.valid) {
+      this.editError.set(true);
+      return;
+    }
+    this.savePlanned(line.id, draft.amountEuros);
+  }
+
+  protected cancelEdit(subcategoryId: string): void {
+    if (!this.isEditing(subcategoryId)) return;
+    this.closeEdit();
+    this.focusPlannedButton(subcategoryId);
+  }
+
+  /** Geste explicite de réinitialisation : enregistre zéro immédiatement, sans passer par le brouillon. */
+  protected clearPlanned(line: LineView): void {
+    if (!this.isEditing(line.id)) return;
+    this.savePlanned(line.id, 0);
+  }
+
+  /** Le blur annule l'édition, sauf si le focus reste dans le même contrôle (champ ou croix). */
+  protected cancelOnBlur(subcategoryId: string, event: FocusEvent): void {
+    if (!this.isEditing(subcategoryId)) return;
+    const editor = event.target instanceof Element ? event.target.closest('.planned-edit') : null;
+    if (event.relatedTarget instanceof Node && editor?.contains(event.relatedTarget)) return;
+    this.closeEdit();
+  }
+
+  private savePlanned(subcategoryId: string, amountEuros: number): void {
+    this.closeEdit();
+    this.budget.setPlannedAmount(this.monthContext.monthKey(), subcategoryId, amountEuros);
+    this.focusPlannedButton(subcategoryId);
+  }
+
+  private closeEdit(): void {
+    this.editingId.set(null);
+    this.editError.set(false);
+  }
+
+  private focusPlannedButton(subcategoryId: string): void {
+    afterNextRender(() => this.document.getElementById(this.plannedButtonId(subcategoryId))?.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  private draftOf(plannedCents: number): string {
+    if (plannedCents <= 0) return '';
+    const formatter = new Intl.NumberFormat(this.settings().locale, {
+      useGrouping: false,
+      maximumFractionDigits: 2,
+    });
+    return formatter.format(this.moneyService.toEuros(plannedCents));
   }
 
   protected openCard(event: Event, categoryId: string): void {
