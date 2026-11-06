@@ -1,7 +1,7 @@
 :host {
   display: block;
   /* Doit rester égal à MIN_COLUMN_WIDTH_PX (budget-mensuel.ts) : colonnes de la disposition B. */
-  --table-column-min: 240px;
+  --table-column-min: 320px;
   /* Hauteur de la topbar mobile (topbar.scss) : cible tactile, padding space-sm et bordures. */
   --topbar-height: calc(var(--size-touch-min) + 2 * var(--space-sm) + 2 * var(--border-width));
   /* Hauteur de la rangée de raccourcis : cible tactile et padding space-xs. */
@@ -121,6 +121,9 @@
 }
 
 .card {
+  --track-amount: 6.5rem;
+  --track-progress: 6rem;
+  container: budget-card / inline-size;
   background-color: var(--surface-card);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-lg);
@@ -133,10 +136,10 @@
 }
 
 .card-head {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--track-amount) var(--track-amount);
   align-items: center;
-  gap: var(--space-xs) var(--space-md);
+  gap: var(--space-xs) var(--space-sm);
   min-height: var(--size-touch-min);
   margin: 0;
   padding: var(--space-md) var(--space-lg);
@@ -158,7 +161,7 @@ details:not([open]) > summary.card-head {
 summary.card-head {
   cursor: pointer;
 
-  &::before {
+  .card-name::before {
     content: '';
     flex: none;
     width: var(--space-sm);
@@ -176,22 +179,30 @@ summary.card-head {
   }
 }
 
-details[open] > summary.card-head::before {
+details[open] > summary.card-head .card-name::before {
   transform: rotate(45deg);
 }
 
 .card-name {
-  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
   min-width: 0;
   font: var(--text-emphasis);
   color: var(--color-text);
   overflow-wrap: anywhere;
 }
 
-.card-totals {
-  display: flex;
-  gap: var(--space-lg);
-  margin-inline-start: auto;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 .total {
@@ -220,7 +231,9 @@ details[open] > summary.card-head::before {
 
 .line {
   display: grid;
-  gap: var(--space-xs);
+  grid-template-columns: minmax(0, 1fr) var(--track-amount) var(--track-amount);
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
   padding-block: var(--space-sm);
   border-top: var(--border-width) solid var(--border);
 }
@@ -231,16 +244,127 @@ details[open] > summary.card-head::before {
   overflow-wrap: anywhere;
 }
 
-.line-amounts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs) var(--space-lg);
-}
-
 .amount {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-xs);
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+}
+
+.line-progress {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.planned-button {
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  box-sizing: border-box;
+  /* Le texte (padding + bordure) s'aligne sur le bord de la piste comme l'en-tête ; la boîte déborde dans l'écart vers Réel. */
+  width: calc(100% + var(--space-sm) + var(--border-width));
+  min-height: var(--size-touch-min);
+  margin-inline-end: calc(-1 * (var(--space-sm) + var(--border-width)));
+  padding: 0 var(--space-sm);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: end;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-text-muted);
+  }
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+}
+
+.amount-value.unset {
+  font: var(--text-caption);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.planned-edit {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.planned-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--size-touch-min);
+  margin: 0;
+  /* Réserve la place de la glyphe de la croix ; sa cible tactile déborde dans l'écart vers Réel. */
+  padding: 0 calc(var(--space-lg) + var(--space-sm)) 0 var(--space-xs);
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-text);
+  font: var(--num-body);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+
+  &[aria-invalid='true'] {
+    color: var(--color-danger);
+  }
+}
+
+.planned-clear {
+  position: absolute;
+  inset-block: 0;
+  /* Centre la cible de 44 px autour de la glyphe, à 4 px du bord de la piste. */
+  inset-inline-end: calc(var(--space-xs) + var(--space-lg) / 2 - var(--size-touch-min) / 2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--size-touch-min);
+  height: var(--size-touch-min);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: calc(var(--size-focus-offset) * -1);
+  }
+}
+
+.planned-clear-icon {
+  width: var(--space-lg);
+  height: var(--space-lg);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--size-bar-thickness);
+  stroke-linecap: round;
+}
+
+.planned-error {
+  grid-column: 1 / -1;
+  font: var(--text-caption);
+  color: var(--color-danger);
 }
 
 .note {
@@ -252,6 +376,17 @@ details[open] > summary.card-head::before {
 
 .card > .note {
   padding-block-start: 0;
+}
+
+@container budget-card (min-width: 28.5rem) {
+  .card-head,
+  .line {
+    grid-template-columns: minmax(0, 1fr) var(--track-amount) var(--track-amount) var(--track-progress);
+  }
+
+  .line-progress {
+    grid-column: auto;
+  }
 }
 
 @media (min-width: 1024px) {

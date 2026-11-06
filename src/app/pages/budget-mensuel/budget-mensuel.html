@@ -58,15 +58,13 @@
 
 <ng-template #cardHead let-category>
   <span class="card-name">{{ category.name }}</span>
-  <span class="card-totals">
-    <span class="total">
-      <span class="total-label">{{ 'budgetMensuel.table.columns.planned' | transloco }}</span>
-      <span class="total-value">{{ category.plannedCents | money: settings() : signedType(category.plannedCents, category.type) }}</span>
-    </span>
-    <span class="total">
-      <span class="total-label">{{ 'budgetMensuel.table.columns.actual' | transloco }}</span>
-      <span class="total-value">{{ category.actualCents | money: settings() : signedType(category.actualCents, category.type) }}</span>
-    </span>
+  <span class="total">
+    <span class="total-label">{{ 'budgetMensuel.table.columns.planned' | transloco }}</span>
+    <span class="total-value">{{ cardAmount(category.plannedCents) | money: settings() : cardSign(category.plannedCents, category.type) }}</span>
+  </span>
+  <span class="total">
+    <span class="total-label">{{ 'budgetMensuel.table.columns.actual' | transloco }}</span>
+    <span class="total-value">{{ cardAmount(category.actualCents) | money: settings() : cardSign(category.actualCents, category.type) }}</span>
   </span>
 </ng-template>
 
@@ -78,26 +76,70 @@
       @for (line of category.lines; track line.id) {
         <li class="line">
           <span class="line-name">{{ line.name }}</span>
-          <span class="line-amounts">
-            <span class="amount">
-              <span class="amount-label">{{ 'budgetMensuel.table.columns.planned' | transloco }}</span>
-              <span class="amount-value">{{ line.plannedCents | money: settings() : signedType(line.plannedCents, line.type) }}</span>
-            </span>
-            <span class="amount">
-              <span class="amount-label">{{ 'budgetMensuel.table.columns.actual' | transloco }}</span>
-              <span class="amount-value">{{ line.actualCents | money: settings() : signedType(line.actualCents, line.type) }}</span>
-            </span>
+          <span class="amount">
+            <span class="amount-label visually-hidden">{{ 'budgetMensuel.table.columns.planned' | transloco }}</span>
+            @if (isEditing(line.id)) {
+              <span class="planned-edit">
+                <input
+                  #plannedInput
+                  type="text"
+                  inputmode="decimal"
+                  enterkeyhint="done"
+                  autocomplete="off"
+                  class="planned-input"
+                  [id]="plannedInputId(line.id)"
+                  [value]="editDraft()"
+                  [attr.aria-label]="'budgetMensuel.table.plannedFieldLabel' | transloco: { name: line.name }"
+                  [attr.aria-invalid]="editError() ? 'true' : null"
+                  [attr.aria-describedby]="editError() ? plannedErrorId(line.id) : null"
+                  (keydown.enter)="commitEdit(line, plannedInput.value)"
+                  (keydown.escape)="cancelEdit(line.id)"
+                  (blur)="cancelOnBlur(line.id, $event)"
+                />
+                <button
+                  type="button"
+                  class="planned-clear"
+                  [attr.aria-label]="'budgetMensuel.table.clearPlanned' | transloco: { name: line.name }"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="clearPlanned(line)"
+                  (keydown.escape)="cancelEdit(line.id)"
+                  (blur)="cancelOnBlur(line.id, $event)"
+                >
+                  <svg class="planned-clear-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
+                </button>
+              </span>
+            } @else {
+              @let plannedText = line.plannedCents > 0
+                ? (line.plannedCents | money: settings() : cardSign(line.plannedCents, line.type))
+                : ('budgetMensuel.table.plannedUnset' | transloco);
+              <button
+                type="button"
+                class="planned-button"
+                [id]="plannedButtonId(line.id)"
+                [attr.aria-label]="'budgetMensuel.table.editPlanned' | transloco: { name: line.name, value: plannedText }"
+                (click)="startEdit(line)"
+              >
+                <span class="amount-value" [class.unset]="line.plannedCents <= 0">{{ plannedText }}</span>
+              </button>
+            }
+          </span>
+          <span class="amount">
+            <span class="amount-label visually-hidden">{{ 'budgetMensuel.table.columns.actual' | transloco }}</span>
+            <span class="amount-value">{{ cardAmount(line.actualCents) | money: settings() : cardSign(line.actualCents, line.type) }}</span>
           </span>
           @if (line.progress; as progress) {
             <app-progress-bar
               class="line-progress"
               [consumptionRate]="progress.rate"
-              [status]="progress.status"
+              [status]="progress.tone"
               [ariaLabel]="'budgetMensuel.table.progress.label' | transloco: { name: line.name }"
-              [ariaValueText]="'budgetMensuel.table.progress.value' | transloco: { planned: (line.plannedCents | money: settings()), actual: (line.actualCents | money: settings()) }"
+              [ariaValueText]="'budgetMensuel.table.progress.value' | transloco: { planned: (cardAmount(line.plannedCents) | money: settings()), actual: (cardAmount(line.actualCents) | money: settings()) }"
             />
-          } @else if (line.plannedCents === 0 && line.actualCents > 0) {
-            <p class="note">{{ 'budgetMensuel.table.realWithoutPlanned' | transloco }}</p>
+          }
+          @if (isEditing(line.id) && editError()) {
+            <span class="planned-error" role="alert" [id]="plannedErrorId(line.id)">{{ 'budgetMensuel.table.amountInvalid' | transloco }}</span>
           }
         </li>
       }

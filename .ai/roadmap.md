@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-11-03
+> Dernière mise à jour : 2026-11-05
 
 ## 1. Pourquoi cet ordre
 
@@ -117,9 +117,9 @@ catégories traité au lot 4 (§ 7).
 8. [x] Tokens sémantiques en thème clair, dont `--color-warn` (`DESIGN_SYSTEM.md` § 4.3) — couleurs validées
   visuellement le 2026-11-03 et implémentées. Fait le 2026-11-03 (PR #45).
 9. [x] Composant `ui/progress-bar`. Fait le 2026-11-03 (PR #46).
-10. [x] Page : bandeau d'allocation, lecture seule. Fait le 2026-11-03 (PR en cours).
-11. Page : table catégorie → sous-catégories, réel en regard aux deux niveaux, barres de progression, signalement
-    d'une catégorie sans sous-catégorie.
+10. [x] Page : bandeau d'allocation, lecture seule. Fait le 2026-11-03 (PR #47).
+11. [x] Page : table catégorie → sous-catégories, réel en regard aux deux niveaux, barres de progression,
+  signalement d'une catégorie sans sous-catégorie. Fait le 2026-11-05 (PR #48).
 12. Page : saisie inline du prévu **au niveau sous-catégorie** (le total de la catégorie se recalcule
     automatiquement), avec validation (montant minimal `0.01`, pas `0.1` — piège relevé en revue du
     2026-10-22 sur `TransactionForm`, voir Lot 2).
