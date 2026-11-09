@@ -26,8 +26,23 @@
 
   <div class="form-group">
     <label for="transactionAmount">{{ 'transactionForm.amount' | transloco }}</label>
-    <input id="transactionAmount" formControlName="amountEuros" type="number" step="0.01"/>
+    <input
+      id="transactionAmount"
+      formControlName="amountText"
+      type="text"
+      inputmode="decimal"
+      enterkeyhint="done"
+      [attr.aria-invalid]="amountErrorKey() ? 'true' : null"
+      [attr.aria-describedby]="amountErrorKey() ? amountErrorId : null"
+    />
+    @if (amountErrorKey(); as errorKey) {
+      <span [id]="amountErrorId" role="alert">{{ errorKey | transloco }}</span>
+    }
   </div>
+
+  @if (aggregateOverflow) {
+    <p [id]="aggregateErrorId" role="alert">{{ 'transactionForm.aggregateOverflow' | transloco }}</p>
+  }
 
   <div class="form-group">
     <label for="transactionDate">{{ 'transactionForm.date' | transloco }}</label>

@@ -108,6 +108,9 @@
     "label": "Label",
     "amount": "Amount",
     "date": "Date",
+    "amountInvalid": "Invalid amount: enter an amount greater than €0, with at most two decimals (e.g. 12.50).",
+    "amountTooLarge": "Amount too large to be saved: enter an amount up to €90,071,992,547,409.91.",
+    "aggregateOverflow": "Transaction rejected: the category, subcategory or month total would exceed the application's exact calculation capacity. Enter a smaller amount.",
     "submit": "Add",
     "cancel": "Cancel"
   },

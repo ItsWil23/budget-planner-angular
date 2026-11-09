@@ -108,6 +108,9 @@
     "label": "Libellé",
     "amount": "Montant",
     "date": "Date",
+    "amountInvalid": "Montant invalide : saisissez un montant supérieur à 0 €, avec deux décimales maximum (ex. 12,50).",
+    "amountTooLarge": "Montant trop grand pour être enregistré : saisissez un montant inférieur ou égal à 90 071 992 547 409,91 €.",
+    "aggregateOverflow": "Transaction refusée : le total de la catégorie, de la sous-catégorie ou du mois dépasserait la capacité de calcul exacte de l’application. Saisissez un montant plus petit.",
     "submit": "Ajouter",
     "cancel": "Annuler"
   },

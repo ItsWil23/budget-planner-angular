@@ -696,13 +696,13 @@ describe('BudgetMensuel', () => {
         TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 100000);
       });
 
-      function addActual(amountEuros: number): void {
+      function addActual(amountCents: number): void {
         TestBed.inject(TransactionService).add({
           label: 'Test',
           categoryId: categoryIdOf('expense'),
           subcategoryId: subcategoryIdOf('expense'),
           date: `${TEST_MONTH}-15`,
-          amountEuros,
+          amountCents,
           type: 'expense',
         });
       }
@@ -744,7 +744,7 @@ describe('BudgetMensuel', () => {
 
       it('shows Not set in the planned cell without a progress bar when the planned amount is zero', () => {
         TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 0);
-        addActual(50);
+        addActual(5000);
         renderMobile();
         const line = expenseLine();
         expect(textsOf(line, '.planned-button')).toEqual(['Non renseigné']);
@@ -781,7 +781,7 @@ describe('BudgetMensuel', () => {
             categoryId: categoryIdOf('income'),
             subcategoryId: subcategoryIdOf('income'),
             date: `${TEST_MONTH}-15`,
-            amountEuros: 100,
+            amountCents: 10000,
             type: 'income',
           });
         });
