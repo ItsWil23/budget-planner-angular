@@ -153,7 +153,8 @@
       "toggleSign": "Basculer le signe (positif ou négatif)",
       "editHint": "Entrée enregistre, Échap annule.",
       "amountInvalid": "Montant invalide : saisissez un montant en euros, avec deux décimales maximum (ex. -12,50).",
-      "amountTooLarge": "Montant trop grand pour être enregistré : saisissez une valeur plus petite."
+      "amountTooLarge": "Montant trop grand pour être enregistré : saisissez une valeur plus petite.",
+      "prepareAggregateOverflow": "Préparation refusée : les récurrences actives dépassent la capacité de calcul exacte de l’application. Réduisez leurs montants pour préparer le mois."
     },
     "table": {
       "label": "Suivi par catégorie",
@@ -166,7 +167,8 @@
       "plannedUnset": "Non renseigné",
       "editPlanned": "Modifier le prévu pour {{ name }} ({{ value }})",
       "plannedFieldLabel": "Prévu pour {{ name }}",
-      "amountInvalid": "Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum.",
+      "amountInvalid": "Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum, sans dépasser 90 071 992 547 409,91 €.",
+      "amountAggregateOverflow": "Montant refusé : le total prévu de la catégorie ou du mois dépasserait la capacité de calcul exacte de l’application. Saisissez un montant plus petit.",
       "clearPlanned": "Effacer le prévu pour {{ name }}",
       "shortcuts": "Accès rapide aux catégories",
       "progress": {

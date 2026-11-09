@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BudgetMonth } from '../models/budget-month';
 import { RecurringRule } from '../models/recurring-rule';
 import { BudgetCategorySummary, BudgetMonthSummary, BudgetSubcategorySummary } from '../models/budget-summary';
-import { BudgetService } from './budget';
+import { BudgetService, PlannedAggregateOverflowError } from './budget';
 import { CategoryService } from './category';
 import { MoneyService } from './money';
 import { MonthContextService } from './month-context';
@@ -22,7 +22,6 @@ describe('Budget Service', () => {
     transactionService = new TransactionService(new MoneyService());
     monthContext = new MonthContextService();
     service = new BudgetService(
-      new MoneyService(),
       categoryService,
       recurringRuleService,
       transactionService,
@@ -35,7 +34,7 @@ describe('Budget Service', () => {
   });
 
   it('crée une ligne prévue pour une sous-catégorie', () => {
-    const line = service.setPlannedAmount('2026-10', 'sub-2', 850);
+    const line = service.setPlannedAmount('2026-10', 'sub-2', 85000);
 
     expect(service.lines()).toHaveLength(1);
     expect(line).toEqual(
@@ -49,15 +48,15 @@ describe('Budget Service', () => {
     expect(service.lines()[0]).toEqual(line);
   });
 
-  it('convertit les euros en centimes', () => {
-    service.setPlannedAmount('2026-10', 'sub-3', 12.34);
+  it('enregistre les centimes saisis tels quels', () => {
+    service.setPlannedAmount('2026-10', 'sub-3', 1234);
 
     expect(service.plannedCentsFor('2026-10', 'sub-3')).toBe(1234);
   });
 
   it('garantit une seule ligne par (mois, sous-catégorie) et garde la dernière valeur', () => {
-    service.setPlannedAmount('2026-10', 'sub-2', 850);
-    const updated = service.setPlannedAmount('2026-10', 'sub-2', 900);
+    service.setPlannedAmount('2026-10', 'sub-2', 85000);
+    const updated = service.setPlannedAmount('2026-10', 'sub-2', 90000);
 
     expect(service.lines()).toHaveLength(1);
     expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(90000);
@@ -65,15 +64,15 @@ describe('Budget Service', () => {
   });
 
   it('conserve l’identifiant de la ligne lors d’une mise à jour', () => {
-    const first = service.setPlannedAmount('2026-10', 'sub-2', 850);
-    const second = service.setPlannedAmount('2026-10', 'sub-2', 900);
+    const first = service.setPlannedAmount('2026-10', 'sub-2', 85000);
+    const second = service.setPlannedAmount('2026-10', 'sub-2', 90000);
 
     expect(second?.id).toBe(first?.id);
   });
 
   it('crée deux lignes distinctes pour la même sous-catégorie sur deux mois', () => {
-    service.setPlannedAmount('2026-10', 'sub-2', 850);
-    service.setPlannedAmount('2026-11', 'sub-2', 850);
+    service.setPlannedAmount('2026-10', 'sub-2', 85000);
+    service.setPlannedAmount('2026-11', 'sub-2', 85000);
 
     expect(service.lines()).toHaveLength(2);
     expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(85000);
@@ -81,7 +80,7 @@ describe('Budget Service', () => {
   });
 
   it('retire la ligne existante quand le montant vaut 0 et renvoie null', () => {
-    service.setPlannedAmount('2026-10', 'sub-2', 850);
+    service.setPlannedAmount('2026-10', 'sub-2', 85000);
 
     const result = service.setPlannedAmount('2026-10', 'sub-2', 0);
 
@@ -99,11 +98,113 @@ describe('Budget Service', () => {
     expect(() => service.setPlannedAmount('2026-10', 'sub-2', -1)).toThrow('Invalid amount');
   });
 
-  it('refuse un montant négatif inférieur au centime sans supprimer la ligne existante', () => {
-    service.setPlannedAmount('2026-10', 'sub-2', 850);
+  it('refuse un montant non entier sans supprimer la ligne existante', () => {
+    service.setPlannedAmount('2026-10', 'sub-2', 85000);
 
-    expect(() => service.setPlannedAmount('2026-10', 'sub-2', -0.001)).toThrow('Invalid amount');
+    expect(() => service.setPlannedAmount('2026-10', 'sub-2', 85000.5)).toThrow('Invalid amount');
+    expect(() => service.setPlannedAmount('2026-10', 'sub-2', -0.5)).toThrow('Invalid amount');
     expect(service.lines()).toHaveLength(1);
+    expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(85000);
+  });
+
+  it('refuse des euros passés à la place de centimes : 12.34 n’est pas un montant en centimes', () => {
+    expect(() => service.setPlannedAmount('2026-10', 'sub-3', 12.34)).toThrow('Invalid amount');
+    expect(service.lines()).toEqual([]);
+  });
+
+  it('accepte le plus grand montant sûr en centimes', () => {
+    service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER);
+
+    expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(Number.MAX_SAFE_INTEGER);
+  });
+
+  describe('garde-fou d’agrégat prévu', () => {
+    it('refuse un centime de plus dans une autre sous-catégorie de la même catégorie, sans mutation', () => {
+      service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER);
+      const before = service.lines();
+
+      expect(() => service.setPlannedAmount('2026-10', 'sub-3', 1)).toThrow(
+        PlannedAggregateOverflowError,
+      );
+      expect(service.lines()).toBe(before);
+      expect(service.plannedCentsFor('2026-10', 'sub-3')).toBe(0);
+    });
+
+    it('refuse la mise à jour d’une ligne existante qui ferait dépasser le total de sa catégorie', () => {
+      service.setPlannedAmount('2026-10', 'sub-2', 100);
+      service.setPlannedAmount('2026-10', 'sub-3', Number.MAX_SAFE_INTEGER - 100);
+      const before = service.lines();
+
+      expect(() => service.setPlannedAmount('2026-10', 'sub-2', 101)).toThrow(
+        PlannedAggregateOverflowError,
+      );
+      expect(service.lines()).toBe(before);
+      expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(100);
+    });
+
+    it('refuse le dépassement du total mensuel des dépenses, les lignes restant individuellement sûres', () => {
+      service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER - 10);
+      const before = service.lines();
+
+      // sub-5 appartient à cat-3 (dépense) : chaque ligne est sûre, leur somme mensuelle ne l'est pas.
+      expect(() => service.setPlannedAmount('2026-10', 'sub-5', 11)).toThrow(
+        PlannedAggregateOverflowError,
+      );
+      expect(service.lines()).toBe(before);
+      expect(service.plannedCentsFor('2026-10', 'sub-5')).toBe(0);
+    });
+
+    it('refuse le dépassement du total mensuel des revenus, les lignes restant individuellement sûres', () => {
+      categoryService.addCategory({ id: 'cat-income-2', name: 'Autres revenus', type: 'income', color: '#2e7d32' });
+      categoryService.addSubcategory({
+        id: 'sub-income-2',
+        name: 'Prime',
+        categoryId: 'cat-income-2',
+        icon: 'gift',
+      });
+      service.setPlannedAmount('2026-10', 'sub-1', Number.MAX_SAFE_INTEGER - 10);
+      const before = service.lines();
+
+      expect(() => service.setPlannedAmount('2026-10', 'sub-income-2', 11)).toThrow(
+        PlannedAggregateOverflowError,
+      );
+      expect(service.lines()).toBe(before);
+      expect(service.plannedCentsFor('2026-10', 'sub-income-2')).toBe(0);
+    });
+
+    it('ne compte pas les lignes des autres mois dans le total mensuel', () => {
+      service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER);
+
+      expect(service.setPlannedAmount('2026-11', 'sub-5', Number.MAX_SAFE_INTEGER)).toEqual(
+        expect.objectContaining({ monthKey: '2026-11', plannedAmountCents: Number.MAX_SAFE_INTEGER }),
+      );
+    });
+
+    it('accepte une mise à jour qui remplace la ligne sans la compter deux fois', () => {
+      service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER - 10);
+
+      service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER);
+
+      expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(Number.MAX_SAFE_INTEGER);
+      expect(service.lines()).toHaveLength(1);
+    });
+
+    it('libère de la place en mettant une ligne à 0 puis accepte une nouvelle ligne', () => {
+      service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER);
+      service.setPlannedAmount('2026-10', 'sub-2', 0);
+
+      service.setPlannedAmount('2026-10', 'sub-3', Number.MAX_SAFE_INTEGER);
+
+      expect(service.plannedCentsFor('2026-10', 'sub-3')).toBe(Number.MAX_SAFE_INTEGER);
+    });
+  });
+
+  it('refuse un montant au-delà des entiers sûrs sans mutation', () => {
+    service.setPlannedAmount('2026-10', 'sub-2', 85000);
+
+    expect(() => service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER + 1)).toThrow(
+      'Invalid amount',
+    );
     expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(85000);
   });
 
@@ -124,9 +225,9 @@ describe('Budget Service', () => {
   });
 
   it('linesForMonth ne renvoie que les lignes du mois demandé', () => {
-    service.setPlannedAmount('2026-10', 'sub-2', 850);
-    service.setPlannedAmount('2026-10', 'sub-3', 30);
-    service.setPlannedAmount('2026-11', 'sub-2', 850);
+    service.setPlannedAmount('2026-10', 'sub-2', 85000);
+    service.setPlannedAmount('2026-10', 'sub-3', 3000);
+    service.setPlannedAmount('2026-11', 'sub-2', 85000);
 
     const october = service.linesForMonth('2026-10');
 
@@ -135,7 +236,7 @@ describe('Budget Service', () => {
   });
 
   it('modifier le tableau renvoyé par linesForMonth ne modifie pas lines()', () => {
-    service.setPlannedAmount('2026-10', 'sub-2', 850);
+    service.setPlannedAmount('2026-10', 'sub-2', 85000);
 
     const october = service.linesForMonth('2026-10');
     october.splice(0);
@@ -217,7 +318,7 @@ describe('Budget Service', () => {
     });
 
     it('n’écrase pas une ligne saisie avant ouverture et la compte comme ignorée', () => {
-      service.setPlannedAmount('2026-07', 'sub-2', 900);
+      service.setPlannedAmount('2026-07', 'sub-2', 90000);
 
       const result = service.openMonth('2026-07');
 
@@ -258,6 +359,96 @@ describe('Budget Service', () => {
 
     it('refuse un mois invalide', () => {
       expect(() => service.openMonth('2026-13')).toThrow('Invalid month key format');
+    });
+
+    describe('garde-fou d’agrégat à l’ouverture', () => {
+      it('refuse des règles individuellement sûres qui dépassent ensemble la catégorie, sans rien créer', () => {
+        vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([
+          buildRule({ id: 'rule-big', subcategoryId: 'sub-2', amountCents: Number.MAX_SAFE_INTEGER - 100 }),
+          buildRule({ id: 'rule-over', subcategoryId: 'sub-3', amountCents: 200 }),
+        ]);
+        const before = service.lines();
+
+        expect(() => service.openMonth('2026-07')).toThrow(PlannedAggregateOverflowError);
+        expect(service.lines()).toBe(before);
+        expect(service.isMonthOpened('2026-07')).toBe(false);
+        expect(service.months().some(month => month.initialized)).toBe(false);
+      });
+
+      it('refuse un dépassement du total mensuel des dépenses porté par deux catégories sûres, sans mutation', () => {
+        vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([
+          buildRule({ id: 'rule-big', subcategoryId: 'sub-2', amountCents: Number.MAX_SAFE_INTEGER - 100 }),
+          buildRule({ id: 'rule-other', subcategoryId: 'sub-5', categoryId: 'cat-3', amountCents: 200 }),
+        ]);
+        const before = service.lines();
+
+        expect(() => service.openMonth('2026-07')).toThrow(PlannedAggregateOverflowError);
+        expect(service.lines()).toBe(before);
+        expect(service.plannedCentsFor('2026-07', 'sub-5')).toBe(0);
+        expect(service.isMonthOpened('2026-07')).toBe(false);
+      });
+
+      it('ne crée aucune ligne valide quand une seule candidate dépasse avec une ligne existante', () => {
+        service.setPlannedAmount('2026-07', 'sub-3', Number.MAX_SAFE_INTEGER - 100);
+        const before = service.lines();
+        vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([
+          buildRule({ id: 'rule-ok', subcategoryId: 'sub-5', categoryId: 'cat-3', amountCents: 1000 }),
+          buildRule({ id: 'rule-over', subcategoryId: 'sub-2', amountCents: 200 }),
+        ]);
+
+        expect(() => service.openMonth('2026-07')).toThrow(PlannedAggregateOverflowError);
+        expect(service.lines()).toBe(before);
+        expect(service.plannedCentsFor('2026-07', 'sub-5')).toBe(0);
+        expect(service.plannedCentsFor('2026-07', 'sub-2')).toBe(0);
+        expect(service.isMonthOpened('2026-07')).toBe(false);
+      });
+
+      it('accepte exactement Number.MAX_SAFE_INTEGER au total mensuel des dépenses', () => {
+        vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([
+          buildRule({ id: 'rule-big', subcategoryId: 'sub-2', amountCents: Number.MAX_SAFE_INTEGER - 100 }),
+          buildRule({ id: 'rule-edge', subcategoryId: 'sub-5', categoryId: 'cat-3', amountCents: 100 }),
+        ]);
+
+        const result = service.openMonth('2026-07');
+
+        expect(result.created).toBe(2);
+        expect(service.isMonthOpened('2026-07')).toBe(true);
+        expect(service.plannedCentsFor('2026-07', 'sub-5')).toBe(100);
+      });
+
+      it('ignore une règle au montant non sûr comme une règle invalide, sans bloquer les autres', () => {
+        vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([
+          buildRule({ id: 'rule-unsafe', subcategoryId: 'sub-2', amountCents: 2 ** 53 }),
+          buildRule({ id: 'rule-ok', subcategoryId: 'sub-5', categoryId: 'cat-3', amountCents: 1000 }),
+        ]);
+
+        const result = service.openMonth('2026-07');
+
+        expect(result).toEqual({
+          monthKey: '2026-07',
+          created: 1,
+          skipped: 0,
+          ignoredRuleIds: ['rule-unsafe'],
+        });
+        expect(service.plannedCentsFor('2026-07', 'sub-5')).toBe(1000);
+      });
+
+      it('permet d’ouvrir le mois après correction des règles qui avaient été refusées', () => {
+        const spy = vi.spyOn(recurringRuleService, 'activeRulesForMonth').mockReturnValue([
+          buildRule({ id: 'rule-big', subcategoryId: 'sub-2', amountCents: Number.MAX_SAFE_INTEGER - 100 }),
+          buildRule({ id: 'rule-over', subcategoryId: 'sub-5', categoryId: 'cat-3', amountCents: 200 }),
+        ]);
+        expect(() => service.openMonth('2026-07')).toThrow(PlannedAggregateOverflowError);
+
+        spy.mockReturnValue([
+          buildRule({ id: 'rule-big', subcategoryId: 'sub-2', amountCents: 85000 }),
+          buildRule({ id: 'rule-over', subcategoryId: 'sub-5', categoryId: 'cat-3', amountCents: 200 }),
+        ]);
+        const result = service.openMonth('2026-07');
+
+        expect(result.created).toBe(2);
+        expect(service.isMonthOpened('2026-07')).toBe(true);
+      });
     });
 
     it('indique si un mois est ouvert', () => {
@@ -338,7 +529,7 @@ describe('Budget Service', () => {
     });
 
     it('donne un réel à 0, un écart négatif, un taux 0 et le statut under à un prévu sans transaction', () => {
-      service.setPlannedAmount('2026-07', 'sub-5', 100);
+      service.setPlannedAmount('2026-07', 'sub-5', 10000);
       const summary = service.monthSummary();
 
       expect(findSubcategory(summary, 'sub-5')).toEqual(
@@ -392,7 +583,7 @@ describe('Budget Service', () => {
     });
 
     it('calcule le ratio et le statut d’un revenu : salaire de juillet 245000 pour prévu 200000 est over', () => {
-      service.setPlannedAmount('2026-07', 'sub-1', 2000);
+      service.setPlannedAmount('2026-07', 'sub-1', 200000);
       const summary = service.monthSummary();
       const expected = {
         plannedAmountCents: 200000,
@@ -409,18 +600,18 @@ describe('Budget Service', () => {
     });
 
     it.each([
-      { subcategoryId: 'sub-2', plannedEuros: 1062.5, expected: 'under' },
-      { subcategoryId: 'sub-2', plannedEuros: 1000, expected: 'on-track' },
-      { subcategoryId: 'sub-2', plannedEuros: 850, expected: 'on-track' },
-      { subcategoryId: 'sub-2', plannedEuros: 700, expected: 'over' },
-      { subcategoryId: 'sub-1', plannedEuros: 4000, expected: 'under' },
-      { subcategoryId: 'sub-1', plannedEuros: 3062.5, expected: 'under' },
-      { subcategoryId: 'sub-1', plannedEuros: 3000, expected: 'on-track' },
-      { subcategoryId: 'sub-1', plannedEuros: 2000, expected: 'over' },
+      { subcategoryId: 'sub-2', plannedCents: 106250, expected: 'under' },
+      { subcategoryId: 'sub-2', plannedCents: 100000, expected: 'on-track' },
+      { subcategoryId: 'sub-2', plannedCents: 85000, expected: 'on-track' },
+      { subcategoryId: 'sub-2', plannedCents: 70000, expected: 'over' },
+      { subcategoryId: 'sub-1', plannedCents: 400000, expected: 'under' },
+      { subcategoryId: 'sub-1', plannedCents: 306250, expected: 'under' },
+      { subcategoryId: 'sub-1', plannedCents: 300000, expected: 'on-track' },
+      { subcategoryId: 'sub-1', plannedCents: 200000, expected: 'over' },
     ])(
-      'applique les seuils de statut à $subcategoryId prévu $plannedEuros € → $expected',
-      ({ subcategoryId, plannedEuros, expected }) => {
-        service.setPlannedAmount('2026-07', subcategoryId, plannedEuros);
+      'applique les seuils de statut à $subcategoryId prévu $plannedCents centimes → $expected',
+      ({ subcategoryId, plannedCents, expected }) => {
+        service.setPlannedAmount('2026-07', subcategoryId, plannedCents);
 
         expect(findSubcategory(service.monthSummary(), subcategoryId).status).toBe(expected);
       },
@@ -428,8 +619,8 @@ describe('Budget Service', () => {
 
     it('agrège une catégorie comme la somme de ses sous-catégories', () => {
       monthContext.setMonth('2026-08');
-      service.setPlannedAmount('2026-08', 'sub-3', 50);
-      service.setPlannedAmount('2026-08', 'sub-4', 100);
+      service.setPlannedAmount('2026-08', 'sub-3', 5000);
+      service.setPlannedAmount('2026-08', 'sub-4', 10000);
       const category = findCategory(service.monthSummary(), 'cat-2');
       const subcategories = category.subcategories;
 
@@ -452,9 +643,9 @@ describe('Budget Service', () => {
     });
 
     it('calcule le bandeau d’allocation : revenus prévus, dépenses prévues et non alloué', () => {
-      service.setPlannedAmount('2026-07', 'sub-1', 2000);
-      service.setPlannedAmount('2026-07', 'sub-2', 1000);
-      service.setPlannedAmount('2026-07', 'sub-5', 300);
+      service.setPlannedAmount('2026-07', 'sub-1', 200000);
+      service.setPlannedAmount('2026-07', 'sub-2', 100000);
+      service.setPlannedAmount('2026-07', 'sub-5', 30000);
       const summary = service.monthSummary();
 
       expect(summary.incomePlannedCents).toBe(200000);
@@ -463,8 +654,8 @@ describe('Budget Service', () => {
     });
 
     it('autorise un montant non alloué négatif dans le bandeau', () => {
-      service.setPlannedAmount('2026-07', 'sub-1', 1000);
-      service.setPlannedAmount('2026-07', 'sub-2', 1500);
+      service.setPlannedAmount('2026-07', 'sub-1', 100000);
+      service.setPlannedAmount('2026-07', 'sub-2', 150000);
       const summary = service.monthSummary();
 
       expect(summary.incomePlannedCents).toBe(100000);
@@ -494,7 +685,7 @@ describe('Budget Service', () => {
       });
       expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
 
-      service.setPlannedAmount('2026-07', 'sub-2', 1000);
+      service.setPlannedAmount('2026-07', 'sub-2', 100000);
       expect(findSubcategory(service.monthSummary(), 'sub-2')).toEqual(
         expect.objectContaining({ plannedAmountCents: 100000, status: 'on-track' }),
       );
@@ -540,7 +731,7 @@ describe('Budget Service', () => {
       service.openMonth('2026-07');
       service.openMonth('2026-08');
 
-      service.setPlannedAmount('2026-07', 'sub-2', 2000);
+      service.setPlannedAmount('2026-07', 'sub-2', 200000);
 
       expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(160000);
       expect(monthOf('2026-08')?.openingBalanceCents).toBe(160000);

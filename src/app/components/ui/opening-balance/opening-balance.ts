@@ -9,6 +9,7 @@ const FIELD_ID = 'budget-opening-input';
 const ADJUST_ID = 'budget-opening-adjust';
 const ERROR_ID = 'budget-opening-error';
 const HINT_ID = 'budget-opening-hint';
+const PREPARE_ERROR_ID = 'budget-opening-prepare-error';
 
 /** Bascule le signe d'un brouillon sans en modifier les chiffres. */
 function toggleSignOf(raw: string): string {
@@ -33,6 +34,8 @@ export class OpeningBalance {
   readonly settings = input.required<UserSettings>();
   /** Solde courant en euros modifiables, pré-rempli à l'ouverture de l'éditeur. */
   readonly editableBalance = input.required<string>();
+  /** Préparation du mois refusée (dépassement d'agrégat) : le mois reste non préparé. */
+  readonly prepareFailed = input.required<boolean>();
 
   readonly prepareMonth = output<void>();
   /** Solde saisi, en centimes entiers exacts. */
@@ -46,6 +49,7 @@ export class OpeningBalance {
   protected readonly errorId = ERROR_ID;
   protected readonly hintId = HINT_ID;
   protected readonly adjustId = ADJUST_ID;
+  protected readonly prepareErrorId = PREPARE_ERROR_ID;
 
   protected onAdjust(): void {
     if (!this.opened()) return;
