@@ -2,12 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BudgetMonth } from '../models/budget-month';
 import { RecurringRule } from '../models/recurring-rule';
 import { BudgetCategorySummary, BudgetMonthSummary, BudgetSubcategorySummary } from '../models/budget-summary';
-import { BudgetService, PlannedAggregateOverflowError } from './budget';
+import { BudgetService, PlannedAggregateOverflowError, TransactionAggregateOverflowError } from './budget';
 import { CategoryService } from './category';
 import { MoneyService } from './money';
 import { MonthContextService } from './month-context';
 import { RecurringRuleService } from './recurring-rule';
 import { TransactionService } from './transaction';
+import { TransactionInput } from '../models/transactions';
 
 describe('Budget Service', () => {
   let service: BudgetService;
@@ -116,6 +117,75 @@ describe('Budget Service', () => {
     service.setPlannedAmount('2026-10', 'sub-2', Number.MAX_SAFE_INTEGER);
 
     expect(service.plannedCentsFor('2026-10', 'sub-2')).toBe(Number.MAX_SAFE_INTEGER);
+  });
+
+  describe('précontrôle des agrégats réels d’un ajout de transaction', () => {
+    const expenseInput: TransactionInput = {
+      label: 'Test dépense',
+      categoryId: 'cat-2',
+      subcategoryId: 'sub-2',
+      type: 'expense',
+      date: '2026-10-09',
+      amountCents: 1,
+    };
+    const incomeInput: TransactionInput = {
+      label: 'Test revenu',
+      categoryId: 'cat-1',
+      subcategoryId: 'sub-1',
+      type: 'income',
+      date: '2026-10-09',
+      amountCents: 1,
+    };
+
+    it('laisse passer un ajout normal sans muter les transactions, puis add() l’enregistre', () => {
+      const transactionsBefore = transactionService.transactions();
+      const countBefore = transactionsBefore.length;
+
+      expect(() => service.assertTransactionAddable(expenseInput)).not.toThrow();
+      expect(transactionService.transactions()).toBe(transactionsBefore);
+
+      transactionService.add(expenseInput);
+      expect(transactionService.transactions()).toHaveLength(countBefore + 1);
+    });
+
+    it('refuse sans mutation un ajout qui ferait dépasser la somme réelle de la sous-catégorie', () => {
+      transactionService.add({ ...expenseInput, amountCents: Number.MAX_SAFE_INTEGER });
+      const transactionsBefore = transactionService.transactions();
+
+      expect(() => service.assertTransactionAddable(expenseInput)).toThrow(
+        TransactionAggregateOverflowError,
+      );
+      expect(transactionService.transactions()).toBe(transactionsBefore);
+    });
+
+    it('refuse sans mutation un revenu qui ferait dépasser la somme réelle des revenus du mois', () => {
+      transactionService.add({ ...incomeInput, amountCents: Number.MAX_SAFE_INTEGER });
+      const transactionsBefore = transactionService.transactions();
+
+      expect(() => service.assertTransactionAddable(incomeInput)).toThrow(
+        TransactionAggregateOverflowError,
+      );
+      expect(transactionService.transactions()).toBe(transactionsBefore);
+    });
+
+    it('refuse sans mutation un ajout qui ferait dépasser le solde de clôture propagé au mois suivant', () => {
+      const julyIncome: TransactionInput = { ...incomeInput, date: '2026-07-15', amountCents: 1 };
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+      const julyOpening = service.openingBalanceCentsFor('2026-07');
+      const julyNet = service.actualClosingBalanceCentsFor('2026-07') - julyOpening;
+      service.setOpeningBalanceOverride('2026-07', Number.MAX_SAFE_INTEGER - julyNet);
+      const transactionsBefore = transactionService.transactions();
+      const augustOpeningBefore = service.openingBalanceCentsFor('2026-08');
+
+      expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(Number.MAX_SAFE_INTEGER);
+      expect(() => service.assertTransactionAddable(julyIncome)).toThrow(
+        TransactionAggregateOverflowError,
+      );
+      expect(transactionService.transactions()).toBe(transactionsBefore);
+      expect(service.openingBalanceCentsFor('2026-08')).toBe(augustOpeningBefore);
+      expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(Number.MAX_SAFE_INTEGER);
+    });
   });
 
   describe('garde-fou d’agrégat prévu', () => {
@@ -681,7 +751,7 @@ describe('Budget Service', () => {
         subcategoryId: 'sub-2',
         date: '2026-07-15',
         type: 'expense',
-        amountEuros: 10,
+        amountCents: 1000,
       });
       expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
 
@@ -696,7 +766,7 @@ describe('Budget Service', () => {
         subcategoryId: 'sub-2',
         date: '2026-08-10',
         type: 'expense',
-        amountEuros: 5,
+        amountCents: 500,
       });
       expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
     });
@@ -747,7 +817,7 @@ describe('Budget Service', () => {
         subcategoryId: 'sub-2',
         date: '2026-07-15',
         type: 'expense',
-        amountEuros: 100,
+        amountCents: 10000,
       });
 
       expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(150000);
@@ -786,7 +856,7 @@ describe('Budget Service', () => {
         subcategoryId: 'sub-2',
         date: '2026-07-20',
         type: 'expense',
-        amountEuros: 10,
+        amountCents: 1000,
       });
 
       expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(159000);
@@ -810,7 +880,7 @@ describe('Budget Service', () => {
         subcategoryId: 'sub-2',
         date: '2026-07-20',
         type: 'expense',
-        amountEuros: 10,
+        amountCents: 1000,
       });
 
       expect(monthOf('2026-08')?.openingBalanceCents).toBe(-5000);
@@ -904,7 +974,7 @@ describe('Budget Service', () => {
         subcategoryId: 'sub-2',
         date: '2026-08-20',
         type: 'expense',
-        amountEuros: 10,
+        amountCents: 1000,
       });
       expect(service.monthSummary().actualClosingBalanceCents).toBe(
         service.actualClosingBalanceCentsFor('2026-08'),

@@ -17,7 +17,7 @@ describe('TransactionService', () => {
       categoryId: 'cat-1',
       subcategoryId: 'sub-1',
       date: '2026-10-06',
-      amountEuros: 1.23,
+      amountCents: 123,
       type: 'income',
     };
   });
@@ -111,11 +111,35 @@ describe('TransactionService', () => {
       expect(service.transactions().length).toBe(countBefore);
     });
 
-    it.each([0, -1, 0.004])('should reject an amount that is not strictly positive in cents (%s €)', (amountEuros: number) => {
-      const countBefore = service.transactions().length;
+    it.each([0, -1, 0.5, 1.23, Number.NaN, Number.MAX_SAFE_INTEGER + 1])(
+      'should reject an amount that is not a positive safe integer in cents (%s)',
+      (amountCents: number) => {
+        const countBefore = service.transactions().length;
 
-      expect(() => service.add({ ...addedTransaction, amountEuros })).toThrow('Invalid amount');
-      expect(service.transactions().length).toBe(countBefore);
+        expect(() => service.add({ ...addedTransaction, amountCents })).toThrow('Invalid amount');
+        expect(service.transactions().length).toBe(countBefore);
+      },
+    );
+
+    it.each([1, Number.MAX_SAFE_INTEGER])('should accept the positive safe integer %s as cents', (amountCents: number) => {
+      const created = service.add({ ...addedTransaction, amountCents });
+
+      expect(created.amountCents).toBe(amountCents);
+      expect(service.transactions().find(t => t.id === created.id)?.amountCents).toBe(amountCents);
+    });
+
+    it('should preserve the date, label and type of the input', () => {
+      const created = service.add(addedTransaction);
+
+      expect(created).toEqual(
+        expect.objectContaining({
+          label: 'Test transaction',
+          categoryId: 'cat-1',
+          subcategoryId: 'sub-1',
+          date: '2026-10-06',
+          type: 'income',
+        }),
+      );
     });
   });
 

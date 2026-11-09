@@ -3,6 +3,25 @@ import { Transaction, TransactionInput, TransactionPresentation } from '../model
 import { MOCK_TRANSACTIONS } from '../mocks/mock-transactions';
 import { MoneyService } from './money';
 
+export const TRANSACTION_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Valide la date et les centimes d'une saisie de transaction. Partagé par `add()` et par le précontrôle
+ * de `BudgetService`, pour que les deux acceptent exactement les mêmes entrées.
+ *
+ * @throws Error('Invalid date format') si la date n'est pas au format AAAA-MM-JJ
+ * @throws Error('Invalid amount') si les centimes ne sont pas un entier sûr strictement positif
+ */
+export function assertValidTransactionInput(input: TransactionInput): void {
+  if (!TRANSACTION_DATE_PATTERN.test(input.date)) {
+    throw new Error('Invalid date format');
+  }
+
+  if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0) {
+    throw new Error('Invalid amount');
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -22,14 +41,7 @@ export class TransactionService {
 
   // Méthode d'ajout pour les transactions : génère id, monthKey et createdAt
   add(input: TransactionInput): Transaction {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
-      throw new Error('Invalid date format');
-    }
-
-    const amountCents = this.moneyService.toCents(input.amountEuros);
-    if (!Number.isFinite(amountCents) || amountCents <= 0) {
-      throw new Error('Invalid amount');
-    }
+    assertValidTransactionInput(input);
 
     const transaction: Transaction = {
       id: crypto.randomUUID(),
@@ -38,7 +50,7 @@ export class TransactionService {
       subcategoryId: input.subcategoryId,
       date: input.date,
       monthKey: input.date.slice(0, 7),
-      amountCents,
+      amountCents: input.amountCents,
       type: input.type,
       createdAt: new Date().toISOString(),
     };

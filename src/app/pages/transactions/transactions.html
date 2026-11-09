@@ -2,7 +2,7 @@
   <button
     type="button"
     class="btn new-transaction-btn"
-    (click)="isModalOpened.set(true)"
+    (click)="openModal()"
     [title]="'transactions.addTooltip' | transloco"
   >
     <svg viewBox="0 0 448 512" class="icon">
@@ -22,11 +22,13 @@
 </div>
 @if (isModalOpened()) {
   <div>
-    <app-modal (closed)="isModalOpened.set(false)">
+    <app-modal (closed)="onModalClosed()">
       <app-transaction-form
         [formCategories]="categories()"
         [formSubcategories]="subcategories()"
+        [aggregateOverflow]="aggregateOverflow()"
         (transactionSubmit)="onTransactionSubmit($event)"
+        (draftChange)="onTransactionDraftChange()"
         (cancel)="onTransactionCancel()"
       ></app-transaction-form>
     </app-modal>

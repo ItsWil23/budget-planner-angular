@@ -1,9 +1,16 @@
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
-import { ReactiveFormsModule, Validators, FormBuilder, FormControl } from '@angular/forms';
+import {
+  AbstractControl,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+  FormBuilder,
+} from '@angular/forms';
 import { Category, Subcategory } from '../../../models/category';
 import { TransactionInput } from '../../../models/transactions';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { MoneyService } from '../../../services/money';
 
 @Component({
   selector: 'app-transaction-form',
@@ -14,18 +21,23 @@ import { TranslocoPipe } from '@jsverse/transloco';
 export class TransactionForm {
   @Input() formCategories: Category[] = [];
   @Input() formSubcategories: Subcategory[] = [];
+  @Input() aggregateOverflow = false;
 
   @Output() transactionSubmit = new EventEmitter<TransactionInput>();
+  @Output() draftChange = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
 
   private readonly formBuilder = inject(FormBuilder);
+  private readonly moneyService = inject(MoneyService);
   protected filteredSubcategories: Subcategory[] = [];
+  protected readonly amountErrorId = 'transactionAmountError';
+  protected readonly aggregateErrorId = 'transactionAggregateError';
 
   newTransactionForm = this.formBuilder.nonNullable.group({
     categoryId: ['', Validators.required],
     subcategoryId: ['', Validators.required],
     label: ['', Validators.required],
-    amountEuros: new FormControl<number | null>(null, [Validators.required, Validators.min(0.1)]),
+    amountText: ['', [(control: AbstractControl) => this.amountErrors(control.value)]],
     date: [new Date().toISOString().substring(0, 10), Validators.required],
   });
 
@@ -38,26 +50,51 @@ export class TransactionForm {
         );
         this.newTransactionForm.controls.subcategoryId.setValue('');
       });
+
+    this.newTransactionForm.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.draftChange.emit());
+  }
+
+  protected amountErrorKey(): string | null {
+    const control = this.newTransactionForm.controls.amountText;
+    if (!control.touched || control.valid) return null;
+    return control.hasError('amountTooLarge')
+      ? 'transactionForm.amountTooLarge'
+      : 'transactionForm.amountInvalid';
   }
 
   protected onSubmitTransactionForm(): void {
-    if (!this.newTransactionForm.valid) {
+    const amountCents = this.parsePositiveCents(this.newTransactionForm.controls.amountText.value);
+    if (!this.newTransactionForm.valid || amountCents === null) {
       this.newTransactionForm.markAllAsTouched();
       return;
     }
 
     const validForm = this.newTransactionForm.getRawValue();
-    if (validForm.amountEuros === null) return;
-    const newTransactionType = this.getCategoryById(validForm.categoryId).type;
     const newTransaction: TransactionInput = {
-      ...validForm,
-      amountEuros: validForm.amountEuros,
-      type: newTransactionType,
+      categoryId: validForm.categoryId,
+      subcategoryId: validForm.subcategoryId,
+      label: validForm.label,
+      date: validForm.date,
+      amountCents,
+      type: this.getCategoryById(validForm.categoryId).type,
     };
 
     this.transactionSubmit.emit(newTransaction);
+  }
 
-    this.newTransactionForm.reset();
+  private amountErrors(raw: string): ValidationErrors | null {
+    const parsed = this.moneyService.parseEurosInput(raw);
+    if (!parsed.valid) {
+      return parsed.error === 'tooLarge' ? { amountTooLarge: true } : { amountInvalid: true };
+    }
+    return parsed.cents > 0 ? null : { amountInvalid: true };
+  }
+
+  private parsePositiveCents(raw: string): number | null {
+    const parsed = this.moneyService.parseEurosInput(raw);
+    return parsed.valid && parsed.cents > 0 ? parsed.cents : null;
   }
 
   private getCategoryById(categoryId: string): Category {

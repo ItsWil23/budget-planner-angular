@@ -9,11 +9,11 @@ import {
   BudgetSubcategorySummary,
 } from '../models/budget-summary';
 import { RecurringRule } from '../models/recurring-rule';
-import { Transaction } from '../models/transactions';
+import { Transaction, TransactionInput } from '../models/transactions';
 import { CategoryService } from './category';
 import { MonthContextService } from './month-context';
 import { RecurringRuleService } from './recurring-rule';
-import { TransactionService } from './transaction';
+import { assertValidTransactionInput, TransactionService } from './transaction';
 
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -105,13 +105,71 @@ function netCents(totals: MonthlyActualTotals | undefined): number {
   return totals ? totals.incomeCents - totals.expenseCents : 0;
 }
 
-function previousMonthKey(monthKey: string): string {
+function shiftMonthKey(monthKey: string, offset: number): string {
   const [year, month] = monthKey.split('-').map(Number);
-  const monthIndex = year * 12 + (month - 1) - 1;
-  const previousYear = Math.floor(monthIndex / 12);
-  const previousMonth = (monthIndex % 12) + 1;
-  return `${String(previousYear).padStart(4, '0')}-${String(previousMonth).padStart(2, '0')}`;
+  const monthIndex = year * 12 + (month - 1) + offset;
+  const shiftedYear = Math.floor(monthIndex / 12);
+  const shiftedMonth = (monthIndex % 12) + 1;
+  return `${String(shiftedYear).padStart(4, '0')}-${String(shiftedMonth).padStart(2, '0')}`;
 }
+
+function previousMonthKey(monthKey: string): string {
+  return shiftMonthKey(monthKey, -1);
+}
+
+/**
+ * Levée lorsqu'un ajout de transaction ferait dépasser `Number.MAX_SAFE_INTEGER` à une somme réelle
+ * ou à un solde d'ouverture/clôture affiché ou propagé. Aucune transaction ni aucun solde n'est alors modifié.
+ */
+export class TransactionAggregateOverflowError extends RangeError {
+  constructor() {
+    super('Transaction aggregate overflow');
+    this.name = 'TransactionAggregateOverflowError';
+  }
+}
+
+interface MonthBalance {
+  openingCents: bigint;
+  closingCents: bigint;
+}
+
+function isSafeCentsBigInt(value: bigint): boolean {
+  return value <= MAX_SAFE_CENTS_BIGINT && value >= -MAX_SAFE_CENTS_BIGINT;
+}
+
+/**
+ * Recalcule en BigInt les ouvertures et clôtures des mois de `keys`, avec la même règle que `resolvedMonths` :
+ * une ouverture surchargée est conservée, sinon elle reprend la clôture du mois précédent initialisé (0 à défaut).
+ * `months` doit être trié par ordre croissant et `netByMonthKey` contient le solde net réel de chaque mois.
+ */
+function computeMonthBalances(
+  months: readonly BudgetMonth[],
+  netByMonthKey: ReadonlyMap<string, bigint>,
+  keys: ReadonlySet<string>,
+): Map<string, MonthBalance> {
+  const monthByKey = new Map(months.map(month => [month.monthKey, month] as const));
+  const closingByMonthKey = new Map<string, bigint>();
+  const balances = new Map<string, MonthBalance>();
+
+  const sortedKeys = [...keys].sort((left, right) => left.localeCompare(right));
+  for (const key of sortedKeys) {
+    const month = monthByKey.get(key);
+    const automaticOpeningCents = closingByMonthKey.get(previousMonthKey(key)) ?? BigInt(0);
+    const openingCents =
+      month?.openingBalanceOverridden === true
+        ? BigInt(month.openingBalanceCents)
+        : automaticOpeningCents;
+    const closingCents = openingCents + (netByMonthKey.get(key) ?? BigInt(0));
+
+    if (month !== undefined) {
+      closingByMonthKey.set(key, closingCents);
+    }
+    balances.set(key, { openingCents, closingCents });
+  }
+
+  return balances;
+}
+
 
 @Injectable({
   providedIn: 'root',
@@ -302,6 +360,94 @@ export class BudgetService {
     );
     for (const categoryId of new Set(categoryIds)) {
       assertPlannedTotalsSafe(lines, monthKey, categoryId, categoryTypes);
+    }
+  }
+
+  /**
+   * Précontrôle synchrone et sans mutation d'un ajout de transaction. Vérifie en BigInt que la somme réelle
+   * de la sous-catégorie, de la catégorie et du type (revenus ou dépenses) du mois restent sûres, puis simule
+   * la cascade des soldes d'ouverture et de clôture (mois initialisés et mois suivants) avant et après l'ajout.
+   *
+   * Doit être suivi immédiatement, sans attente, de `TransactionService.add()` avec la même saisie.
+   *
+   * @throws Error si la date ou le montant ne sont pas valides
+   * @throws TransactionAggregateOverflowError si un total réel ou un solde propagé ne serait plus sûr
+   */
+  assertTransactionAddable(input: TransactionInput): void {
+    assertValidTransactionInput(input);
+
+    const monthKey = input.date.slice(0, 7);
+    const candidateCents = BigInt(input.amountCents);
+    const candidateIsIncome = input.type === 'income';
+    const transactions = this.transactionService.transactions();
+
+    const sumWhere = (predicate: (transaction: Transaction) => boolean): bigint =>
+      transactions.reduce(
+        (total, transaction) =>
+          predicate(transaction) ? total + BigInt(transaction.amountCents) : total,
+        BigInt(0),
+      );
+    const sameMonth = (transaction: Transaction): boolean => transaction.monthKey === monthKey;
+
+    const subcategoryTotal =
+      sumWhere(
+        transaction =>
+          sameMonth(transaction) && transaction.subcategoryId === input.subcategoryId,
+      ) + candidateCents;
+    const categoryTotal =
+      sumWhere(
+        transaction => sameMonth(transaction) && transaction.categoryId === input.categoryId,
+      ) + candidateCents;
+    const typeTotal =
+      sumWhere(
+        transaction =>
+          sameMonth(transaction) && (transaction.type === 'income') === candidateIsIncome,
+      ) + candidateCents;
+    if (
+      subcategoryTotal > MAX_SAFE_CENTS_BIGINT ||
+      categoryTotal > MAX_SAFE_CENTS_BIGINT ||
+      typeTotal > MAX_SAFE_CENTS_BIGINT
+    ) {
+      throw new TransactionAggregateOverflowError();
+    }
+
+    const netBeforeByMonthKey = new Map<string, bigint>();
+    for (const transaction of transactions) {
+      const cents = BigInt(transaction.amountCents);
+      const net = transaction.type === 'income' ? cents : -cents;
+      netBeforeByMonthKey.set(
+        transaction.monthKey,
+        (netBeforeByMonthKey.get(transaction.monthKey) ?? BigInt(0)) + net,
+      );
+    }
+    const netAfterByMonthKey = new Map(netBeforeByMonthKey);
+    netAfterByMonthKey.set(
+      monthKey,
+      (netAfterByMonthKey.get(monthKey) ?? BigInt(0)) +
+        (candidateIsIncome ? candidateCents : -candidateCents),
+    );
+
+    const months = [...this._months()].sort((left, right) =>
+      left.monthKey.localeCompare(right.monthKey),
+    );
+    const affectedKeys = new Set<string>([monthKey]);
+    for (const month of months) {
+      affectedKeys.add(month.monthKey);
+      affectedKeys.add(shiftMonthKey(month.monthKey, 1));
+    }
+
+    const balancesBefore = computeMonthBalances(months, netBeforeByMonthKey, affectedKeys);
+    const balancesAfter = computeMonthBalances(months, netAfterByMonthKey, affectedKeys);
+    for (const [key, balance] of balancesAfter) {
+      const previous = balancesBefore.get(key);
+      const openingChanged = previous?.openingCents !== balance.openingCents;
+      const closingChanged = previous?.closingCents !== balance.closingCents;
+      if (
+        (openingChanged && !isSafeCentsBigInt(balance.openingCents)) ||
+        (closingChanged && !isSafeCentsBigInt(balance.closingCents))
+      ) {
+        throw new TransactionAggregateOverflowError();
+      }
     }
   }
 
