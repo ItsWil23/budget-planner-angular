@@ -23,6 +23,7 @@
     [overridden]="openingOverridden()"
     [settings]="settings()"
     [editableBalance]="openingEditable()"
+    [prepareFailed]="prepareFailed()"
     (prepareMonth)="prepareMonth()"
     (balanceSave)="saveOpeningBalance($event)"
     (balanceReset)="clearOpeningOverride()"
@@ -153,7 +154,7 @@
             />
           }
           @if (isEditing(line.id) && editError()) {
-            <span class="planned-error" role="alert" [id]="plannedErrorId(line.id)">{{ 'budgetMensuel.table.amountInvalid' | transloco }}</span>
+            <span class="planned-error" role="alert" [id]="plannedErrorId(line.id)">{{ plannedErrorKey() | transloco }}</span>
           }
         </li>
       }

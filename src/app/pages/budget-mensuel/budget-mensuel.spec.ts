@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TranslocoService, TranslocoTestingModule } from '@jsverse/transloco';
 import { MoneyPipe } from '../../components/ui/money-pipe/money-pipe';
 import { CategoryType } from '../../models/category';
+import { RecurringRule } from '../../models/recurring-rule';
 import { BudgetService } from '../../services/budget';
 import { CategoryService } from '../../services/category';
 import { MoneyService } from '../../services/money';
@@ -31,6 +32,7 @@ const FR_TRANSLATIONS = {
       editPlanned: 'Modifier le prévu pour {{ name }} ({{ value }})',
       plannedFieldLabel: 'Prévu pour {{ name }}',
       amountInvalid: 'Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum.',
+      amountAggregateOverflow: 'Montant refusé : le total prévu de la catégorie ou du mois dépasserait la capacité de calcul exacte de l’application. Saisissez un montant plus petit.',
       clearPlanned: 'Effacer le prévu pour {{ name }}',
       shortcuts: 'Accès rapide aux catégories',
       progress: { label: 'Progression de {{ name }}', value: 'Réel {{ actual }} sur {{ planned }} prévus' },
@@ -51,6 +53,7 @@ const FR_TRANSLATIONS = {
       editHint: 'Entrée enregistre, Échap annule.',
       amountInvalid: 'Montant invalide : saisissez un montant en euros, avec deux décimales maximum (ex. -12,50).',
       amountTooLarge: 'Montant trop grand pour être enregistré : saisissez une valeur plus petite.',
+      prepareAggregateOverflow: 'Préparation refusée : les récurrences actives dépassent la capacité de calcul exacte de l’application. Réduisez leurs montants pour préparer le mois.',
     },
   },
 };
@@ -71,6 +74,7 @@ const EN_TRANSLATIONS = {
       editPlanned: 'Edit planned amount for {{ name }} ({{ value }})',
       plannedFieldLabel: 'Planned amount for {{ name }}',
       amountInvalid: 'Invalid amount: enter 0 or an amount of at least €0.01, with at most two decimals.',
+      amountAggregateOverflow: "Amount rejected: the planned total of the category or the month would exceed the application's exact calculation capacity. Enter a smaller amount.",
       clearPlanned: 'Clear planned amount for {{ name }}',
       shortcuts: 'Quick access to categories',
       progress: { label: 'Progress of {{ name }}', value: 'Actual {{ actual }} of {{ planned }} planned' },
@@ -91,6 +95,7 @@ const EN_TRANSLATIONS = {
       editHint: 'Enter saves, Escape cancels.',
       amountInvalid: 'Invalid amount: enter an amount in euros, with at most two decimals (e.g. -12.50).',
       amountTooLarge: 'Amount too large to be saved: enter a smaller value.',
+      prepareAggregateOverflow: "Preparation refused: the active recurring lines exceed the application's exact calculation capacity. Reduce their amounts to prepare the month.",
     },
   },
 };
@@ -181,8 +186,8 @@ describe('BudgetMensuel', () => {
   describe('with planned lines', () => {
     beforeEach(() => {
       const budget = TestBed.inject(BudgetService);
-      budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 3000);
-      budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 1000);
+      budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 300000);
+      budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 100000);
       fixture.detectChanges();
     });
 
@@ -221,7 +226,7 @@ describe('BudgetMensuel', () => {
     });
 
     it('keeps the minus sign and the real value on a negative unallocated amount', () => {
-      TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 5000);
+      TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 500000);
       fixture.detectChanges();
 
       const unallocated = metricValues()[2];
@@ -436,8 +441,8 @@ describe('BudgetMensuel', () => {
     describe('desktop', () => {
       beforeEach(() => {
         const budget = TestBed.inject(BudgetService);
-        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 3000);
-        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 1000);
+        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 300000);
+        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 100000);
         renderWith({ desktop: true, width: categoryCount() * 256 });
       });
 
@@ -556,8 +561,8 @@ describe('BudgetMensuel', () => {
     describe('mobile', () => {
       beforeEach(() => {
         const budget = TestBed.inject(BudgetService);
-        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 3000);
-        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 1000);
+        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 300000);
+        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 100000);
         renderMobile();
       });
 
@@ -625,7 +630,7 @@ describe('BudgetMensuel', () => {
       });
 
       it('keeps the plus sign on positive income card totals and line amounts', () => {
-        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 3000);
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), 300000);
         renderMobile();
         const summary = TestBed.inject(BudgetService).monthSummary();
         const incomeCategory = summary.categories.find(item => item.categoryId === categoryIdOf('income'));
@@ -643,7 +648,7 @@ describe('BudgetMensuel', () => {
       });
 
       it('updates card totals when a planned amount changes', () => {
-        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 2000);
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 200000);
         fixture.detectChanges();
         expect(textsOf(cardOf(categoryIdOf('expense')), '.total-value')[0]).toBe(expected(200000));
       });
@@ -688,7 +693,7 @@ describe('BudgetMensuel', () => {
     describe('line progress', () => {
       beforeEach(() => {
         // Mock data already spends 850 € on this subcategory this month.
-        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 1000);
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 100000);
       });
 
       function addActual(amountEuros: number): void {
@@ -707,7 +712,7 @@ describe('BudgetMensuel', () => {
       }
 
       it('reports under-consumption below 80 percent of the planned amount', () => {
-        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 1700);
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 170000);
         renderMobile();
         const line = expenseLine();
         const bar = line?.querySelector('[role="progressbar"]');
@@ -726,7 +731,7 @@ describe('BudgetMensuel', () => {
       });
 
       it('reports overspending and caps the progress value at 100', () => {
-        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 500);
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 50000);
         renderMobile();
         const line = expenseLine();
         const bar = line?.querySelector('[role="progressbar"]');
@@ -765,7 +770,7 @@ describe('BudgetMensuel', () => {
           TestBed.inject(BudgetService).setPlannedAmount(
             TEST_MONTH,
             subcategoryIdOf('income'),
-            plannedCents / 100,
+            plannedCents,
           );
           renderMobile();
         }
@@ -809,7 +814,7 @@ describe('BudgetMensuel', () => {
 
     describe('inline planned edit', () => {
       beforeEach(() => {
-        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 10.5);
+        TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 1050);
         renderMobile();
       });
 
@@ -861,18 +866,41 @@ describe('BudgetMensuel', () => {
         input.value = '12,5';
         press(input, 'Enter');
         await fixture.whenStable();
-        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 12.5);
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 1250);
         expect(plannedInput()).toBeNull();
         expect(plannedButton()?.textContent?.trim()).toBe(expected(1250));
         expect(document.activeElement).toBe(plannedButton());
       });
 
-      it('accepts the minimum positive amount of 0.01 euro', () => {
+      it('accepts the minimum positive amount of one cent (0,01 euro)', () => {
         const spy = spyOnSetPlannedAmount();
         const input = openEditor();
         input.value = '0,01';
         press(input, 'Enter');
-        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 0.01);
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), 1);
+      });
+
+      it.each([
+        { raw: '12,34', cents: 1234 },
+        { raw: '12.34', cents: 1234 },
+        { raw: '0,1', cents: 10 },
+        { raw: '100', cents: 10000 },
+      ])('saves the typed draft $raw as exactly $cents cents', ({ raw, cents }) => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = raw;
+        press(input, 'Enter');
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), cents);
+      });
+
+      it('accepts the largest safe amount in cents and shows it back exactly', () => {
+        const spy = spyOnSetPlannedAmount();
+        const input = openEditor();
+        input.value = '90071992547409.91';
+        press(input, 'Enter');
+        expect(spy).toHaveBeenCalledWith(TEST_MONTH, subcategoryIdOf('expense'), Number.MAX_SAFE_INTEGER);
+        expect(plannedInput()).toBeNull();
+        expect(plannedButton()?.textContent?.trim()).toBe(expected(Number.MAX_SAFE_INTEGER));
       });
 
       it.each(['', '0', '0,00'])('removes the planned amount when the draft is %j', raw => {
@@ -884,17 +912,63 @@ describe('BudgetMensuel', () => {
         expect(plannedButton()?.textContent?.trim()).toBe('Non renseigné');
       });
 
-      it.each(['-5', 'abc', '0,001', '1,2,3'])('rejects the draft %j without saving', raw => {
-        const spy = spyOnSetPlannedAmount();
+      it.each(['-5', '-0', '-0,01', 'abc', '0,001', '1,2,3', '.5', '1.234', '12,345', '90071992547409.92'])(
+        'rejects the draft %j without saving',
+        raw => {
+          const spy = spyOnSetPlannedAmount();
+          const input = openEditor();
+          input.value = raw;
+          press(input, 'Enter');
+          expect(spy).not.toHaveBeenCalled();
+          expect(plannedInput()?.value).toBe(raw);
+          expect(plannedInput()?.getAttribute('aria-invalid')).toBe('true');
+          expect(elementOf<HTMLElement>('[role="alert"]')?.textContent?.trim()).toBe(
+            'Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum.',
+          );
+        },
+      );
+
+      it('keeps the editor open with the localized error when the aggregate would overflow, without throwing', () => {
+        const budget = TestBed.inject(BudgetService);
+        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        budget.setPlannedAmount(TEST_MONTH, 'sub-3', Number.MAX_SAFE_INTEGER);
+        fixture.detectChanges();
+        const errorSpy = vi.spyOn(console, 'error');
+        const linesBefore = budget.lines();
+
         const input = openEditor();
-        input.value = raw;
+        input.value = '0,01';
         press(input, 'Enter');
-        expect(spy).not.toHaveBeenCalled();
-        expect(plannedInput()?.value).toBe(raw);
+
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(budget.lines()).toBe(linesBefore);
+        expect(budget.plannedCentsFor(TEST_MONTH, subcategoryIdOf('expense'))).toBe(0);
+        expect(plannedInput()?.value).toBe('0,01');
         expect(plannedInput()?.getAttribute('aria-invalid')).toBe('true');
+        expect(document.activeElement).toBe(plannedInput());
         expect(elementOf<HTMLElement>('[role="alert"]')?.textContent?.trim()).toBe(
-          'Montant invalide : saisissez 0 ou un montant d’au moins 0,01 €, avec deux décimales maximum.',
+          'Montant refusé : le total prévu de la catégorie ou du mois dépasserait la capacité de calcul exacte de l’application. Saisissez un montant plus petit.',
         );
+      });
+
+      it('closes the editor on Escape after an aggregate refusal, without saving', async () => {
+        const budget = TestBed.inject(BudgetService);
+        budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 0);
+        budget.setPlannedAmount(TEST_MONTH, 'sub-3', Number.MAX_SAFE_INTEGER);
+        fixture.detectChanges();
+        const spy = spyOnSetPlannedAmount();
+
+        const input = openEditor();
+        input.value = '0,01';
+        press(input, 'Enter');
+        expect(plannedInput()).not.toBeNull();
+
+        press(plannedInput() ?? input, 'Escape');
+        await fixture.whenStable();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(plannedInput()).toBeNull();
+        expect(plannedButton()?.textContent?.trim()).toBe('Non renseigné');
+        expect(document.activeElement).toBe(plannedButton());
       });
 
       it('cancels on Escape without saving and restores focus to the button', async () => {
@@ -1220,6 +1294,82 @@ describe('BudgetMensuel', () => {
         expect(plannedButtonFor('sub-1')?.textContent?.trim()).toBe('Non renseigné');
         expect(plannedButtonFor('sub-2')?.textContent?.trim()).toBe('Non renseigné');
         expect(metricValues()).toEqual([expected(0), expected(0), expected(0)]);
+      });
+    });
+
+    describe('refused preparation for aggregate overflow', () => {
+      const overflowingRules = (): RecurringRule[] => [
+        {
+          id: 'rule-big',
+          label: 'Grosse règle',
+          categoryId: 'cat-2',
+          subcategoryId: 'sub-2',
+          amountCents: Number.MAX_SAFE_INTEGER - 100,
+          startMonth: TEST_MONTH,
+          active: true,
+        },
+        {
+          id: 'rule-over',
+          label: 'Règle qui dépasse',
+          categoryId: 'cat-2',
+          subcategoryId: 'sub-3',
+          amountCents: 200,
+          startMonth: TEST_MONTH,
+          active: true,
+        },
+      ];
+
+      function refusalAlert(): HTMLElement | null {
+        return openingSection()?.querySelector<HTMLElement>('[role="alert"]') ?? null;
+      }
+
+      beforeEach(() => {
+        vi.spyOn(TestBed.inject(RecurringRuleService), 'activeRulesForMonth').mockReturnValue(overflowingRules());
+      });
+
+      it('keeps the month unprepared, shows the dedicated alert and does not throw', async () => {
+        const errorSpy = vi.spyOn(console, 'error');
+        prepareButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(TestBed.inject(BudgetService).isMonthOpened(TEST_MONTH)).toBe(false);
+        expect(TestBed.inject(BudgetService).lines()).toEqual([]);
+        expect(statusText()).toBe('Mois non préparé');
+        expect(prepareButton()).not.toBeNull();
+        expect(adjustButton()).toBeNull();
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(refusalAlert()?.textContent?.trim()).toBe(
+          'Préparation refusée : les récurrences actives dépassent la capacité de calcul exacte de l’application. Réduisez leurs montants pour préparer le mois.',
+        );
+        expect(prepareButton()?.getAttribute('aria-describedby')).toBe(refusalAlert()?.id);
+      });
+
+      it('clears the alert and prepares the month once the rules fit again', async () => {
+        prepareButton()?.click();
+        fixture.detectChanges();
+        expect(refusalAlert()).not.toBeNull();
+
+        vi.spyOn(TestBed.inject(RecurringRuleService), 'activeRulesForMonth').mockReturnValue([]);
+        prepareButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(TestBed.inject(BudgetService).isMonthOpened(TEST_MONTH)).toBe(true);
+        expect(refusalAlert()).toBeNull();
+        expect(adjustButton()).not.toBeNull();
+      });
+
+      it('hides the alert when the selected month changes', () => {
+        prepareButton()?.click();
+        fixture.detectChanges();
+        expect(refusalAlert()).not.toBeNull();
+
+        TestBed.inject(MonthContextService).setMonth('2026-08');
+        fixture.detectChanges();
+
+        expect(refusalAlert()).toBeNull();
+        expect(TestBed.inject(BudgetService).isMonthOpened('2026-08')).toBe(false);
       });
     });
 

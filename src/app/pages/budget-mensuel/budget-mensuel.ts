@@ -15,9 +15,9 @@ import { OpeningBalance } from '../../components/ui/opening-balance/opening-bala
 import { ProgressBar } from '../../components/ui/progress-bar/progress-bar';
 import { BudgetLineStatus } from '../../models/budget-status';
 import { CategoryType } from '../../models/category';
-import { BudgetService } from '../../services/budget';
+import { BudgetService, PlannedAggregateOverflowError } from '../../services/budget';
 import { CategoryService } from '../../services/category';
-import { MoneyService } from '../../services/money';
+import { EurosInputResult, MoneyService } from '../../services/money';
 import { MonthContextService } from '../../services/month-context';
 import { SettingsService } from '../../services/settings';
 
@@ -57,6 +57,8 @@ interface CategoryView extends SizedItem {
 }
 
 type TableLayout = 'columns' | 'balanced';
+/** Erreur d'édition du Prévu : saisie individuelle invalide, ou dépassement d'agrégat refusé. */
+type PlannedErrorKind = 'invalid' | 'aggregate';
 
 const ROW_CAPACITY = 18;
 const MAX_SMALL_PER_COLUMN = 3;
@@ -68,23 +70,6 @@ const COLUMN_GAP_PX = 16;
 const MIN_COLUMN_WIDTH_PX = 320;
 const DESKTOP_QUERY = '(min-width: 1024px)';
 const CARD_ID_PREFIX = 'budget-category-';
-const PLANNED_DRAFT_PATTERN = /^\d+(?:\.\d{1,2})?$/;
-
-export type PlannedDraft =
-  | { readonly valid: true; readonly amountEuros: number }
-  | { readonly valid: false };
-
-  /**
-   * Valide le brouillon d'un prévu saisi en euros (virgule ou point décimal). Vide ou zéro vaut 0,
- * ce qui supprime le prévu. Le motif limite à deux décimales : tout montant non nul vaut donc au moins 0,01.
- */
-export function parsePlannedDraft(raw: string): PlannedDraft {
-  const normalized = raw.trim().replace(',', '.');
-  if (normalized === '') return { valid: true, amountEuros: 0 };
-  if (!PLANNED_DRAFT_PATTERN.test(normalized)) return { valid: false };
-  const amountEuros = Number(normalized);
-  return { valid: true, amountEuros };
-}
 
 export function sizeGroupOf(rowCount: number): SizeGroup {
   if (rowCount <= SMALL_MAX_ROWS) return 'small';
@@ -190,7 +175,17 @@ export class BudgetMensuel {
 
   protected readonly editingId = signal<string | null>(null);
   protected readonly editDraft = signal('');
-  protected readonly editError = signal(false);
+  protected readonly editError = signal<PlannedErrorKind | null>(null);
+  protected readonly plannedErrorKey = computed(() =>
+    this.editError() === 'aggregate'
+      ? 'budgetMensuel.table.amountAggregateOverflow'
+      : 'budgetMensuel.table.amountInvalid',
+  );
+  /** Mois dont la préparation a été refusée : l'alerte ne vaut que pour ce mois. */
+  private readonly prepareRefusedMonthKey = signal<string | null>(null);
+  protected readonly prepareFailed = computed(
+    () => !this.isOpened() && this.prepareRefusedMonthKey() === this.monthContext.monthKey(),
+  );
 
   protected readonly isOpened = computed(() => this.budget.isMonthOpened(this.monthContext.monthKey()));
   protected readonly openingBalanceCents = computed(() => this.monthSummary().openingBalanceCents);
@@ -268,7 +263,7 @@ export class BudgetMensuel {
 
   protected startEdit(line: LineView): void {
     this.editDraft.set(this.draftOf(line.plannedCents));
-    this.editError.set(false);
+    this.editError.set(null);
     this.editingId.set(line.id);
     afterNextRender(() => this.document.getElementById(this.plannedInputId(line.id))?.focus(), {
       injector: this.injector,
@@ -276,12 +271,12 @@ export class BudgetMensuel {
   }
 
   protected commitEdit(line: LineView, raw: string): void {
-    const draft = parsePlannedDraft(raw);
-    if (!draft.valid) {
-      this.editError.set(true);
+    const parsed = this.parsePlannedInput(raw);
+    if (!parsed.valid) {
+      this.editError.set('invalid');
       return;
     }
-    this.savePlanned(line.id, draft.amountEuros);
+    this.savePlanned(line.id, parsed.cents);
   }
 
   protected cancelEdit(subcategoryId: string): void {
@@ -304,15 +299,31 @@ export class BudgetMensuel {
     this.closeEdit();
   }
 
-  private savePlanned(subcategoryId: string, amountEuros: number): void {
+  private savePlanned(subcategoryId: string, amountCents: number): void {
+    try {
+      this.budget.setPlannedAmount(this.monthContext.monthKey(), subcategoryId, amountCents);
+    } catch (error) {
+      if (error instanceof PlannedAggregateOverflowError) {
+        this.editError.set('aggregate');
+        return;
+      }
+      throw error;
+    }
     this.closeEdit();
-    this.budget.setPlannedAmount(this.monthContext.monthKey(), subcategoryId, amountEuros);
     this.focusPlannedButton(subcategoryId);
+  }
+
+  /** Vide vaut zéro (suppression). Le signe moins est refusé même pour « -0 », que parseEurosInput accepterait. */
+  private parsePlannedInput(raw: string): EurosInputResult {
+    const trimmed = raw.trim();
+    if (trimmed === '') return { valid: true, cents: 0 };
+    if (/^[-\u2212]/.test(trimmed)) return { valid: false, error: 'invalid' };
+    return this.moneyService.parseEurosInput(trimmed);
   }
 
   private closeEdit(): void {
     this.editingId.set(null);
-    this.editError.set(false);
+    this.editError.set(null);
   }
 
   private focusPlannedButton(subcategoryId: string): void {
@@ -335,7 +346,17 @@ export class BudgetMensuel {
   }
 
   protected prepareMonth(): void {
-    this.budget.openMonth(this.monthContext.monthKey());
+    const monthKey = this.monthContext.monthKey();
+    try {
+      this.budget.openMonth(monthKey);
+    } catch (error) {
+      if (error instanceof PlannedAggregateOverflowError) {
+        this.prepareRefusedMonthKey.set(monthKey);
+        return;
+      }
+      throw error;
+    }
+    this.prepareRefusedMonthKey.set(null);
   }
 
   protected clearOpeningOverride(): void {

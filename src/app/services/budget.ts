@@ -1,6 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { BudgetLine } from '../models/budget-line';
 import { BudgetMonth, OpenMonthResult } from '../models/budget-month';
+import { CategoryType } from '../models/category';
 import { BudgetLineStatus, getBudgetLineStatus } from '../models/budget-status';
 import {
   BudgetCategorySummary,
@@ -10,7 +11,6 @@ import {
 import { RecurringRule } from '../models/recurring-rule';
 import { Transaction } from '../models/transactions';
 import { CategoryService } from './category';
-import { MoneyService } from './money';
 import { MonthContextService } from './month-context';
 import { RecurringRuleService } from './recurring-rule';
 import { TransactionService } from './transaction';
@@ -54,6 +54,51 @@ interface MonthlyActualTotals {
 interface ResolvedMonths {
   months: BudgetMonth[];
   closingCentsByMonthKey: ReadonlyMap<string, number>;
+}
+
+/**
+ * Levée lorsqu'une mutation ferait dépasser `Number.MAX_SAFE_INTEGER` au total prévu d'une catégorie
+ * ou au total prévu mensuel des revenus ou des dépenses. Aucune ligne n'est alors modifiée.
+ */
+export class PlannedAggregateOverflowError extends RangeError {
+  constructor() {
+    super('Planned aggregate overflow');
+    this.name = 'PlannedAggregateOverflowError';
+  }
+}
+
+const MAX_SAFE_CENTS_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
+
+/**
+ * Vérifie en BigInt, donc sans arrondi, que les totaux prévus du mois restent représentables :
+ * celui de la catégorie touchée et celui de son type (revenus ou dépenses).
+ */
+function assertPlannedTotalsSafe(
+  lines: readonly BudgetLine[],
+  monthKey: string,
+  categoryId: string,
+  categoryTypes: ReadonlyMap<string, CategoryType>,
+): void {
+  const categoryType = categoryTypes.get(categoryId);
+  let categoryTotal = BigInt(0);
+  let typeTotal = BigInt(0);
+
+  for (const line of lines) {
+    if (line.monthKey !== monthKey) {
+      continue;
+    }
+    const amount = BigInt(line.plannedAmountCents);
+    if (line.categoryId === categoryId) {
+      categoryTotal += amount;
+    }
+    if (categoryType !== undefined && categoryTypes.get(line.categoryId) === categoryType) {
+      typeTotal += amount;
+    }
+  }
+
+  if (categoryTotal > MAX_SAFE_CENTS_BIGINT || typeTotal > MAX_SAFE_CENTS_BIGINT) {
+    throw new PlannedAggregateOverflowError();
+  }
 }
 
 function netCents(totals: MonthlyActualTotals | undefined): number {
@@ -185,14 +230,21 @@ export class BudgetService {
   });
 
   constructor(
-    private readonly moneyService: MoneyService,
     private readonly categoryService: CategoryService,
     private readonly recurringRuleService: RecurringRuleService,
     private readonly transactionService: TransactionService,
     private readonly monthContextService: MonthContextService,
   ) {}
 
-  setPlannedAmount(monthKey: string, subcategoryId: string, amountEuros: number): BudgetLine | null {
+  /**
+   * Enregistre le prévu d'une sous-catégorie en centimes entiers sûrs. Zéro supprime la ligne.
+   * La mutation est refusée sans rien modifier si elle ferait dépasser `Number.MAX_SAFE_INTEGER`
+   * au total prévu de la catégorie ou au total prévu mensuel des revenus ou des dépenses.
+   *
+   * @throws Error('Invalid amount') si le montant n'est pas un entier sûr positif ou nul
+   * @throws PlannedAggregateOverflowError si l'agrégat prévu ne serait plus représentable
+   */
+  setPlannedAmount(monthKey: string, subcategoryId: string, amountCents: number): BudgetLine | null {
     this.assertValidMonthKey(monthKey);
 
     const subcategory = this.categoryService
@@ -202,41 +254,55 @@ export class BudgetService {
       throw new Error('Unknown subcategory');
     }
 
-    if (amountEuros < 0) {
+    if (!Number.isSafeInteger(amountCents) || amountCents < 0) {
       throw new Error('Invalid amount');
     }
 
-    const cents = this.moneyService.toCents(amountEuros);
-    if (!Number.isInteger(cents) || cents < 0) {
-      throw new Error('Invalid amount');
-    }
-
-    const existing = this._lines().find(
+    const currentLines = this._lines();
+    const existing = currentLines.find(
       line => line.monthKey === monthKey && line.subcategoryId === subcategoryId,
     );
 
-    if (cents === 0) {
-      this._lines.update(lines =>
-        lines.filter(line => line.monthKey !== monthKey || line.subcategoryId !== subcategoryId),
+    if (amountCents === 0) {
+      this._lines.set(
+        currentLines.filter(
+          line => line.monthKey !== monthKey || line.subcategoryId !== subcategoryId,
+        ),
       );
       return null;
     }
 
     const line: BudgetLine = existing
-      ? { ...existing, plannedAmountCents: cents }
+      ? { ...existing, plannedAmountCents: amountCents }
       : {
           id: crypto.randomUUID(),
           monthKey,
           categoryId: subcategory.categoryId,
           subcategoryId,
-          plannedAmountCents: cents,
+          plannedAmountCents: amountCents,
         };
 
-    this._lines.update(lines =>
-      existing ? lines.map(current => (current === existing ? line : current)) : [...lines, line],
-    );
+    const nextLines = existing
+      ? currentLines.map(current => (current === existing ? line : current))
+      : [...currentLines, line];
+    this.assertPlannedAggregatesSafe(nextLines, monthKey, [subcategory.categoryId]);
+    this._lines.set(nextLines);
 
     return line;
+  }
+
+  /** Valide, avant toute mutation, les totaux prévus de chaque catégorie touchée et de leurs types. */
+  private assertPlannedAggregatesSafe(
+    lines: readonly BudgetLine[],
+    monthKey: string,
+    categoryIds: Iterable<string>,
+  ): void {
+    const categoryTypes = new Map<string, CategoryType>(
+      this.categoryService.categories().map(category => [category.id, category.type]),
+    );
+    for (const categoryId of new Set(categoryIds)) {
+      assertPlannedTotalsSafe(lines, monthKey, categoryId, categoryTypes);
+    }
   }
 
   linesForMonth(monthKey: string): BudgetLine[] {
@@ -251,6 +317,12 @@ export class BudgetService {
     return line?.plannedAmountCents ?? 0;
   }
 
+  /**
+   * Initialise le mois et génère ses lignes récurrentes. Les candidates sont validées avec les lignes
+   * existantes avant toute mutation : en cas de dépassement, rien n'est créé ni initialisé.
+   *
+   * @throws PlannedAggregateOverflowError si les totaux prévus du mois ne seraient plus représentables
+   */
   openMonth(monthKey: string): OpenMonthResult {
     this.assertValidMonthKey(monthKey);
 
@@ -299,11 +371,19 @@ export class BudgetService {
       result.created++;
     }
 
+    const openingBalanceCents = this.automaticOpeningCentsFor(monthKey);
+
     if (generatedLines.length > 0) {
-      this._lines.update(lines => [...lines, ...generatedLines]);
+      const currentLines = this._lines();
+      const nextLines = [...currentLines, ...generatedLines];
+      this.assertPlannedAggregatesSafe(
+        nextLines,
+        monthKey,
+        generatedLines.map(line => line.categoryId),
+      );
+      this._lines.set(nextLines);
     }
 
-    const openingBalanceCents = this.automaticOpeningCentsFor(monthKey);
     this._months.update(months => [
       ...months,
       { monthKey, openingBalanceCents, openingBalanceOverridden: false, initialized: true },
@@ -388,7 +468,7 @@ export class BudgetService {
   }
 
   private isValidRuleAmount(rule: RecurringRule): boolean {
-    return Number.isInteger(rule.amountCents) && rule.amountCents > 0;
+    return Number.isSafeInteger(rule.amountCents) && rule.amountCents > 0;
   }
 
   private assertValidMonthKey(monthKey: string): void {

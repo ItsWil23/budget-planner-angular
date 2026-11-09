@@ -153,7 +153,8 @@
       "toggleSign": "Switch sign (positive or negative)",
       "editHint": "Enter saves, Escape cancels.",
       "amountInvalid": "Invalid amount: enter an amount in euros, with at most two decimals (e.g. -12.50).",
-      "amountTooLarge": "Amount too large to be saved: enter a smaller value."
+      "amountTooLarge": "Amount too large to be saved: enter a smaller value.",
+      "prepareAggregateOverflow": "Preparation refused: the active recurring lines exceed the application's exact calculation capacity. Reduce their amounts to prepare the month."
     },
     "table": {
       "label": "Category tracking",
@@ -166,7 +167,8 @@
       "plannedUnset": "Not set",
       "editPlanned": "Edit planned amount for {{ name }} ({{ value }})",
       "plannedFieldLabel": "Planned amount for {{ name }}",
-      "amountInvalid": "Invalid amount: enter 0 or an amount of at least €0.01, with at most two decimals.",
+      "amountInvalid": "Invalid amount: enter 0 or an amount of at least €0.01, with at most two decimals, and no more than €90,071,992,547,409.91.",
+      "amountAggregateOverflow": "Amount rejected: the planned total of the category or the month would exceed the application's exact calculation capacity. Enter a smaller amount.",
       "clearPlanned": "Clear planned amount for {{ name }}",
       "shortcuts": "Quick access to categories",
       "progress": {

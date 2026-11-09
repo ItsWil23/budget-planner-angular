@@ -75,8 +75,16 @@
       </div>
     </dl>
     <p class="opening-help">{{ 'budgetMensuel.openingBalance.unpreparedHelp' | transloco }}</p>
+    @if (prepareFailed()) {
+      <p class="opening-error" role="alert" [id]="prepareErrorId">{{ 'budgetMensuel.openingBalance.prepareAggregateOverflow' | transloco }}</p>
+    }
     <div class="opening-actions">
-      <button type="button" class="opening-action opening-action-primary" (click)="onPrepare()">
+      <button
+        type="button"
+        class="opening-action opening-action-primary"
+        [attr.aria-describedby]="prepareFailed() ? prepareErrorId : null"
+        (click)="onPrepare()"
+      >
         {{ 'budgetMensuel.openingBalance.prepare' | transloco }}
       </button>
     </div>
