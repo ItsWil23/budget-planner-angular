@@ -1,6 +1,6 @@
 ## Tâche — répartition des catégories du Budget Mensuel sur grand écran
 Lot : suivi décidé après le Lot 1 (`roadmap.md` § 4, « Budget Mensuel — grille/CSS »)
-Statut : proposée le 2026-11-16, en attente de validation
+Statut : validée le 2026-11-16, implémentée sur `feat/budget-mensuel-grid`.
 Branche : `feat/budget-mensuel-grid`
 
 ### Contexte
@@ -39,3 +39,11 @@ Mesure du 2026-11-16 avec quatre catégories : deux colonnes à toutes les large
 - `roadmap.md` § 4, « Suivis décidés après le Lot 1 ».
 - `DESIGN_SYSTEM.md` : tokens d'espacement et de taille.
 - `AGENTS.md` : mobile first, pas de valeur brute dans les composants (token local documenté dans `:host`, comme `--kpi-group-max`).
+
+### Suivi de livraison — 2026-11-16
+- Implémentation commitée dans `f5f6008` (`feat: cap budget category cards on wide screens`).
+- Mesures après implémentation : à 1920 et 2560 px, cartes plafonnées à 640 px et groupe centré (marges égales de 140 px et 460 px). À 1024, 1280 et 1600 px, rendu inchangé (cartes de 325 à 620 px). À 375 px, aucun changement ni débordement.
+- Thèmes clair et sombre vérifiés à 2560 px.
+- Nettoyage SCSS : seule règle morte trouvée, `.manager-placeholder`, supprimée. Les autres sélecteurs servent aux modes `columns` et `balanced`.
+- Reliquat : `budget-mensuel.scss` reste au-dessus du budget de 4 kB (7,02 kB au lieu de 7,03 kB) ; ce gain n'a pas été chassé au-delà du nettoyage sans perte de rendu, à traiter dans une tâche dédiée si nécessaire.
+- Validations : deux typechecks, 573 tests sur 35 fichiers, build (avertissements SCSS préexistants), `git diff --check`.

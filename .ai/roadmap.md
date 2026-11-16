@@ -140,7 +140,8 @@ Ces sujets sont hors des 13 tâches clôturées et seront découpés en specs s�
 - [x] **TASK-018 — solde de clôture budgétée** : calcul exact en centimes et synthèse du mois par équation, avec préparation et ajustement du solde d'ouverture. Fait le 2026-11-16 (PR #55).
 - [x] **TASK-019 — versionner et synchroniser les règles récurrentes** : nouvelles versions effectives au mois système suivant; synchronisation facultative des mois préparés concernés, en préservant les montants manuels et les effacements à zéro. Fait le 2026-11-16 (PR #57).
 - [x] **TASK-020 — dialogue de gestion des règles récurrentes** : création en tête, liste défilante, édition dans le même dialogue, actions accessibles par menu; date d'effet localisée et choix de synchronisation seulement pour une série existante. Dépend de TASK-019. Fait le 2026-11-16 (PR #59).
-- **Budget Mensuel — grille/CSS :** distribuer les catégories sur le nombre de colonnes offert par la largeur disponible, garder leurs groupes et éviter l'étirement excessif des cartes ; nettoyer le SCSS par suppressions mesurées, sans perte de rendu.
+- [x] **TASK-021 — grille Budget Mensuel sur grand écran** : cartes plafonnées à 40rem et groupe centré ; nettoyage SCSS mesuré. Fait le 2026-11-16 (PR à ouvrir).
+- [ ] **TASK-022 — menu contextuel des actions d'une règle récurrente** : remplacer la ligne dépliable par un menu accessible clavier et tactile, comme prévu initialement pour TASK-020. Spec à rédiger après TASK-021.
 - **Cartes sous 340px :** choisir visuellement entre ellipse et troncation sur deux lignes pour les noms de catégorie/sous-catégorie ; éviter les retours lettre par lettre.
 - **Validation appareil réel :** test du clavier numérique mobile et du signe négatif en attente d'accès à un téléphone ; non bloquant pour la clôture du Lot 1.
 
