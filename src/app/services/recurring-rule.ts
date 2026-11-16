@@ -19,11 +19,13 @@ export class RecurringRuleService {
 
   createRule(input: RecurringRuleInput): RecurringRule {
     this.assertValidAmount(input.amountCents);
+    const startMonth = this.monthContext.nextSystemMonthKey;
+    this.assertValidPeriod(startMonth, input.endMonth);
     const rule: RecurringRule = {
       ...input,
       id: crypto.randomUUID(),
       seriesId: crypto.randomUUID(),
-      startMonth: this.monthContext.nextSystemMonthKey,
+      startMonth,
       active: true,
     };
     this._rules.update(rules => [...rules, rule]);
@@ -38,15 +40,23 @@ export class RecurringRuleService {
     this.assertValidAmount(patch.amountCents ?? source.amountCents);
 
     const isUnstartedSuccessor = source.startMonth === this.monthContext.nextSystemMonthKey;
-    const closedVersion = isUnstartedSuccessor
-      ? null
+    const isEnded = source.endMonth !== undefined && source.endMonth < this.monthContext.systemMonthKey;
+    const closedVersion = isUnstartedSuccessor || isEnded
+      ? isEnded ? source : null
       : { ...source, endMonth: this.monthContext.systemMonthKey };
+    const startMonth = isUnstartedSuccessor ? source.startMonth : this.monthContext.nextSystemMonthKey;
+    const endMonth = Object.hasOwn(patch, 'endMonth')
+      ? patch.endMonth
+      : isEnded && patch.active === true
+        ? undefined
+        : source.endMonth;
+    this.assertValidPeriod(startMonth, endMonth);
     const nextVersion: RecurringRule = {
       ...source,
       ...patch,
       id: isUnstartedSuccessor ? source.id : crypto.randomUUID(),
-      startMonth: isUnstartedSuccessor ? source.startMonth : this.monthContext.nextSystemMonthKey,
-      endMonth: source.endMonth,
+      startMonth,
+      endMonth,
     };
 
     return { sourceVersionId: source.id, closedVersion, nextVersion };
@@ -55,6 +65,14 @@ export class RecurringRuleService {
   private assertValidAmount(amountCents: number): void {
     if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
       throw new Error('Invalid recurring rule amount');
+    }
+  }
+
+  private assertValidPeriod(startMonth: string, endMonth: string | undefined): void {
+    if (endMonth === undefined) return;
+    this.validateMonthKey(endMonth);
+    if (endMonth < startMonth) {
+      throw new Error('Invalid recurring rule period');
     }
   }
 

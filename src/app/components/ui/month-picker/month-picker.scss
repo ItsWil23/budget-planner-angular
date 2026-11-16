@@ -1,0 +1,182 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.month-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.picker-control {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.picker-trigger {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-sm);
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-sm);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-app);
+  color: var(--color-text);
+  font: var(--text-body);
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-accent);
+  }
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+
+  &.picker-invalid {
+    border-color: var(--color-danger);
+  }
+}
+
+.picker-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-value-empty {
+  color: var(--color-text-muted);
+}
+
+.picker-clear {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--size-touch-min);
+  min-height: var(--size-touch-min);
+  padding: 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-app);
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+}
+
+.picker-icon {
+  flex: 0 0 auto;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--size-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.picker-panel {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: calc(100% + var(--space-xs));
+  inset-inline-start: 0;
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-sm);
+  inline-size: min(100%, 18rem);
+  min-inline-size: 16rem;
+  padding: var(--space-sm);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-card);
+}
+
+.picker-header {
+  display: grid;
+  grid-template-columns: var(--size-touch-min) minmax(0, 1fr) var(--size-touch-min) var(--size-touch-min);
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.picker-nav,
+.picker-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--size-touch-min);
+  padding: 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-app);
+  color: var(--color-text);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+}
+
+.picker-title {
+  font: var(--text-emphasis);
+  font-variant-numeric: tabular-nums;
+}
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-xs);
+}
+
+.picker-grid-years {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.picker-cell {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-xs);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-app);
+  color: var(--color-text);
+  font: var(--text-body);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+
+  &:hover:not([aria-disabled='true']) {
+    border-color: var(--color-accent);
+  }
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+
+  &[aria-pressed='true'] {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-surface);
+  }
+
+  &[aria-disabled='true'] {
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+  }
+}

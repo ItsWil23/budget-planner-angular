@@ -22,7 +22,7 @@
 </div>
 @if (isModalOpened()) {
   <div>
-    <app-modal (closed)="onModalClosed()">
+    <app-modal [title]="'transactions.newButton' | transloco" (closed)="onModalClosed()">
       <app-transaction-form
         [formCategories]="categories()"
         [formSubcategories]="subcategories()"

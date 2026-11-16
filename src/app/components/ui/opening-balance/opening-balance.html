@@ -9,7 +9,7 @@
       <span class="opening-badge opening-badge-unprepared">{{ 'budgetMensuel.openingBalance.unprepared' | transloco }}</span>
     }
   </div>
-  <div class="opening-body">
+  <div class="opening-caption">
     @if (opened()) {
       @if (editing()) {
         <p class="opening-hint" [id]="hintId">{{ 'budgetMensuel.openingBalance.editHint' | transloco }}</p>
@@ -17,20 +17,52 @@
           <p class="opening-error" role="alert" [id]="errorId">{{ (editError() === 'tooLarge' ? 'budgetMensuel.openingBalance.amountTooLarge' : 'budgetMensuel.openingBalance.amountInvalid') | transloco }}</p>
         }
       } @else {
+        <p class="opening-help">{{ 'budgetMensuel.openingBalance.adjustHelp' | transloco }}</p>
+      }
+    } @else {
+      <p class="opening-help">{{ 'budgetMensuel.openingBalance.unpreparedHelp' | transloco }}</p>
+    }
+  </div>
+  <div class="opening-body">
+    @if (opened()) {
+      @if (!editing()) {
         <div class="opening-actions">
+          <button
+            type="button"
+            class="opening-action opening-action-secondary opening-action-manage"
+            data-action="manage-recurring-rules"
+            (click)="manageRules.emit()"
+          >
+            <svg class="opening-manage-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="M4 5h12M4 10h8M4 15h5" />
+              <path d="M15 12.5a3 3 0 1 1-2.2 1" />
+            </svg>
+            {{ 'budgetMensuel.openingBalance.manageRules' | transloco }}
+          </button>
           <button type="button" class="opening-action" [id]="adjustId" (click)="onAdjust()">
             {{ 'budgetMensuel.openingBalance.adjust' | transloco }}
           </button>
           @if (overridden()) {
-            <button type="button" class="opening-action opening-action-secondary" (click)="onReset()">
+            <button type="button" class="opening-action opening-action-secondary opening-action-reset" (click)="onReset()">
               {{ 'budgetMensuel.openingBalance.reset' | transloco }}
             </button>
           }
         </div>
       }
     } @else {
-      <p class="opening-help">{{ 'budgetMensuel.openingBalance.unpreparedHelp' | transloco }}</p>
       <div class="opening-actions">
+        <button
+          type="button"
+          class="opening-action opening-action-secondary opening-action-manage"
+          data-action="manage-recurring-rules"
+          (click)="manageRules.emit()"
+        >
+          <svg class="opening-manage-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path d="M4 5h12M4 10h8M4 15h5" />
+            <path d="M15 12.5a3 3 0 1 1-2.2 1" />
+          </svg>
+          {{ 'budgetMensuel.openingBalance.manageRules' | transloco }}
+        </button>
         <button
           type="button"
           class="opening-action opening-action-primary"

@@ -5,7 +5,7 @@
 .opening {
   display: grid;
   flex: 1 1 auto;
-  align-content: space-between;
+  align-content: start;
   min-width: 0;
   gap: var(--space-sm);
   padding: var(--space-md) var(--space-lg);
@@ -29,7 +29,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  min-height: var(--size-touch-min);
+  min-height: var(--space-2xl);
 
   h2 {
     min-width: 0;
@@ -39,6 +39,15 @@
 
 /* Hauteur réservée au plus haut état (édition ou préparation refusée) : l'équation, empilée dessous sur mobile,
    ne bouge pas verticalement quand l'état change. */
+.opening-caption {
+  display: grid;
+  align-content: start;
+  gap: var(--space-xs);
+  font: var(--text-caption);
+  /* Deux lignes réservées : la légende de l'équation voisine occupe la même hauteur. */
+  min-block-size: 2lh;
+}
+
 .opening-body {
   display: grid;
   align-content: center;
@@ -134,7 +143,7 @@
 .opening-actions {
   display: flex;
   flex: 0 0 auto;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-sm);
 }
@@ -148,6 +157,9 @@
 }
 
 .opening-action-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-color: var(--color-accent);
   background-color: var(--color-accent);
   color: var(--color-surface);
@@ -155,6 +167,24 @@
 
 .opening-action-secondary {
   color: var(--color-text-muted);
+}
+
+.opening-action-manage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  color: var(--color-text);
+}
+
+.opening-manage-icon {
+  flex: 0 0 auto;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--size-icon-stroke);
+  stroke-linecap: round;
 }
 
 :is(.opening-input, .opening-sign, .opening-action):focus-visible {
@@ -168,7 +198,19 @@
   }
 
   .opening-body {
-    min-height: calc(var(--size-touch-min) + var(--space-lg) + var(--space-xs) + var(--border-width));
+    min-height: calc(var(--size-touch-min) + var(--space-xs));
+  }
+}
+
+/* Les trois actions tiennent sur une seule ligne dans le rail large (voir budget-mensuel.scss). */
+@container budget-page (min-width: 56rem) {
+  .opening-actions {
+    flex-wrap: nowrap;
+  }
+
+  .opening-action {
+    padding-inline: var(--space-sm);
+    white-space: nowrap;
   }
 }
 

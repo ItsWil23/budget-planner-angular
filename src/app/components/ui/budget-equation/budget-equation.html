@@ -2,6 +2,7 @@
   <header class="equation-head">
     <h2 class="equation-title" id="budget-equation-title">{{ 'budgetMensuel.equation.title' | transloco }}</h2>
   </header>
+  <p class="equation-caption">{{ 'budgetMensuel.equation.caption' | transloco }}</p>
   <div class="equation-body">
     <div class="equation-formula">
       <div class="equation-term">
@@ -50,9 +51,9 @@
         <span class="equation-label">{{ 'budgetMensuel.allocation.unallocated' | transloco }}</span>
         <span class="equation-value">{{ unallocatedCents() | money: settings() }}</span>
       </p>
-      @if (!opened()) {
-        <p class="equation-note">{{ 'budgetMensuel.equation.indicative' | transloco }}</p>
-      }
     </aside>
   </div>
+  @if (!opened()) {
+    <p class="equation-note">{{ 'budgetMensuel.equation.indicative' | transloco }}</p>
+  }
 </section>

@@ -19,10 +19,22 @@
   margin-inline: auto;
 }
 
+.manager-placeholder {
+  min-block-size: var(--size-touch-min);
+}
+
 /* Rail de préparation à gauche (environ 280–320px), équation à droite, largeur plafonnée par le groupe. */
 @container budget-page (min-width: 40rem) {
   .overview {
     grid-template-columns: minmax(22rem, 24rem) minmax(0, 1fr);
+    gap: var(--space-lg);
+  }
+}
+
+/* Rail assez large pour que les trois actions de préparation tiennent sur une ligne. */
+@container budget-page (min-width: 56rem) {
+  .overview {
+    grid-template-columns: minmax(30rem, 30rem) minmax(0, 1fr);
     gap: var(--space-lg);
   }
 }
