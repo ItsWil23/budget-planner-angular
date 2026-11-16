@@ -46,6 +46,12 @@ Permettre au service de créer et modifier des règles récurrentes sans réécr
 - Synchronisation de mois non préparés.
 - Persistance backend ou gestion des récurrences à montant variable.
 
+### Suivi de livraison — 2026-11-16
+- Implémentation commitée dans `3a6b55f` (`feat: version recurring rules and sync prepared budgets`).
+- PR #57 vers `main` mergée le 2026-11-16 (`f6ac7d7`).
+- Validations réussies : deux typechecks, 531 tests sur 33 fichiers, build et `git diff --check`. Le build conserve deux avertissements de budget SCSS.
+- La gestion de l'interface reste hors de cette tâche et est spécifiée dans TASK-020.
+
 ### Critères d'acceptation
 - L'historique n'est pas réécrit; une modification prend effet le mois système suivant.
 - Le résultat de synchronisation est atomique et ne perd aucun ajustement manuel ou effacement à zéro.
