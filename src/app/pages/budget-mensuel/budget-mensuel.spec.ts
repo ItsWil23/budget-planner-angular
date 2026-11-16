@@ -40,8 +40,13 @@ const FR_TRANSLATIONS = {
     preparation: {
       title: 'Préparation du mois',
     },
+    recurringRules: {
+      trigger: 'Gérer les règles récurrentes',
+      title: 'Règles récurrentes',
+    },
     equation: {
       title: 'Équation du mois',
+      caption: 'Clôture = ouverture + revenus prévus − dépenses prévues',
       opening: "Solde d'ouverture",
       indicative: "Montants indicatifs : le mois n'est pas encore préparé.",
     },
@@ -49,10 +54,12 @@ const FR_TRANSLATIONS = {
       unprepared: 'Mois non préparé',
       automatic: 'Automatique',
       manual: 'Ajusté manuellement',
-      unpreparedHelp: 'Initialise le mois avec les récurrences actives.',
+      unpreparedHelp: 'Initialiser le mois avec les récurrences actives et le solde d\'ouverture.',
+      adjustHelp: 'Ajuster le solde d\'ouverture manuellement ou revenir au calcul automatique',
       prepare: 'Préparer le mois',
       adjust: 'Ajuster',
       reset: 'Revenir au calcul automatique',
+      manageRules: 'Récurrences',
       fieldLabel: "Solde d'ouverture ajusté, en euros",
       toggleSign: 'Basculer le signe (positif ou négatif)',
       editHint: 'Entrée enregistre, Échap annule.',
@@ -87,8 +94,13 @@ const EN_TRANSLATIONS = {
     preparation: {
       title: 'Month preparation',
     },
+    recurringRules: {
+      trigger: 'Manage recurring rules',
+      title: 'Recurring rules',
+    },
     equation: {
       title: 'Month equation',
+      caption: 'Closing = opening + planned income − planned expenses',
       opening: 'Opening balance',
       indicative: 'Indicative amounts: the month is not prepared yet.',
     },
@@ -96,10 +108,12 @@ const EN_TRANSLATIONS = {
       unprepared: 'Month not prepared',
       automatic: 'Automatic',
       manual: 'Adjusted manually',
-      unpreparedHelp: 'Initialises the month with active recurring rules.',
+      unpreparedHelp: 'Initialise the month with the active recurring rules and the opening balance',
+      adjustHelp: 'Adjust the opening balance manually or return to automatic calculation',
       prepare: 'Prepare month',
       adjust: 'Adjust',
       reset: 'Return to automatic calculation',
+      manageRules: 'Recurrences',
       fieldLabel: 'Adjusted opening balance, in euros',
       toggleSign: 'Switch sign (positive or negative)',
       editHint: 'Enter saves, Escape cancels.',
@@ -182,6 +196,41 @@ describe('BudgetMensuel', () => {
     expect(component).toBeTruthy();
   });
 
+  it('opens the recurring-rule manager from the Budget Mensuel page', () => {
+    const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      '.overview-preparation [data-action="manage-recurring-rules"]',
+    );
+
+    expect(trigger?.textContent?.trim()).toBe('Récurrences');
+    expect(trigger?.closest('.opening')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector(':scope > [data-action="open-manager"]')).toBeNull();
+    trigger?.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')?.textContent).toContain('Règles récurrentes');
+  });
+
+  it('places the recurring-rule action first in the preparation actions', () => {
+    const first: HTMLElement | null = fixture.nativeElement.querySelector('.overview-preparation .opening-actions button');
+
+    expect(first?.getAttribute('data-action')).toBe('manage-recurring-rules');
+  });
+
+  it('localizes the recurring-rule manager trigger and dialog in English', async () => {
+    await TestBed.inject(TranslocoService).setActiveLang('en');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      '.overview-preparation [data-action="manage-recurring-rules"]',
+    );
+    expect(trigger?.textContent?.trim()).toBe('Recurrences');
+    trigger?.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')?.textContent).toContain('Recurring rules');
+  });
+
   it('renders the preparation rail and the equation as sibling islands without nesting', () => {
     const overview: HTMLElement | null = fixture.nativeElement.querySelector('.overview');
     const rail: HTMLElement | null = overview?.querySelector('.overview-preparation') ?? null;
@@ -210,7 +259,10 @@ describe('BudgetMensuel', () => {
 
     expect(secondary?.getAttribute('aria-label')).toBe('Montant non alloué');
     expect(secondary?.querySelector('h3')).toBeNull();
-    expect(secondary?.textContent).toContain("Montants indicatifs : le mois n'est pas encore préparé.");
+    expect(secondary?.querySelector('.equation-note')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.equation > .equation-note')?.textContent).toContain(
+      "Montants indicatifs : le mois n'est pas encore préparé.",
+    );
   });
 
   it('does not open the month automatically', () => {
@@ -1292,7 +1344,7 @@ describe('BudgetMensuel', () => {
     }
 
     function resetButton(): HTMLButtonElement | null {
-      return openingButton('.opening-action-secondary');
+      return openingButton('.opening-action-reset');
     }
 
     function signButton(): HTMLButtonElement | null {
@@ -1359,7 +1411,9 @@ describe('BudgetMensuel', () => {
         prepareButton()?.click();
         fixture.detectChanges();
         const section = openingSection();
-        expect(section?.querySelector('.opening-help')).toBeNull();
+        expect(section?.querySelector('.opening-help')?.textContent?.trim()).toBe(
+          'Ajuster le solde d\'ouverture manuellement ou revenir au calcul automatique',
+        );
         expect(adjustButton()?.getAttribute('type')).toBe('button');
         expect(adjustButton()?.textContent?.trim().length).toBeGreaterThan(0);
         expect(section?.querySelector('#budget-opening-adjust')).not.toBeNull();

@@ -13,12 +13,12 @@ export interface RecurringRule {
 
 export type RecurringRuleInput = Pick<
   RecurringRule,
-  'label' | 'categoryId' | 'subcategoryId' | 'amountCents' | 'dayOfMonth'
+  'label' | 'categoryId' | 'subcategoryId' | 'amountCents' | 'dayOfMonth' | 'endMonth'
 >;
 
 export type RecurringRulePatch = Partial<
   Pick<RecurringRule, 'label' | 'categoryId' | 'subcategoryId' | 'amountCents' | 'dayOfMonth' | 'active'>
->;
+> & { endMonth?: string | undefined };
 
 export interface RecurringRuleVersionChange {
   readonly sourceVersionId: string;

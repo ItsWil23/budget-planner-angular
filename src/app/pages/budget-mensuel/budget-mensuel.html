@@ -6,6 +6,7 @@
     [editableBalance]="openingEditable()"
     [prepareFailed]="prepareFailed()"
     (prepareMonth)="prepareMonth()"
+    (manageRules)="openRecurringRules()"
     (balanceSave)="saveOpeningBalance($event)"
     (balanceReset)="clearOpeningOverride()"
   />
@@ -22,6 +23,10 @@
     [opened]="isOpened()"
   />
 </div>
+
+@defer (on immediate) {
+  <app-recurring-rule-manager [opened]="recurringRulesOpen()" (closed)="closeRecurringRules()" />
+}
 
 <section class="table-section" [attr.aria-label]="'budgetMensuel.table.label' | transloco">
   @if (layout() === 'columns') {

@@ -1,0 +1,198 @@
+@if (opened()) {
+  <app-modal [title]="'budgetMensuel.recurringRules.title' | transloco" (closed)="closeManager()">
+    <div class="rule-manager">
+      @if (syncChoice()) {
+        <section class="sync-choice" aria-labelledby="recurring-rule-sync-title">
+          <h3 id="recurring-rule-sync-title">{{ 'budgetMensuel.recurringRules.syncTitle' | transloco }}</h3>
+          @if (errorKey(); as error) {
+            <p id="recurring-rule-error" role="alert">{{ error | transloco }}</p>
+          }
+          <div class="form-actions">
+            <button type="button" data-action="sync-prepared" (click)="applyPendingChange(true)">
+              {{ 'budgetMensuel.recurringRules.sync' | transloco }}
+            </button>
+            <button type="button" data-action="future-only" (click)="applyPendingChange(false)">
+              {{ 'budgetMensuel.recurringRules.futureOnly' | transloco: { month: effectiveMonthLabel() } }}
+            </button>
+            <button type="button" data-action="cancel-sync" (click)="cancelSyncChoice()">
+              {{ 'budgetMensuel.recurringRules.cancel' | transloco }}
+            </button>
+          </div>
+        </section>
+      } @else {
+        <form class="rule-create" [formGroup]="form" (ngSubmit)="saveRule()">
+          <h3>{{ (editingRuleId() ? 'budgetMensuel.recurringRules.editTitle' : 'budgetMensuel.recurringRules.createTitle') | transloco }}</h3>
+          <p class="effective-date">
+            {{ 'budgetMensuel.recurringRules.effectiveDateBefore' | transloco }}
+            @if (endMonthDraft(); as endMonth) {
+              <strong class="effective-date-highlight">{{ 'budgetMensuel.recurringRules.effectiveDateFrom' | transloco: { month: effectiveMonthLabel() } }}</strong><span class="effective-date-range"> {{ 'budgetMensuel.recurringRules.effectiveDateTo' | transloco: { month: displayMonth(endMonth) } }}.</span>
+            } @else {
+              <strong class="effective-date-highlight">{{ 'budgetMensuel.recurringRules.effectiveDateFrom' | transloco: { month: effectiveMonthLabel() } }}.</strong>
+            }
+          </p>
+
+          <div class="rule-form-grid">
+            <div class="form-field">
+              <label for="recurring-rule-category">{{ 'budgetMensuel.recurringRules.category' | transloco }}</label>
+              <span class="select-field">
+                <select id="recurring-rule-category" [formControl]="form.controls.categoryId">
+                  <option value="" disabled>{{ 'budgetMensuel.recurringRules.categoryPlaceholder' | transloco }}</option>
+                  @for (category of categories(); track category.id) {
+                    <option [value]="category.id">{{ category.name }}</option>
+                  }
+                </select>
+              </span>
+            </div>
+            <div class="form-field">
+              <label for="recurring-rule-subcategory">{{ 'budgetMensuel.recurringRules.subcategory' | transloco }}</label>
+              <span class="select-field">
+                <select id="recurring-rule-subcategory" [formControl]="form.controls.subcategoryId">
+                  <option value="" disabled>{{ 'budgetMensuel.recurringRules.subcategoryPlaceholder' | transloco }}</option>
+                  @for (subcategory of subcategories(); track subcategory.id) {
+                    <option [value]="subcategory.id">{{ subcategory.name }}</option>
+                  }
+                </select>
+              </span>
+            </div>
+            <div class="form-field">
+              <label for="recurring-rule-label">{{ 'budgetMensuel.recurringRules.label' | transloco }}</label>
+              <input id="recurring-rule-label" type="text" autocomplete="off" [formControl]="form.controls.label" />
+            </div>
+            <div class="form-field">
+              <label for="recurring-rule-amount">{{ 'budgetMensuel.recurringRules.amount' | transloco }}</label>
+              <input
+                id="recurring-rule-amount"
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                [formControl]="form.controls.amountText"
+                [attr.aria-invalid]="amountErrorKey() ? 'true' : null"
+                [attr.aria-describedby]="amountErrorKey() ? 'recurring-rule-amount-error' : null"
+              />
+              @if (amountErrorKey(); as error) {
+                <p id="recurring-rule-amount-error" role="alert">{{ error | transloco }}</p>
+              }
+            </div>
+            <div class="form-field form-field-day">
+              <label for="recurring-rule-day">{{ 'budgetMensuel.recurringRules.dayOfMonth' | transloco }}</label>
+              <input
+                id="recurring-rule-day"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                [formControl]="form.controls.dayOfMonth"
+                [attr.aria-invalid]="dayErrorKey() ? 'true' : null"
+                [attr.aria-describedby]="dayErrorKey() ? 'recurring-rule-day-error' : null"
+              />
+              @if (dayErrorKey(); as error) {
+                <p id="recurring-rule-day-error" role="alert">{{ error | transloco }}</p>
+              }
+            </div>
+            <div class="form-field form-field-end-month">
+              <label for="recurring-rule-end-month">{{ 'budgetMensuel.recurringRules.endMonth' | transloco }}</label>
+              <app-month-picker
+                fieldId="recurring-rule-end-month"
+                [value]="endMonthDraft()"
+                [minMonth]="effectiveMonthKey"
+                [defaultMonth]="effectiveMonthKey"
+                [locale]="settings().locale"
+                [placeholder]="'budgetMensuel.recurringRules.noEnd' | transloco"
+                [invalid]="endMonthErrorKey() !== null"
+                [describedBy]="endMonthErrorKey() ? 'recurring-rule-end-month-error' : null"
+                (valueChange)="onEndMonthInput($event)"
+              />
+              @if (endMonthErrorKey(); as error) {
+                <p id="recurring-rule-end-month-error" role="alert">{{ error | transloco: { month: effectiveMonthLabel() } }}</p>
+              }
+            </div>
+          </div>
+
+          @if (errorKey(); as error) {
+            <p id="recurring-rule-error" role="alert">{{ error | transloco }}</p>
+          }
+          <div class="form-actions">
+            <button type="submit" data-action="save-rule">
+              {{ (editingRuleId() ? 'budgetMensuel.recurringRules.save' : 'budgetMensuel.recurringRules.add') | transloco }}
+            </button>
+            @if (editingRuleId()) {
+              <button type="button" data-action="cancel-edit" (click)="cancelEdit()">
+                {{ 'budgetMensuel.recurringRules.cancel' | transloco }}
+              </button>
+            }
+          </div>
+        </form>
+
+        <h3 class="existing-rules-title">{{ 'budgetMensuel.recurringRules.existingRules' | transloco }}</h3>
+        <ul class="rule-list" [attr.aria-label]="'budgetMensuel.recurringRules.listLabel' | transloco">
+          @for (group of ruleGroups(); track group.seriesId) {
+            <li
+              class="rule-series"
+              [class.rule-series-expanded]="expandedSeriesId() === group.seriesId"
+              [attr.data-series-id]="group.seriesId"
+            >
+              <button
+                type="button"
+                class="rule-summary"
+                [attr.data-action]="'row-actions-' + group.seriesId"
+                [attr.aria-label]="'budgetMensuel.recurringRules.actions' | transloco: { name: group.latest.label }"
+                [attr.aria-expanded]="expandedSeriesId() === group.seriesId"
+                (click)="toggleSeries(group.seriesId)"
+              >
+                  <span class="rule-summary-primary">
+                    <span class="rule-label">{{ group.latest.label }}</span>
+                    <span class="rule-amount-status">
+                      <span class="rule-amount">{{ group.latest.amountCents | money: settings() }}</span>
+                      <span class="rule-status">{{ ruleStatusKey(group.latest) | transloco }}</span>
+                    </span>
+                  </span>
+                  <span class="rule-summary-secondary">
+                    <span class="rule-category">{{ group.categoryName }} / {{ group.subcategoryName }}</span>
+                    <span class="rule-period">
+                      {{ periodStartKey(group.latest) | transloco: { month: displayMonth(group.latest.startMonth) } }}
+                      @if (group.latest.endMonth) {
+                        <span class="rule-period-end">{{ 'budgetMensuel.recurringRules.toMonth' | transloco: { month: displayMonth(group.latest.endMonth) } }}</span>
+                      }
+                    </span>
+                  </span>
+              </button>
+              @if (expandedSeriesId() === group.seriesId) {
+                <div class="rule-expanded-content">
+                  <div class="rule-actions">
+                    @if (canEdit(group.latest)) {
+                      <button type="button" [attr.data-action]="'edit-' + group.seriesId" (click)="startEdit(group.latest)">
+                        {{ 'budgetMensuel.recurringRules.edit' | transloco }}
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      [attr.data-action]="(shouldActivate(group.latest) ? 'activate-' : 'deactivate-') + group.seriesId"
+                      (click)="setRuleActive(group.latest, shouldActivate(group.latest))"
+                    >
+                      {{ (shouldActivate(group.latest) ? 'budgetMensuel.recurringRules.activate' : 'budgetMensuel.recurringRules.deactivate') | transloco }}
+                    </button>
+                  </div>
+                  @if (group.versions.length > 1) {
+                    <ol class="rule-history" [attr.aria-label]="'budgetMensuel.recurringRules.history' | transloco">
+                      @for (version of group.versions; track version.id) {
+                        @if (version.id !== group.latest.id) {
+                          <li>
+                            <span>{{ version.label }}</span>
+                            <span>{{ version.amountCents | money: settings() }}</span>
+                            <span>{{ periodStartKey(version) | transloco: { month: displayMonth(version.startMonth) } }}</span>
+                            @if (version.endMonth) {
+                              <span class="rule-period-end">{{ 'budgetMensuel.recurringRules.toMonth' | transloco: { month: displayMonth(version.endMonth) } }}</span>
+                            }
+                          </li>
+                        }
+                      }
+                    </ol>
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </app-modal>
+}

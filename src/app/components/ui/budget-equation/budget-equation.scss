@@ -6,7 +6,7 @@
 
 .equation {
   display: grid;
-  align-content: space-between;
+  align-content: start;
   gap: var(--space-sm);
   min-width: 0;
   padding: var(--space-md) var(--space-lg);
@@ -21,15 +21,22 @@
   }
 }
 
-/* Même hauteur et même alignement que l'en-tête de la carte de préparation. */
+/* En-tête compacte : le titre est proche de la légende, même hauteur que la carte de préparation voisine. */
 .equation-head {
   display: flex;
   align-items: center;
-  min-height: var(--size-touch-min);
+  min-height: var(--space-2xl);
 }
 
 .equation-title {
   font: var(--text-emphasis);
+}
+
+/* Légende permanente sous le titre : même hauteur que celle de la carte de préparation voisine. */
+.equation-caption {
+  min-block-size: 2lh;
+  font: var(--text-caption);
+  color: var(--color-text-muted);
 }
 
 .equation-body {
@@ -138,10 +145,10 @@
   .equation-formula {
     display: flex;
     flex-wrap: nowrap;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: var(--space-md);
-    min-block-size: calc(var(--size-touch-min) + var(--space-lg) + var(--space-xs) + var(--border-width));
+    min-block-size: calc(var(--size-touch-min) + var(--space-xs));
   }
 
   .equation-term {

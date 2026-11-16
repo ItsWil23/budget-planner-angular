@@ -44,6 +44,7 @@ export class OpeningBalance {
   readonly prepareFailed = input.required<boolean>();
 
   readonly prepareMonth = output<void>();
+  readonly manageRules = output<void>();
   /** Solde saisi, en centimes entiers exacts. */
   readonly balanceSave = output<number>();
   readonly balanceReset = output<void>();

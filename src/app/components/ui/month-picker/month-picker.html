@@ -1,0 +1,106 @@
+<div class="month-picker" (focusout)="onFocusOut($event)">
+  <div class="picker-control">
+    <button
+      #trigger
+      type="button"
+      class="picker-trigger"
+      [class.picker-invalid]="invalid()"
+      [id]="fieldId()"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="open()"
+      [attr.aria-controls]="open() ? panelId() : null"
+      [attr.aria-invalid]="invalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy() ? valueId() + ' ' + describedBy() : valueId()"
+      (click)="toggle()"
+    >
+      <svg class="picker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path d="M16 2v4M8 2v4M3 10h18" />
+      </svg>
+      <span class="picker-value" [id]="valueId()" [class.picker-value-empty]="!selectedKey()">{{ displayText() }}</span>
+    </button>
+    @if (selectedKey()) {
+      <button type="button" class="picker-clear" [attr.aria-label]="'monthPicker.clear' | transloco" (click)="clear()">
+        <svg class="picker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  @if (open()) {
+    <div class="picker-panel" [id]="panelId()" role="group" [attr.aria-label]="'monthPicker.dialog' | transloco">
+      <div class="picker-header">
+        <button
+          type="button"
+          class="picker-nav"
+          [attr.aria-label]="(view() === 'months' ? 'monthPicker.previousYear' : 'monthPicker.previousYears') | transloco"
+          (click)="shiftPage(-1)"
+        >
+          <svg class="picker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="picker-title"
+          [attr.aria-label]="
+            view() === 'months'
+              ? ('monthPicker.showYears' | transloco: { year: viewYear() })
+              : ('monthPicker.showMonths' | transloco)
+          "
+          (click)="toggleView()"
+        >
+          {{ view() === 'months' ? viewYear() : rangeLabel() }}
+        </button>
+        <button
+          type="button"
+          class="picker-nav"
+          [attr.aria-label]="(view() === 'months' ? 'monthPicker.nextYear' : 'monthPicker.nextYears') | transloco"
+          (click)="shiftPage(1)"
+        >
+          <svg class="picker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+        <button type="button" class="picker-nav" [attr.aria-label]="'monthPicker.close' | transloco" (click)="dismiss()">
+          <svg class="picker-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+
+      @if (view() === 'months') {
+        <div class="picker-grid">
+          @for (cell of monthCells(); track cell.key) {
+            <button
+              type="button"
+              class="picker-cell"
+              [attr.data-key]="cell.key"
+              [attr.aria-pressed]="cell.selected"
+              [attr.aria-disabled]="cell.disabled ? 'true' : null"
+              (click)="selectMonth(cell)"
+            >
+              {{ cell.label }}
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="picker-grid picker-grid-years">
+          @for (cell of yearCells(); track cell.key) {
+            <button
+              type="button"
+              class="picker-cell"
+              [attr.data-key]="cell.key"
+              [attr.aria-pressed]="cell.selected"
+              [attr.aria-disabled]="cell.disabled ? 'true' : null"
+              (click)="selectYear(cell)"
+            >
+              {{ cell.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

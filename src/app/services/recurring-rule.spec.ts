@@ -53,6 +53,33 @@ describe('RecurringRuleService', () => {
       expect(service.activeRulesForMonth('2026-12').some(rule => rule.label === 'Assurance')).toBe(true);
     });
 
+    it('should create a rule with an inclusive optional end month', () => {
+      const rule = service.createRule({
+        label: 'Assurance temporaire',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        amountCents: 12500,
+        endMonth: '2027-02',
+      });
+
+      expect(rule.startMonth).toBe('2026-12');
+      expect(rule.endMonth).toBe('2027-02');
+      expect(service.activeRulesForMonth('2027-02').some(item => item.id === rule.id)).toBe(true);
+      expect(service.activeRulesForMonth('2027-03').some(item => item.id === rule.id)).toBe(false);
+    });
+
+    it('should reject an end month before the fixed start month', () => {
+      expect(() =>
+        service.createRule({
+          label: 'Période invalide',
+          categoryId: 'cat-2',
+          subcategoryId: 'sub-2',
+          amountCents: 12500,
+          endMonth: '2026-11',
+        }),
+      ).toThrow('Invalid recurring rule period');
+    });
+
     it.each([0, -1, 85000.5, Number.MAX_SAFE_INTEGER + 1])(
       'should reject an invalid recurring amount when creating a rule (%s)',
       amountCents => {
@@ -91,6 +118,29 @@ describe('RecurringRuleService', () => {
       expect(() => service.planVersionChange('rule-1', { amountCents: 0 })).toThrow(
         'Invalid recurring rule amount',
       );
+    });
+
+    it('should set or clear the optional end month on a successor version', () => {
+      const withEnd = service.planVersionChange('rule-1', { endMonth: '2027-03' });
+      expect(withEnd.nextVersion.endMonth).toBe('2027-03');
+
+      service.commitVersionChange(withEnd);
+      const withoutEnd = service.planVersionChange(withEnd.nextVersion.id, { endMonth: undefined });
+      expect(withoutEnd.nextVersion.endMonth).toBeUndefined();
+    });
+
+    it('should reactivate an ended rule without extending its historical end month', () => {
+      const change = service.planVersionChange('rule-3', { active: true });
+
+      expect(change.closedVersion).toEqual(expect.objectContaining({ id: 'rule-3', endMonth: '2026-09' }));
+      expect(change.nextVersion).toEqual(
+        expect.objectContaining({ startMonth: '2026-12', endMonth: undefined, active: true }),
+      );
+      service.commitVersionChange(change);
+
+      expect(service.rules().find(rule => rule.id === 'rule-3')?.endMonth).toBe('2026-09');
+      expect(service.activeRulesForMonth('2026-09').some(rule => rule.id === 'rule-3')).toBe(true);
+      expect(service.activeRulesForMonth('2026-12').find(rule => rule.seriesId === 'series-3')?.active).toBe(true);
     });
 
     it('should commit a successor while retaining the inclusive historical version', () => {

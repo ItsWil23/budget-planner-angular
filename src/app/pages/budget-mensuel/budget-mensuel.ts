@@ -15,6 +15,7 @@ import { BudgetEquation } from '../../components/ui/budget-equation/budget-equat
 import { MoneyPipe } from '../../components/ui/money-pipe/money-pipe';
 import { OpeningBalance } from '../../components/ui/opening-balance/opening-balance';
 import { ProgressBar } from '../../components/ui/progress-bar/progress-bar';
+import { RecurringRuleManager } from '../../components/ui/recurring-rule-manager/recurring-rule-manager';
 import { BudgetLineStatus } from '../../models/budget-status';
 import { CategoryType } from '../../models/category';
 import { BudgetService, PlannedAggregateOverflowError } from '../../services/budget';
@@ -155,7 +156,7 @@ function nameLookup(items: readonly { id: string; name: string }[]): (id: string
 
 @Component({
   selector: 'app-budget-mensuel',
-  imports: [BudgetEquation, MoneyPipe, NgTemplateOutlet, OpeningBalance, ProgressBar, TranslocoPipe],
+  imports: [BudgetEquation, MoneyPipe, NgTemplateOutlet, OpeningBalance, ProgressBar, RecurringRuleManager, TranslocoPipe],
   templateUrl: './budget-mensuel.html',
   styleUrl: './budget-mensuel.scss',
 })
@@ -189,6 +190,7 @@ export class BudgetMensuel {
   protected readonly prepareFailed = computed(
     () => !this.isOpened() && this.prepareRefusedMonthKey() === this.monthContext.monthKey(),
   );
+  protected readonly recurringRulesOpen = signal(false);
 
   protected readonly isOpened = computed(() => this.budget.isMonthOpened(this.monthContext.monthKey()));
   protected readonly openingBalanceCents = computed(() => this.monthSummary().openingBalanceCents);
@@ -252,6 +254,14 @@ export class BudgetMensuel {
   constructor() {
     this.trackHostWidth();
     this.trackDesktopBreakpoint();
+  }
+
+  protected openRecurringRules(): void {
+    this.recurringRulesOpen.set(true);
+  }
+
+  protected closeRecurringRules(): void {
+    this.recurringRulesOpen.set(false);
   }
 
   /** Dans les cards, les dépenses sont affichées en positif ; seul un revenu positif garde son « + ». */
