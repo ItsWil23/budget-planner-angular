@@ -90,6 +90,12 @@ Confirmation dans le même dialogue :
 - Transactions réelles, génération de transactions planifiées ou récurrences à montant variable.
 - Suppression définitive d'une série et écriture backend.
 
+### Suivi de livraison — 2026-11-16
+- Implémentation commitée dans `f91e92a` (`feat: add recurring rule manager to budget month`), sur `feat/recurring-rule-management-dialog`.
+- PR vers `main` ouverte, en attente de fusion.
+- Validations réussies : deux typechecks, 573 tests sur 35 fichiers, build et `git diff --check`. Le build conserve deux avertissements de budget SCSS préexistants (`budget-mensuel.scss`, `category-card.scss`). Le lint reste non configuré.
+- Écarts validés pendant l'implémentation : action « Récurrences » ; fin de période choisie dans un sélecteur mois/année (`app-month-picker`) au lieu d'un champ natif ; libellés permanents de l'équation et de la préparation.
+
 ### Critères d'acceptation
 - L'utilisateur peut réaliser les parcours CRUD prévus dans un seul dialogue accessible, sans modales imbriquées.
 - La date d'effet système est visible avant sauvegarde et ne dépend pas du mois consulté.
