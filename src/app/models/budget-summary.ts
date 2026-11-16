@@ -31,4 +31,6 @@ export interface BudgetMonthSummary {
   unallocatedCents: number;
   openingBalanceCents: number;
   actualClosingBalanceCents: number;
+  /** `null` si le résultat sort de la plage entière sûre. */
+  budgetedClosingBalanceCents: number | null;
 }

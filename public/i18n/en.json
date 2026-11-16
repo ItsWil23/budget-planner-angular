@@ -136,19 +136,28 @@
   "budgetMensuel": {
     "title": "Monthly budget",
     "allocation": {
-      "label": "Monthly allocation",
       "income": "Planned income",
       "expense": "Planned expenses",
       "unallocated": "Unallocated amount"
     },
+    "budgetedClosingBalance": {
+      "label": "Budgeted closing balance",
+      "unavailable": "Unavailable"
+    },
+    "preparation": {
+      "title": "Month preparation"
+    },
+    "equation": {
+      "title": "Month equation",
+      "opening": "Opening balance",
+      "indicative": "Indicative amounts: the month is not prepared yet.",
+      "draftInvalid": "Incomplete entry: closing balance not calculated."
+    },
     "openingBalance": {
-      "title": "Opening balance",
-      "amountLabel": "Amount",
-      "indicativeLabel": "Indicative automatic opening",
       "unprepared": "Month not prepared",
       "automatic": "Automatic",
       "manual": "Adjusted manually",
-      "unpreparedHelp": "Preparing the month initialises it and proposes the active recurring lines. Changing month does not open it.",
+      "unpreparedHelp": "Initialises the month with active recurring rules.",
       "prepare": "Prepare month",
       "adjust": "Adjust",
       "reset": "Return to automatic calculation",

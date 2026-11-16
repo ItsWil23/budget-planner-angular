@@ -1,0 +1,58 @@
+<section class="equation" aria-labelledby="budget-equation-title">
+  <header class="equation-head">
+    <h2 class="equation-title" id="budget-equation-title">{{ 'budgetMensuel.equation.title' | transloco }}</h2>
+  </header>
+  <div class="equation-body">
+    <div class="equation-formula">
+      <div class="equation-term">
+        <span class="equation-operator equation-operator-empty"></span>
+        <div class="equation-stack">
+          <p class="equation-label">{{ 'budgetMensuel.equation.opening' | transloco }}</p>
+          @if (openingEditor(); as editor) {
+            <ng-container *ngTemplateOutlet="editor" />
+          } @else {
+            <p class="equation-value">{{ openingCents() | money: settings() }}</p>
+          }
+        </div>
+      </div>
+      <div class="equation-term">
+        <span class="equation-operator">+</span>
+        <div class="equation-stack">
+          <p class="equation-label">{{ 'budgetMensuel.allocation.income' | transloco }}</p>
+          <p class="equation-value">{{ incomeCents() | money: settings() }}</p>
+        </div>
+      </div>
+      <div class="equation-term">
+        <span class="equation-operator">−</span>
+        <div class="equation-stack">
+          <p class="equation-label">{{ 'budgetMensuel.allocation.expense' | transloco }}</p>
+          <p class="equation-value">{{ expenseCents() | money: settings() }}</p>
+        </div>
+      </div>
+      <div class="equation-term equation-result">
+        <span class="equation-operator">=</span>
+        <div class="equation-stack">
+          <p class="equation-label">{{ 'budgetMensuel.budgetedClosingBalance.label' | transloco }}</p>
+          @let closingValue = closing();
+          @if (closingValue === 'invalid') {
+            <p class="equation-note equation-note-alert" role="status">{{ 'budgetMensuel.equation.draftInvalid' | transloco }}</p>
+          } @else if (closingValue === null) {
+            <p class="equation-value equation-value-unavailable">{{ 'budgetMensuel.budgetedClosingBalance.unavailable' | transloco }}</p>
+          } @else {
+            <p class="equation-value">{{ closingValue | money: settings() }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <aside class="equation-secondary" [attr.aria-label]="'budgetMensuel.allocation.unallocated' | transloco">
+      <p class="equation-secondary-item">
+        <span class="equation-label">{{ 'budgetMensuel.allocation.unallocated' | transloco }}</span>
+        <span class="equation-value">{{ unallocatedCents() | money: settings() }}</span>
+      </p>
+      @if (!opened()) {
+        <p class="equation-note">{{ 'budgetMensuel.equation.indicative' | transloco }}</p>
+      }
+    </aside>
+  </div>
+</section>

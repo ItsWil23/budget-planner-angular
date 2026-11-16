@@ -5,50 +5,49 @@
 .opening {
   display: grid;
   flex: 1 1 auto;
-  align-content: start;
+  align-content: space-between;
   min-width: 0;
-  gap: var(--space-md);
-  padding: var(--space-lg);
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
   background-color: var(--surface-card);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-lg);
 
   h2,
-  p,
-  dl,
-  dd {
+  p {
     margin: 0;
   }
 
   h2 {
     font: var(--text-emphasis);
   }
-
-  dl {
-    display: grid;
-    gap: var(--space-md);
-  }
 }
 
 .opening-header {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
+  min-height: var(--size-touch-min);
 
   h2 {
-    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 
-.opening-item {
+/* Hauteur réservée au plus haut état (édition ou préparation refusée) : l'équation, empilée dessous sur mobile,
+   ne bouge pas verticalement quand l'état change. */
+.opening-body {
   display: grid;
-  gap: var(--space-xs);
+  align-content: center;
+  gap: var(--space-sm);
+  min-height: var(--size-touch-min);
 }
 
-.opening-label,
-.opening-hint {
+.opening-hint,
+.opening-help {
   font: var(--text-caption);
   color: var(--color-text-muted);
 }
@@ -58,20 +57,12 @@
   color: var(--color-danger);
 }
 
-.opening-value {
-  font: var(--num-emphasis);
-  font-variant-numeric: tabular-nums;
-}
-
-.opening-help {
-  font: var(--text-body);
-  color: var(--color-text-muted);
-}
-
 .opening-edit {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  inline-size: calc(2 * var(--size-touch-min) + var(--space-xl));
+  min-width: 0;
   min-height: var(--size-touch-min);
 }
 
@@ -123,6 +114,7 @@
 
 .opening-badge {
   display: inline-block;
+  flex: 0 0 auto;
   box-sizing: border-box;
   padding: var(--space-xs) var(--space-sm);
   border: var(--border-width) solid var(--border);
@@ -130,6 +122,7 @@
   background-color: var(--surface-app);
   color: var(--color-text-muted);
   font: var(--text-label);
+  white-space: nowrap;
 }
 
 .opening-badge-manual {
@@ -140,14 +133,17 @@
 
 .opening-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: center;
   gap: var(--space-sm);
 }
 
 .opening-action {
   min-height: var(--size-touch-min);
-  padding: 0 var(--space-lg);
+  padding: 0 var(--space-md);
   font: var(--text-body);
+  white-space: normal;
   cursor: pointer;
 }
 
@@ -166,13 +162,19 @@
   outline-offset: var(--size-focus-offset);
 }
 
-@media (min-width: 768px) {
+@container budget-page (min-width: 40rem) {
   .opening {
-    padding: var(--space-xl);
+    padding: var(--space-lg) var(--space-xl);
   }
 
-  .opening dl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-xl);
+  .opening-body {
+    min-height: calc(var(--size-touch-min) + var(--space-lg) + var(--space-xs) + var(--border-width));
+  }
+}
+
+@container equation (min-width: 44rem) {
+  .opening-edit {
+    inline-size: auto;
+    min-width: 12rem;
   }
 }

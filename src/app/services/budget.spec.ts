@@ -733,6 +733,95 @@ describe('Budget Service', () => {
       expect(summary.unallocatedCents).toBe(-50000);
     });
 
+    describe('clôture budgétée', () => {
+      const clearPlannedFor = (monthKey: string): void => {
+        categoryService
+          .subcategories()
+          .forEach(subcategory => service.setPlannedAmount(monthKey, subcategory.id, 0));
+      };
+
+      it('vaut ouverture + revenus prévus − dépenses prévues quand le résultat est positif', () => {
+        service.openMonth('2026-07');
+        clearPlannedFor('2026-07');
+        service.setOpeningBalanceOverride('2026-07', 50000);
+        service.setPlannedAmount('2026-07', 'sub-1', 200000);
+        service.setPlannedAmount('2026-07', 'sub-2', 100000);
+        const summary = service.monthSummary();
+
+        expect(summary.openingBalanceCents).toBe(50000);
+        expect(summary.incomePlannedCents).toBe(200000);
+        expect(summary.expensePlannedCents).toBe(100000);
+        expect(summary.budgetedClosingBalanceCents).toBe(150000);
+      });
+
+      it('vaut zéro quand revenus et dépenses prévus s’équilibrent sans ouverture', () => {
+        service.openMonth('2026-07');
+        clearPlannedFor('2026-07');
+        service.setPlannedAmount('2026-07', 'sub-1', 100000);
+        service.setPlannedAmount('2026-07', 'sub-2', 100000);
+
+        expect(service.monthSummary().budgetedClosingBalanceCents).toBe(0);
+      });
+
+      it('peut être négative quand les dépenses prévues dépassent les revenus et l’ouverture', () => {
+        service.openMonth('2026-07');
+        clearPlannedFor('2026-07');
+        service.setPlannedAmount('2026-07', 'sub-1', 100000);
+        service.setPlannedAmount('2026-07', 'sub-2', 150000);
+
+        expect(service.monthSummary().budgetedClosingBalanceCents).toBe(-50000);
+      });
+
+      it('se recalcule avec l’ouverture du mois affiché après un changement de mois', () => {
+        service.openMonth('2026-07');
+        clearPlannedFor('2026-07');
+        service.setOpeningBalanceOverride('2026-07', 50000);
+        service.setPlannedAmount('2026-07', 'sub-1', 200000);
+        service.setPlannedAmount('2026-07', 'sub-2', 100000);
+        expect(service.monthSummary().budgetedClosingBalanceCents).toBe(150000);
+
+        monthContext.setMonth('2026-08');
+        service.setPlannedAmount('2026-08', 'sub-1', 10000);
+        const august = service.monthSummary();
+
+        expect(august.monthKey).toBe('2026-08');
+        expect(august.openingBalanceCents).toBe(service.actualClosingBalanceCentsFor('2026-07'));
+        expect(august.budgetedClosingBalanceCents).toBe(august.openingBalanceCents + 10000);
+      });
+
+      it('expose null au lieu d’une valeur arrondie quand le résultat sort de la plage sûre', () => {
+        service.openMonth('2026-07');
+        clearPlannedFor('2026-07');
+        service.setOpeningBalanceOverride('2026-07', -Number.MAX_SAFE_INTEGER);
+        service.setPlannedAmount('2026-07', 'sub-2', 1);
+        const summary = service.monthSummary();
+
+        expect(summary.openingBalanceCents).toBe(-Number.MAX_SAFE_INTEGER);
+        expect(summary.budgetedClosingBalanceCents).toBeNull();
+      });
+
+      it('prévisualise la clôture pour un brouillon d’ouverture sans rien enregistrer', () => {
+        service.openMonth('2026-07');
+        clearPlannedFor('2026-07');
+        service.setOpeningBalanceOverride('2026-07', 50000);
+        service.setPlannedAmount('2026-07', 'sub-1', 200000);
+        service.setPlannedAmount('2026-07', 'sub-2', 100000);
+
+        expect(service.previewBudgetedClosingBalanceCents(-30000)).toBe(70000);
+        expect(service.previewBudgetedClosingBalanceCents(0)).toBe(100000);
+        expect(service.monthSummary().openingBalanceCents).toBe(50000);
+        expect(service.monthSummary().budgetedClosingBalanceCents).toBe(150000);
+      });
+
+      it('prévisualise null hors plage sûre plutôt qu’une valeur arrondie', () => {
+        service.openMonth('2026-07');
+        clearPlannedFor('2026-07');
+        service.setPlannedAmount('2026-07', 'sub-1', 100000);
+
+        expect(service.previewBudgetedClosingBalanceCents(Number.MAX_SAFE_INTEGER)).toBeNull();
+      });
+    });
+
     it('se met à jour quand MonthContextService change le mois', () => {
       expect(service.monthSummary().monthKey).toBe('2026-07');
 

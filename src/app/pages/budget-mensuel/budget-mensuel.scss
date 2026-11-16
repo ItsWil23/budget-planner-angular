@@ -3,6 +3,8 @@
   container: budget-page / inline-size;
   /* Doit rester égal à MIN_COLUMN_WIDTH_PX (budget-mensuel.ts) : colonnes de la disposition B. */
   --table-column-min: 320px;
+  /* Largeur maximale du groupe de KPI sur grand écran, centré : évite l'étirement des cartes. */
+  --kpi-group-max: 90rem;
   /* Hauteur de la topbar mobile (topbar.scss) : cible tactile, padding space-sm et bordures. */
   --topbar-height: calc(var(--size-touch-min) + 2 * var(--space-sm) + 2 * var(--border-width));
   /* Hauteur de la rangée de raccourcis : cible tactile et padding space-xs. */
@@ -12,84 +14,16 @@
 .overview {
   display: grid;
   gap: var(--space-md);
+  align-items: stretch;
+  max-width: var(--kpi-group-max);
+  margin-inline: auto;
 }
 
-.allocation {
-  padding: var(--space-lg);
-  background-color: var(--surface-card);
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-lg);
-}
-
-.metrics {
-  display: grid;
-  gap: var(--space-md);
-  margin: 0;
-}
-
-.metric {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--space-md);
-}
-
-.metric-label,
-.metric-value {
-  margin: 0;
-}
-
-.metric-label {
-  font: var(--text-caption);
-}
-
-.metric-value {
-  font: var(--num-emphasis);
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-}
-
-@media (min-width: 768px) {
+/* Rail de préparation à gauche (environ 280–320px), équation à droite, largeur plafonnée par le groupe. */
+@container budget-page (min-width: 40rem) {
   .overview {
+    grid-template-columns: minmax(22rem, 24rem) minmax(0, 1fr);
     gap: var(--space-lg);
-  }
-
-  .allocation {
-    padding: var(--space-xl);
-  }
-
-  .metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-xl);
-  }
-
-  .metric {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--space-xs);
-  }
-
-  .metric-value {
-    text-align: center;
-  }
-}
-
-/* Seuil : sous ce seuil, le montant du solde et le badge d'état passent sur deux lignes. */
-@container budget-page (min-width: 800px) {
-  .overview {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-    align-items: stretch;
-  }
-
-  .overview-opening {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .allocation {
-    grid-column: 2;
-    grid-row: 1;
   }
 }
 

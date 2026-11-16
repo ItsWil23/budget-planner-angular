@@ -1,32 +1,25 @@
 <div class="overview">
-  <section class="allocation" [attr.aria-label]="'budgetMensuel.allocation.label' | transloco">
-    <dl class="metrics">
-      <div class="metric">
-        <dt class="metric-label">{{ 'budgetMensuel.allocation.income' | transloco }}</dt>
-        <dd class="metric-value">{{ monthSummary().incomePlannedCents | money: settings() : (monthSummary().incomePlannedCents > 0 ? 'income' : undefined) }}</dd>
-      </div>
-      <div class="metric">
-        <dt class="metric-label">{{ 'budgetMensuel.allocation.expense' | transloco }}</dt>
-        <dd class="metric-value">{{ monthSummary().expensePlannedCents | money: settings() : (monthSummary().expensePlannedCents > 0 ? 'expense' : undefined) }}</dd>
-      </div>
-      <div class="metric">
-        <dt class="metric-label">{{ 'budgetMensuel.allocation.unallocated' | transloco }}</dt>
-        <dd class="metric-value">{{ monthSummary().unallocatedCents | money: settings() }}</dd>
-      </div>
-    </dl>
-  </section>
-
   <app-opening-balance
-    class="overview-opening"
+    class="overview-preparation"
     [opened]="isOpened()"
-    [balanceCents]="openingBalanceCents()"
     [overridden]="openingOverridden()"
-    [settings]="settings()"
     [editableBalance]="openingEditable()"
     [prepareFailed]="prepareFailed()"
     (prepareMonth)="prepareMonth()"
     (balanceSave)="saveOpeningBalance($event)"
     (balanceReset)="clearOpeningOverride()"
+  />
+
+  <app-budget-equation
+    class="overview-equation"
+    [settings]="settings()"
+    [openingCents]="openingBalanceCents()"
+    [openingEditor]="openingEditorTemplate()"
+    [incomeCents]="monthSummary().incomePlannedCents"
+    [expenseCents]="monthSummary().expensePlannedCents"
+    [unallocatedCents]="monthSummary().unallocatedCents"
+    [closing]="closingPreview()"
+    [opened]="isOpened()"
   />
 </div>
 

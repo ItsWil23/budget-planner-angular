@@ -8,8 +8,10 @@ import {
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { BudgetEquation } from '../../components/ui/budget-equation/budget-equation';
 import { MoneyPipe } from '../../components/ui/money-pipe/money-pipe';
 import { OpeningBalance } from '../../components/ui/opening-balance/opening-balance';
 import { ProgressBar } from '../../components/ui/progress-bar/progress-bar';
@@ -153,7 +155,7 @@ function nameLookup(items: readonly { id: string; name: string }[]): (id: string
 
 @Component({
   selector: 'app-budget-mensuel',
-  imports: [MoneyPipe, NgTemplateOutlet, OpeningBalance, ProgressBar, TranslocoPipe],
+  imports: [BudgetEquation, MoneyPipe, NgTemplateOutlet, OpeningBalance, ProgressBar, TranslocoPipe],
   templateUrl: './budget-mensuel.html',
   styleUrl: './budget-mensuel.scss',
 })
@@ -166,6 +168,7 @@ export class BudgetMensuel {
   private readonly injector = inject(Injector);
   private readonly moneyService = inject(MoneyService);
   private readonly monthContext = inject(MonthContextService);
+  private readonly openingBalance = viewChild(OpeningBalance);
 
   protected readonly monthSummary = this.budget.monthSummary;
   protected readonly settings = inject(SettingsService).settings;
@@ -196,6 +199,25 @@ export class BudgetMensuel {
         .find(month => month.monthKey === this.monthContext.monthKey())?.openingBalanceOverridden === true,
   );
   protected readonly openingEditable = computed(() => this.formatEditableEuros(this.openingBalanceCents()));
+  /** Gabarit du champ d'ouverture, présent seulement pendant l'édition : il remplace la valeur dans l'équation. */
+  protected readonly openingEditorTemplate = computed(() => {
+    const opening = this.openingBalance();
+    return opening?.editing() ? opening.editorTemplate() : null;
+  });
+  /** Brouillon d'ouverture en centimes, `null` hors édition, `'invalid'` si la saisie est incomplète. */
+  protected readonly openingDraft = computed<number | 'invalid' | null>(() => {
+    const opening = this.openingBalance();
+    if (!opening?.editing()) return null;
+    const parsed = this.moneyService.parseEurosInput(opening.draft());
+    return parsed.valid ? parsed.cents : 'invalid';
+  });
+  /** Clôture affichée : celle du brouillon pendant l'édition, sinon celle du résumé. */
+  protected readonly closingPreview = computed<number | null | 'invalid'>(() => {
+    const draft = this.openingDraft();
+    if (draft === null) return this.monthSummary().budgetedClosingBalanceCents;
+    if (draft === 'invalid') return 'invalid';
+    return this.budget.previewBudgetedClosingBalanceCents(draft);
+  });
 
   protected readonly categories = computed<CategoryView[]>(() => {
     const categoryName = nameLookup(this.categoryService.categories());
