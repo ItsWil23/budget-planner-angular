@@ -59,7 +59,7 @@ La synthèse du Budget Mensuel expose le solde d'ouverture, les revenus prévus,
 
 ### Suivi de livraison — 2026-11-16
 - Implémentation commitée dans `5214149` (`feat: add budgeted closing balance summary`).
-- PR #55 vers `main` ouverte, en attente de revue et de fusion. La fiche reste dans `active/` jusque-là.
+- PR #55 vers `main` mergée le 2026-11-16 (`fa5a934`).
 - Validations réussies : deux typechecks, 512 tests sur 33 fichiers, build et `git diff --check`. Le build conserve deux avertissements de budget SCSS.
 - Contrôle visuel des corrections finales effectué en thème sombre, de 320px à 2400px, avec états automatique, manuel, édition et annulation. Le thème clair et les états non préparé/préparation refusée n'ont pas été vérifiés intégralement.
 
