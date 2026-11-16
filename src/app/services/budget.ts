@@ -3,12 +3,13 @@ import { BudgetLine } from '../models/budget-line';
 import { BudgetMonth, OpenMonthResult } from '../models/budget-month';
 import { CategoryType } from '../models/category';
 import { BudgetLineStatus, getBudgetLineStatus } from '../models/budget-status';
+import { RecurringRuleSuppression } from '../models/recurring-rule-suppression';
 import {
   BudgetCategorySummary,
   BudgetMonthSummary,
   BudgetSubcategorySummary,
 } from '../models/budget-summary';
-import { RecurringRule } from '../models/recurring-rule';
+import { RecurringRule, RecurringRuleVersionChange } from '../models/recurring-rule';
 import { Transaction, TransactionInput } from '../models/transactions';
 import { CategoryService } from './category';
 import { MonthContextService } from './month-context';
@@ -191,8 +192,10 @@ function computeMonthBalances(
 export class BudgetService {
   private readonly _lines = signal<BudgetLine[]>([]);
   private readonly _months = signal<BudgetMonth[]>([]);
+  private readonly _recurringRuleSuppressions = signal<RecurringRuleSuppression[]>([]);
 
   readonly lines = this._lines.asReadonly();
+  readonly recurringRuleSuppressions = this._recurringRuleSuppressions.asReadonly();
   readonly months = computed<BudgetMonth[]>(() => this.resolvedMonths().months);
 
   private readonly actualTotalsByMonthKey = computed<Map<string, MonthlyActualTotals>>(() => {
@@ -341,18 +344,30 @@ export class BudgetService {
     const existing = currentLines.find(
       line => line.monthKey === monthKey && line.subcategoryId === subcategoryId,
     );
+    const sourceRule = existing?.sourceRuleId
+      ? this.recurringRuleService.rules().find(rule => rule.id === existing.sourceRuleId)
+      : undefined;
 
     if (amountCents === 0) {
-      this._lines.set(
-        currentLines.filter(
-          line => line.monthKey !== monthKey || line.subcategoryId !== subcategoryId,
-        ),
+      const activeRule = sourceRule ?? this.recurringRuleService
+        .activeRulesForMonth(monthKey)
+        .find(rule => rule.subcategoryId === subcategoryId);
+      const nextLines = currentLines.filter(
+        line => line.monthKey !== monthKey || line.subcategoryId !== subcategoryId,
       );
+      const nextSuppressions = this._recurringRuleSuppressions().filter(
+        item => item.monthKey !== monthKey || item.subcategoryId !== subcategoryId,
+      );
+      if (existing && activeRule) {
+        nextSuppressions.push({ monthKey, seriesId: activeRule.seriesId, subcategoryId });
+      }
+      this._lines.set(nextLines);
+      this._recurringRuleSuppressions.set(nextSuppressions);
       return null;
     }
 
     const line: BudgetLine = existing
-      ? { ...existing, plannedAmountCents: amountCents }
+      ? { ...existing, plannedAmountCents: amountCents, sourceRuleId: undefined }
       : {
           id: crypto.randomUUID(),
           monthKey,
@@ -366,8 +381,104 @@ export class BudgetService {
       : [...currentLines, line];
     this.assertPlannedAggregatesSafe(nextLines, monthKey, [subcategory.categoryId]);
     this._lines.set(nextLines);
+    this._recurringRuleSuppressions.update(suppressions =>
+      suppressions.filter(item => item.monthKey !== monthKey || item.subcategoryId !== subcategoryId),
+    );
 
     return line;
+  }
+
+  /**
+   * Applique une transition de version, en synchronisant uniquement les mois préparés si demandé.
+   * Toutes les sommes sont validées avant les mutations des règles, lignes ou suppressions.
+   */
+  applyRecurringRuleVersionChange(
+    change: RecurringRuleVersionChange,
+    synchronizePreparedMonths: boolean,
+  ): void {
+    const rules = this.recurringRuleService.rules();
+    const sourceRule = rules.find(rule => rule.id === change.sourceVersionId);
+    if (!sourceRule || sourceRule.seriesId !== change.nextVersion.seriesId) {
+      throw new Error('Invalid recurring rule version change');
+    }
+
+    if (!synchronizePreparedMonths) {
+      this.recurringRuleService.commitVersionChange(change);
+      return;
+    }
+
+    if (!this.isValidRuleAmount(change.nextVersion)) {
+      throw new Error('Invalid recurring rule amount');
+    }
+
+    const subcategory = this.categoryService
+      .subcategories()
+      .find(item => item.id === change.nextVersion.subcategoryId);
+    if (!subcategory || subcategory.categoryId !== change.nextVersion.categoryId) {
+      throw new Error('Invalid recurring rule subcategory');
+    }
+
+    const seriesId = change.nextVersion.seriesId;
+    const seriesRuleIds = new Set(rules.filter(rule => rule.seriesId === seriesId).map(rule => rule.id));
+    const currentLines = this._lines();
+    let nextLines = [...currentLines];
+    const suppressions = this._recurringRuleSuppressions();
+    const changedCategoriesByMonth = new Map<string, Set<string>>();
+
+    const preparedMonths = this._months().filter(month => month.initialized);
+    for (const month of preparedMonths) {
+      const generatedLines = nextLines.filter(
+        line => line.monthKey === month.monthKey && line.sourceRuleId !== undefined && seriesRuleIds.has(line.sourceRuleId),
+      );
+      const hasSuppression = suppressions.some(
+        item => item.monthKey === month.monthKey && item.seriesId === seriesId,
+      );
+      if (generatedLines.length === 0 && !hasSuppression) continue;
+
+      const changedCategories = new Set<string>();
+      nextLines = nextLines.filter(line => {
+        const isGeneratedForSeries =
+          line.monthKey === month.monthKey &&
+          line.sourceRuleId !== undefined &&
+          seriesRuleIds.has(line.sourceRuleId);
+        if (isGeneratedForSeries) changedCategories.add(line.categoryId);
+        return !isGeneratedForSeries;
+      });
+
+      const isSuppressed = suppressions.some(
+        item =>
+          item.monthKey === month.monthKey &&
+          item.seriesId === seriesId &&
+          item.subcategoryId === change.nextVersion.subcategoryId,
+      );
+      const slotOccupied = nextLines.some(
+        line =>
+          line.monthKey === month.monthKey &&
+          line.subcategoryId === change.nextVersion.subcategoryId,
+      );
+      if (change.nextVersion.active && !isSuppressed && !slotOccupied) {
+        nextLines.push({
+          id: crypto.randomUUID(),
+          monthKey: month.monthKey,
+          categoryId: change.nextVersion.categoryId,
+          subcategoryId: change.nextVersion.subcategoryId,
+          plannedAmountCents: change.nextVersion.amountCents,
+          sourceRuleId: change.nextVersion.id,
+        });
+        changedCategories.add(change.nextVersion.categoryId);
+      }
+
+      if (changedCategories.size > 0) {
+        changedCategoriesByMonth.set(month.monthKey, changedCategories);
+      }
+    }
+
+    for (const [monthKey, categoryIds] of changedCategoriesByMonth) {
+      this.assertPlannedAggregatesSafe(nextLines, monthKey, categoryIds);
+    }
+
+    this.recurringRuleService.commitVersionChange(change);
+    this._lines.set(nextLines);
   }
 
   /** Valide, avant toute mutation, les totaux prévus de chaque catégorie touchée et de leurs types. */
@@ -518,6 +629,17 @@ export class BudgetService {
         continue;
       }
       handledSubcategoryIds.add(subcategory.id);
+
+      const isSuppressed = this._recurringRuleSuppressions().some(
+        item =>
+          item.monthKey === monthKey &&
+          item.seriesId === rule.seriesId &&
+          item.subcategoryId === subcategory.id,
+      );
+      if (isSuppressed) {
+        result.skipped++;
+        continue;
+      }
 
       const alreadyExists = this._lines().some(
         line => line.monthKey === monthKey && line.subcategoryId === subcategory.id,

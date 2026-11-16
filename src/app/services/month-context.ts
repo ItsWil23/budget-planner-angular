@@ -4,7 +4,8 @@ import { Injectable, computed, signal } from '@angular/core';
   providedIn: 'root',
 })
 export class MonthContextService {
-  private readonly systemMonthKey = this.getInitialMonth();
+  readonly systemMonthKey = this.getInitialMonth();
+  readonly nextSystemMonthKey = this.shiftMonthKey(this.systemMonthKey, 1);
   private readonly _monthKey = signal<string>(this.systemMonthKey);
   readonly monthKey = this._monthKey.asReadonly();
   readonly isCurrentMonth = computed(() => this._monthKey() === this.systemMonthKey);
@@ -29,11 +30,15 @@ export class MonthContextService {
   }
 
   shiftMonth(delta: number): void {
-    const [year, month] = this._monthKey().split('-').map(Number);
+    this.setMonth(this.shiftMonthKey(this._monthKey(), delta));
+  }
+
+  private shiftMonthKey(monthKey: string, delta: number): string {
+    const [year, month] = monthKey.split('-').map(Number);
     const monthIndex = year * 12 + (month - 1) + delta;
     const shiftedYear = Math.floor(monthIndex / 12);
     const shiftedMonth = (monthIndex % 12) + 1;
-    this.setMonth(`${String(shiftedYear).padStart(4, '0')}-${String(shiftedMonth).padStart(2, '0')}`);
+    return `${String(shiftedYear).padStart(4, '0')}-${String(shiftedMonth).padStart(2, '0')}`;
   }
 
   resetToCurrentMonth(): void {
