@@ -137,7 +137,7 @@ Ces sujets sont hors des 13 tâches clôturées et seront découpés en specs s�
 - [x] **TASK-015 — saisie exacte du prévu** : parsing direct en centimes, garde-fous sur les agrégats et préparation récurrente atomique. Fait le 2026-11-09 (PR #52).
 - [x] **TASK-016 — saisie exacte des transactions** : saisie et stockage en centimes exacts ; prévalidation des agrégats réels et de la cascade avant mutation. Fait le 2026-11-09 (PR #53).
 - [x] **TASK-017 — layout partagé pleine largeur** : le conteneur des pages `MainLayout` utilise toute la largeur disponible ; les contenus étroits gardent des limites locales. Fait le 2026-11-16 (PR #54).
-- [ ] **TASK-018 — solde de clôture budgétée** : calcul exact en centimes et synthèse du mois par équation, avec préparation et ajustement du solde d'ouverture. Implémentation validée, PR #55 ouverte en attente de revue et de fusion ; archiver la spec après fusion.
+- [x] **TASK-018 — solde de clôture budgétée** : calcul exact en centimes et synthèse du mois par équation, avec préparation et ajustement du solde d'ouverture. Fait le 2026-11-16 (PR #55).
 - **Budget Mensuel — récurrences :** ouvrir un dialogue accessible et adaptatif depuis un bouton de la page ; liste défilante, création en haut, édition dans le même dialogue, actions par ligne via menu contextuel, désactivation/réactivation.
 - **Budget Mensuel — grille/CSS :** distribuer les catégories sur le nombre de colonnes offert par la largeur disponible, garder leurs groupes et éviter l'étirement excessif des cartes ; nettoyer le SCSS par suppressions mesurées, sans perte de rendu.
 - **Cartes sous 340px :** choisir visuellement entre ellipse et troncation sur deux lignes pour les noms de catégorie/sous-catégorie ; éviter les retours lettre par lettre.
