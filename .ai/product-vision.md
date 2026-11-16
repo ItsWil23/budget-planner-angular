@@ -1,7 +1,7 @@
 # Vision produit — Budget Planner v3
 
 > Source de vérité produit. Toute décision de design ou d'implémentation doit pouvoir se justifier par ce document.
-> Dernière mise à jour : 2026-11-06
+> Dernière mise à jour : 2026-11-16
 
 ---
 
@@ -93,17 +93,19 @@ Chaque écran a **un seul rôle**. Règle d'arbitrage : quand une information pe
 | Écran | Rôle unique | Contient | Ne contient pas |
 |---|---|---|---|
 | **Dashboard** | Comprendre son mois en 30 secondes | Chiffre héros, KPI, graphiques de synthèse, dernières transactions | Aucune saisie de budget |
-| **Budget Mensuel** | **Construire** le budget du mois | Tables catégorie → sous-catégories, saisie du prévu, réel agrégé en regard | Ni donut ni graphique |
+| **Budget Mensuel** | **Construire** le budget du mois | Tables catégorie → sous-catégories, saisie du prévu, réel agrégé en regard, récurrences, soldes d'ouverture et de clôture budgétée | Ni donut ni graphique |
 | **Transactions** | Saisir et retrouver le réel | Liste filtrable, formulaire, pagination | Aucun KPI |
 | **Catégories** | Configurer sa structure | CRUD catégories / sous-catégories | — |
 | **Paramètres** | Préférences et compte | Thème, langue, devise, réinitialisation | — |
 
-**Budget Mensuel reste une page de tables**, fidèle à la métaphore du tableur. Mais « pas de graphiques » ne signifie pas « aucun retour visuel » : construire un budget exige un retour immédiat. Deux éléments y sont conservés, parce qu'ils relèvent du **feedback d'action** et non de la data-visualisation :
+**Budget Mensuel reste une page de tables**, fidèle à la métaphore du tableur. Mais « pas de graphiques » ne signifie pas « aucun retour visuel » : construire un budget exige un retour immédiat et une lecture synthétique de ses résultats mensuels. Ces éléments relèvent du **feedback d'action** et du résultat du budget, pas de la data-visualisation :
 
 - un **bandeau d'allocation** en haut : revenus prévus, dépenses prévues, montant non encore alloué ;
+- le **solde d'ouverture** du mois, reporté et ajustable ;
+- le **solde de clôture budgétée**, calculé comme solde d'ouverture + revenus prévus − dépenses prévues ; ce n'est pas une projection dynamique fondée sur le rythme des transactions ;
 - une **barre de progression prévu / réel par ligne** (le pattern des cartes de Sam's Budgets).
 
-Tout le reste — donuts, comparaisons, historiques — appartient au Dashboard.
+Ces soldes sont des indicateurs de niveau mensuel ; aucun KPI agrégé supplémentaire par catégorie ou sous-catégorie n'est ajouté. Les donuts, comparaisons, historiques et indicateurs du réel à date appartiennent au Dashboard.
 
 ## 10. Architecture produit — décisions structurantes
 
@@ -273,6 +275,12 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-11-05 | Budget Mensuel : la progression reste par sous-catégorie, pas de barre agrégée dans l'en-tête de catégorie ; les colonnes Prévu/Réel sont alignées entre en-têtes et lignes. |
 | 2026-11-05 | Édition du prévu : Entrée valide, Échap/blur annulent le brouillon ; la croix est une action immédiate de réinitialisation du prévu et n'est pas annulée par une perte de focus ultérieure. |
 | 2026-11-06 | Budget Mensuel : le sélecteur de mois navigue sans initialiser le mois ; l'utilisateur déclenche explicitement « Préparer le mois », qui ouvre le BudgetMonth et propose les lignes des récurrences actives. L'ajustement du solde d'ouverture est disponible après préparation ; l'override peut être remis au calcul automatique. |
+| 2026-11-06 | Largeurs : le conteneur partagé occupe toute la largeur disponible sur toutes les pages ; les contraintes de lecture restent locales aux formulaires et blocs qui en ont besoin. |
+| 2026-11-06 | Budget Mensuel : le solde de clôture budgétée (solde d'ouverture + revenus prévus − dépenses prévues) est le seul nouveau KPI mensuel retenu ; aucune projection dynamique ni métrique agrégée par catégorie n'est ajoutée. |
+| 2026-11-06 | Budget Mensuel : les cartes de catégories s'adaptent au nombre de colonnes offert par la largeur disponible, sans étirement excessif ; les groupes petite/moyenne/grande sont conservés. Le traitement des noms sous 340px (ellipse ou troncation sur deux lignes) est à valider visuellement. |
+| 2026-11-06 | Gestion des récurrences : entrée depuis Budget Mensuel, dialogue accessible et adaptatif, liste défilante et création en haut. Création/édition dans le dialogue sans modales imbriquées ; actions de ligne regroupées dans un menu contextuel ; désactivation/réactivation conserve l'historique. |
+| 2026-11-09 | Exactitude monétaire : les saisies décimales utilisateur sont parsées directement en centimes entiers sûrs, et l'affichage monétaire doit formater depuis les centimes sans conversion intermédiaire en flottant en euros. Les migrations de saisie Prévu et Transaction sont séparées. |
+| 2026-11-09 | Synthèse Budget Mensuel : l'île de préparation reste dans un emplacement fixe à gauche de l'île équation ; son contenu reflète l'état préparé/non préparé sans déplacer l'équation. L'équation présente ouverture + revenus prévus − dépenses prévues = clôture budgétée ; le montant non alloué est secondaire. En mobile, les deux îles s'empilent en réservant l'emplacement de préparation. |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 
