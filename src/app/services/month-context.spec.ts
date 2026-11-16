@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { MonthContextService } from './month-context';
 
 describe('MonthContextService', () => {
@@ -92,6 +93,22 @@ describe('MonthContextService', () => {
     service.shiftMonth(1);
 
     expect(service.monthKey()).toBe('2027-01');
+  });
+
+  it('exposes the next system month independently of the selected month', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 11, 16));
+
+    try {
+      const service = new MonthContextService();
+      service.setMonth('2035-02');
+
+      expect(service.systemMonthKey).toBe('2026-12');
+      expect(service.nextSystemMonthKey).toBe('2027-01');
+      expect(service.monthKey()).toBe('2035-02');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('crosses the year boundary backward', () => {

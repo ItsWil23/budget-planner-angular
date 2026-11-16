@@ -1452,6 +1452,7 @@ describe('BudgetMensuel', () => {
       const overflowingRules = (): RecurringRule[] => [
         {
           id: 'rule-big',
+          seriesId: 'series-big',
           label: 'Grosse règle',
           categoryId: 'cat-2',
           subcategoryId: 'sub-2',
@@ -1461,6 +1462,7 @@ describe('BudgetMensuel', () => {
         },
         {
           id: 'rule-over',
+          seriesId: 'series-over',
           label: 'Règle qui dépasse',
           categoryId: 'cat-2',
           subcategoryId: 'sub-3',

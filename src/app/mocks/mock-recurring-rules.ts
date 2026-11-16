@@ -3,6 +3,7 @@ import { RecurringRule } from '../models/recurring-rule';
 export const MOCK_RECURRING_RULES: RecurringRule[] = [
   {
     id: 'rule-1',
+    seriesId: 'series-1',
     label: 'Salaire mensuel',
     categoryId: 'cat-1',
     subcategoryId: 'sub-1',
@@ -13,6 +14,7 @@ export const MOCK_RECURRING_RULES: RecurringRule[] = [
   },
   {
     id: 'rule-2',
+    seriesId: 'series-2',
     label: 'Loyer appartement',
     categoryId: 'cat-2',
     subcategoryId: 'sub-2',
@@ -23,6 +25,7 @@ export const MOCK_RECURRING_RULES: RecurringRule[] = [
   },
   {
     id: 'rule-3',
+    seriesId: 'series-3',
     label: 'Facture internet fibre',
     categoryId: 'cat-2',
     subcategoryId: 'sub-3',
@@ -34,6 +37,7 @@ export const MOCK_RECURRING_RULES: RecurringRule[] = [
   },
   {
     id: 'rule-4',
+    seriesId: 'series-4',
     label: 'Électricité désactivée',
     categoryId: 'cat-2',
     subcategoryId: 'sub-4',

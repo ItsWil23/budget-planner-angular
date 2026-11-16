@@ -19,9 +19,9 @@ describe('Budget Service', () => {
 
   beforeEach(() => {
     categoryService = new CategoryService();
-    recurringRuleService = new RecurringRuleService();
     transactionService = new TransactionService(new MoneyService());
     monthContext = new MonthContextService();
+    recurringRuleService = new RecurringRuleService(monthContext);
     service = new BudgetService(
       categoryService,
       recurringRuleService,
@@ -318,6 +318,7 @@ describe('Budget Service', () => {
   describe('openMonth', () => {
     const buildRule = (overrides: Partial<RecurringRule>): RecurringRule => ({
       id: 'rule-test',
+      seriesId: 'series-test',
       label: 'Règle de test',
       categoryId: 'cat-2',
       subcategoryId: 'sub-2',
@@ -405,6 +406,107 @@ describe('Budget Service', () => {
 
       expect(result.created).toBe(0);
       expect(service.plannedCentsFor('2026-07', 'sub-2')).toBe(0);
+    });
+
+    it('synchronise une ligne récurrente modifiée manuellement sans l’écraser', () => {
+      service.openMonth('2026-07');
+      service.setPlannedAmount('2026-07', 'sub-2', 90000);
+      const change = recurringRuleService.planVersionChange('rule-2', { amountCents: 95000 });
+
+      service.applyRecurringRuleVersionChange(change, true);
+
+      expect(service.linesForMonth('2026-07').find(line => line.subcategoryId === 'sub-2')).toEqual(
+        expect.objectContaining({ plannedAmountCents: 90000, sourceRuleId: undefined }),
+      );
+    });
+
+    it('préserve une ligne récurrente effacée à zéro pendant la synchronisation', () => {
+      service.openMonth('2026-07');
+      service.setPlannedAmount('2026-07', 'sub-2', 0);
+      const change = recurringRuleService.planVersionChange('rule-2', { amountCents: 95000 });
+
+      service.applyRecurringRuleVersionChange(change, true);
+
+      expect(service.linesForMonth('2026-07').some(line => line.subcategoryId === 'sub-2')).toBe(false);
+      expect(service.recurringRuleSuppressions()).toContainEqual({
+        monthKey: '2026-07',
+        seriesId: 'series-2',
+        subcategoryId: 'sub-2',
+      });
+    });
+
+    it('retire la suppression à zéro lorsqu’un montant manuel positif est ressaisi', () => {
+      service.openMonth('2026-07');
+      service.setPlannedAmount('2026-07', 'sub-2', 0);
+
+      service.setPlannedAmount('2026-07', 'sub-2', 91000);
+      const change = recurringRuleService.planVersionChange('rule-2', { amountCents: 95000 });
+      service.applyRecurringRuleVersionChange(change, true);
+
+      expect(service.recurringRuleSuppressions()).toEqual([]);
+      const line = service.linesForMonth('2026-07').find(item => item.subcategoryId === 'sub-2');
+      expect(line?.plannedAmountCents).toBe(91000);
+      expect(line?.sourceRuleId).toBeUndefined();
+    });
+
+    it('laisse les mois préparés inchangés quand la synchronisation est refusée', () => {
+      service.openMonth('2026-07');
+      const previousLines = service.lines();
+      const change = recurringRuleService.planVersionChange('rule-2', { amountCents: 95000 });
+
+      service.applyRecurringRuleVersionChange(change, false);
+
+      expect(service.lines()).toBe(previousLines);
+      expect(service.plannedCentsFor('2026-07', 'sub-2')).toBe(85000);
+      expect(
+        recurringRuleService.activeRulesForMonth('2026-07').find(rule => rule.seriesId === 'series-2')?.amountCents,
+      ).toBe(85000);
+    });
+
+    it('ne synchronise pas une règle créée vers les mois préparés existants', () => {
+      service.openMonth('2026-07');
+      const previousLines = service.lines();
+
+      const createdRule = recurringRuleService.createRule({
+        label: 'Assurance',
+        categoryId: 'cat-3',
+        subcategoryId: 'sub-5',
+        amountCents: 12500,
+      });
+
+      expect(service.lines()).toEqual(previousLines);
+      service.openMonth(createdRule.startMonth);
+      expect(service.linesForMonth(createdRule.startMonth).find(line => line.subcategoryId === 'sub-5')).toEqual(
+        expect.objectContaining({ plannedAmountCents: 12500, sourceRuleId: createdRule.id }),
+      );
+    });
+
+    it('ne synchronise pas les mois non préparés', () => {
+      const change = recurringRuleService.planVersionChange('rule-2', { amountCents: 95000 });
+
+      service.applyRecurringRuleVersionChange(change, true);
+
+      expect(service.linesForMonth('2026-07')).toEqual([]);
+      service.openMonth('2026-07');
+      expect(service.plannedCentsFor('2026-07', 'sub-2')).toBe(85000);
+    });
+
+    it('refuse atomiquement une synchronisation qui dépasse un agrégat sûr', () => {
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+      const previousLines = service.lines();
+      const previousRules = recurringRuleService.rules();
+      const previousSuppressions = service.recurringRuleSuppressions();
+      const change = recurringRuleService.planVersionChange('rule-2', {
+        amountCents: Number.MAX_SAFE_INTEGER - 100,
+      });
+
+      expect(() => service.applyRecurringRuleVersionChange(change, true)).toThrow(
+        PlannedAggregateOverflowError,
+      );
+      expect(service.lines()).toBe(previousLines);
+      expect(recurringRuleService.rules()).toBe(previousRules);
+      expect(service.recurringRuleSuppressions()).toBe(previousSuppressions);
     });
 
     it('ignore et signale une règle dont la sous-catégorie est inconnue', () => {
