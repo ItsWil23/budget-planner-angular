@@ -138,6 +138,20 @@ function isSafeCentsBigInt(value: bigint): boolean {
 }
 
 /**
+ * Clôture budgétée : ouverture + revenus prévus − dépenses prévues, calculée en BigInt.
+ * Renvoie `null` si le résultat sort de la plage entière sûre, plutôt qu'une valeur arrondie.
+ */
+function budgetedClosingCents(
+  openingBalanceCents: number,
+  incomePlannedCents: number,
+  expensePlannedCents: number,
+): number | null {
+  const closing =
+    BigInt(openingBalanceCents) + BigInt(incomePlannedCents) - BigInt(expensePlannedCents);
+  return isSafeCentsBigInt(closing) ? Number(closing) : null;
+}
+
+/**
  * Recalcule en BigInt les ouvertures et clôtures des mois de `keys`, avec la même règle que `resolvedMonths` :
  * une ouverture surchargée est conservée, sinon elle reprend la clôture du mois précédent initialisé (0 à défaut).
  * `months` doit être trié par ordre croissant et `netByMonthKey` contient le solde net réel de chaque mois.
@@ -276,14 +290,21 @@ export class BudgetService {
       category => category.plannedAmountCents,
     );
 
+    const openingBalanceCents = this.openingCentsFor(monthKey);
+
     return {
       monthKey,
       categories,
       incomePlannedCents,
       expensePlannedCents,
       unallocatedCents: incomePlannedCents - expensePlannedCents,
-      openingBalanceCents: this.openingCentsFor(monthKey),
+      openingBalanceCents,
       actualClosingBalanceCents: this.closingCentsFor(monthKey),
+      budgetedClosingBalanceCents: budgetedClosingCents(
+        openingBalanceCents,
+        incomePlannedCents,
+        expensePlannedCents,
+      ),
     };
   });
 
@@ -540,6 +561,16 @@ export class BudgetService {
 
   isMonthOpened(monthKey: string): boolean {
     return this._months().some(month => month.monthKey === monthKey && month.initialized);
+  }
+
+  /** Clôture budgétée du mois affiché pour un solde d'ouverture donné (brouillon d'édition, sans enregistrement). */
+  previewBudgetedClosingBalanceCents(openingBalanceCents: number): number | null {
+    const summary = this.monthSummary();
+    return budgetedClosingCents(
+      openingBalanceCents,
+      summary.incomePlannedCents,
+      summary.expensePlannedCents,
+    );
   }
 
   openingBalanceCentsFor(monthKey: string): number {

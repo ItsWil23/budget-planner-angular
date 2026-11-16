@@ -4,7 +4,7 @@
 > [`.ai/product-vision.md`](./.ai/product-vision.md) § 11. Aucune couleur, taille ou espacement ne doit être écrit
 > en dur dans un composant : tout passe par les tokens de ce document.
 > Exploration visuelle : [`.ai/design/palettes.html`](./.ai/design/palettes.html), [`.ai/design/fonts.html`](./.ai/design/fonts.html).
-> Dernière mise à jour : 2026-11-03
+> Dernière mise à jour : 2026-11-16
 
 ---
 
@@ -46,6 +46,9 @@ toutes les pages, y compris Budget Mensuel (une île peut contenir une table ent
 - Sur desktop, le titre de page n'est pas affiché dans la topbar : la navigation indique déjà la page active. Le bouton
   d'ajout de l'en-tête de page est à gauche.
 - Zone de contenu sous la topbar (hero + reste) : `overflow-y: auto`, seule cette zone défile.
+- Le conteneur partagé des pages occupe toute la largeur disponible dans la zone de contenu : pas de plafond global
+  qui recentre une page étroite sur les très grands écrans. Les formulaires et blocs qui ont besoin d'une mesure de
+  lecture plus courte définissent leur propre largeur maximale localement.
 - Le fond ne bouge donc jamais — c'est l'effet recherché, cohérent avec les références retenues.
 
 ### Layout mobile / tablette (< 1024px)

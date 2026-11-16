@@ -1,9 +1,17 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, Injector, afterNextRender, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  Injector,
+  TemplateRef,
+  afterNextRender,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { UserSettings } from '../../../models/user-settings';
 import { EurosInputError, MoneyService } from '../../../services/money';
-import { MoneyPipe } from '../money-pipe/money-pipe';
 
 const FIELD_ID = 'budget-opening-input';
 const ADJUST_ID = 'budget-opening-adjust';
@@ -19,7 +27,7 @@ function toggleSignOf(raw: string): string {
 
 @Component({
   selector: 'app-opening-balance',
-  imports: [MoneyPipe, TranslocoPipe],
+  imports: [TranslocoPipe],
   templateUrl: './opening-balance.html',
   styleUrl: './opening-balance.scss',
 })
@@ -29,9 +37,7 @@ export class OpeningBalance {
   private readonly moneyService = inject(MoneyService);
 
   readonly opened = input.required<boolean>();
-  readonly balanceCents = input.required<number>();
   readonly overridden = input.required<boolean>();
-  readonly settings = input.required<UserSettings>();
   /** Solde courant en euros modifiables, pré-rempli à l'ouverture de l'éditeur. */
   readonly editableBalance = input.required<string>();
   /** Préparation du mois refusée (dépassement d'agrégat) : le mois reste non préparé. */
@@ -42,8 +48,10 @@ export class OpeningBalance {
   readonly balanceSave = output<number>();
   readonly balanceReset = output<void>();
 
-  protected readonly editing = signal(false);
-  protected readonly draft = signal('');
+  /** Gabarit du champ, rendu par la page dans le terme « Solde d'ouverture » de l'équation. */
+  readonly editorTemplate = viewChild.required<TemplateRef<unknown>>('editor');
+  readonly editing = signal(false);
+  readonly draft = signal('');
   protected readonly editError = signal<EurosInputError | null>(null);
   protected readonly fieldId = FIELD_ID;
   protected readonly errorId = ERROR_ID;
@@ -78,6 +86,7 @@ export class OpeningBalance {
 
   protected onToggleSign(field: HTMLInputElement): void {
     field.value = toggleSignOf(field.value);
+    this.draft.set(field.value);
     field.focus();
   }
 

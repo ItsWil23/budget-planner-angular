@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-11-06
+> Dernière mise à jour : 2026-11-16
 
 ## 1. Pourquoi cet ordre
 
@@ -18,7 +18,7 @@ application.
 | Lot | Contenu | Statut |
 |---|---|---|
 | 0 | Fondations design + données + services | Terminé (points 1 à 6 faits ; bascule de langue et menu de compte au lot 5) |
-| 1 | Budget Mensuel | À faire — écran cœur |
+| 1 | Budget Mensuel | Terminé (PR #50, 2026-11-06) |
 | 2 | Transactions — finalisation | Partiellement fait (v3 phase A) |
 | 3 | Dashboard | À faire |
 | 4 | Catégories — reprise | Fait en phase A, à corriger |
@@ -123,10 +123,25 @@ catégories traité au lot 4 (§ 7).
 12. [x] Page : saisie inline du prévu **au niveau sous-catégorie** (le total de la catégorie se recalcule
   automatiquement), avec validation (montant minimal `0.01`, pas `0.1` — piège relevé en revue du
   2026-10-22 sur `TransactionForm`, voir Lot 2). Fait le 2026-11-06 (PR #49).
-13. Page : préparation explicite du mois (récurrences actives), solde d'ouverture et ajustement manuel. Le sélecteur
-  de mois ne l'initialise pas automatiquement. Contrôle final à 375px, thèmes clair et sombre.
+13. [x] Page : préparation explicite du mois (récurrences actives), solde d'ouverture et ajustement manuel. Le
+  sélecteur de mois ne l'initialise pas automatiquement. Contrôle final à 375px, thèmes clair et sombre. Fait le
+  2026-11-06 (PR #50).
 
 **Definition of done** : un mois complet peut être planifié de bout en bout, sans dépendre du Dashboard.
+
+### Suivis décidés après le Lot 1
+
+Ces sujets sont hors des 13 tâches clôturées et seront découpés en specs séparées, une à la fois :
+
+- [x] **TASK-014 — formatage monétaire exact dans `MoneyPipe`** : formatage direct depuis les centimes sûrs. Fait le 2026-11-06 (PR #51).
+- [x] **TASK-015 — saisie exacte du prévu** : parsing direct en centimes, garde-fous sur les agrégats et préparation récurrente atomique. Fait le 2026-11-09 (PR #52).
+- [x] **TASK-016 — saisie exacte des transactions** : saisie et stockage en centimes exacts ; prévalidation des agrégats réels et de la cascade avant mutation. Fait le 2026-11-09 (PR #53).
+- [x] **TASK-017 — layout partagé pleine largeur** : le conteneur des pages `MainLayout` utilise toute la largeur disponible ; les contenus étroits gardent des limites locales. Fait le 2026-11-16 (PR #54).
+- [ ] **TASK-018 — solde de clôture budgétée** : calcul exact en centimes et synthèse du mois par équation, avec préparation et ajustement du solde d'ouverture. Implémentation validée, PR #55 ouverte en attente de revue et de fusion ; archiver la spec après fusion.
+- **Budget Mensuel — récurrences :** ouvrir un dialogue accessible et adaptatif depuis un bouton de la page ; liste défilante, création en haut, édition dans le même dialogue, actions par ligne via menu contextuel, désactivation/réactivation.
+- **Budget Mensuel — grille/CSS :** distribuer les catégories sur le nombre de colonnes offert par la largeur disponible, garder leurs groupes et éviter l'étirement excessif des cartes ; nettoyer le SCSS par suppressions mesurées, sans perte de rendu.
+- **Cartes sous 340px :** choisir visuellement entre ellipse et troncation sur deux lignes pour les noms de catégorie/sous-catégorie ; éviter les retours lettre par lettre.
+- **Validation appareil réel :** test du clavier numérique mobile et du signe négatif en attente d'accès à un téléphone ; non bloquant pour la clôture du Lot 1.
 
 ## 5. Lot 2 — Transactions (finalisation)
 
@@ -135,14 +150,14 @@ Déjà fait en phase A : liste, modal, formulaire d'ajout, filtrage catégorie/s
 - Sous-catégorie obligatoire dans le formulaire ; catégorie sans sous-catégorie visible mais désactivée, avec
   raccourci pour en créer une (`domain-model.md` § 2).
 - Édition et suppression d'une transaction existante (`readOnly` déjà prévu dans `TransactionList`).
-- Styling SCSS selon le nouveau design system (pas encore fait).
-- Interface de gestion des `RecurringRule` — **emplacement à trancher** : sous-écran de Transactions, ou accessible
-  depuis Budget Mensuel ? à décider avant de commencer cette tâche.
+- Styling SCSS selon le nouveau design system (pas encore fait), incluant le débordement horizontal préexistant de la table à 375px (environ 531px de table dans 359px disponibles), repéré pendant TASK-017.
+- Interface de gestion des `RecurringRule` depuis Budget Mensuel : bouton ouvrant un dialogue accessible et adaptatif.
+  Les actions Modifier/Désactiver sont regroupées dans un menu contextuel par ligne, pas affichées en permanence.
 - Pagination et tri : non bloquants pour la definition of done du produit, à faire si le temps le permet.
 
 Écarts relevés en revue de code du 2026-10-22, à corriger dans ce lot :
 
-- La liste ne filtre pas par mois sélectionné alors que la route est `monthScoped: true` (`MonthContextService`).
+- La liste ne filtre pas par mois sélectionné alors que la route est `monthScoped: true` (`MonthContextService`). À traiter comme tâche du Lot 2, pas comme suivi du Lot 1.
 - Date par défaut du formulaire calculée via `toISOString()` (UTC) au lieu de l'heure locale : décale le jour
   entre minuit et l'heure du fuseau.
 - Montant minimal du formulaire fixé à `Validators.min(0.1)` : exclut les montants de 1 à 9 centimes, à corriger

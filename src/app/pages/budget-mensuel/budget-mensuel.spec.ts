@@ -19,11 +19,11 @@ const MINUS_SIGN = '\u2212';
 const FR_TRANSLATIONS = {
   budgetMensuel: {
     allocation: {
-      label: 'Allocation du mois',
       income: 'Revenus prévus',
       expense: 'Dépenses prévues',
       unallocated: 'Montant non alloué',
     },
+    budgetedClosingBalance: { label: 'Clôture budgétée', unavailable: 'Indisponible' },
     table: {
       label: 'Suivi par catégorie',
       columns: { subcategory: 'Sous-catégories', planned: 'Prévu', actual: 'Réel' },
@@ -37,14 +37,19 @@ const FR_TRANSLATIONS = {
       shortcuts: 'Accès rapide aux catégories',
       progress: { label: 'Progression de {{ name }}', value: 'Réel {{ actual }} sur {{ planned }} prévus' },
     },
+    preparation: {
+      title: 'Préparation du mois',
+    },
+    equation: {
+      title: 'Équation du mois',
+      opening: "Solde d'ouverture",
+      indicative: "Montants indicatifs : le mois n'est pas encore préparé.",
+    },
     openingBalance: {
-      title: "Solde d'ouverture",
-      amountLabel: 'Montant',
-      indicativeLabel: 'Ouverture automatique indicative',
       unprepared: 'Mois non préparé',
       automatic: 'Automatique',
       manual: 'Ajusté manuellement',
-      unpreparedHelp: "Préparer le mois l'initialise et propose les lignes récurrentes actives. Changer de mois ne l'ouvre pas.",
+      unpreparedHelp: 'Initialise le mois avec les récurrences actives.',
       prepare: 'Préparer le mois',
       adjust: 'Ajuster',
       reset: 'Revenir au calcul automatique',
@@ -61,11 +66,11 @@ const FR_TRANSLATIONS = {
 const EN_TRANSLATIONS = {
   budgetMensuel: {
     allocation: {
-      label: 'Monthly allocation',
       income: 'Planned income',
       expense: 'Planned expenses',
       unallocated: 'Unallocated amount',
     },
+    budgetedClosingBalance: { label: 'Budgeted closing balance', unavailable: 'Unavailable' },
     table: {
       label: 'Category tracking',
       columns: { subcategory: 'Subcategories', planned: 'Planned', actual: 'Actual' },
@@ -79,14 +84,19 @@ const EN_TRANSLATIONS = {
       shortcuts: 'Quick access to categories',
       progress: { label: 'Progress of {{ name }}', value: 'Actual {{ actual }} of {{ planned }} planned' },
     },
+    preparation: {
+      title: 'Month preparation',
+    },
+    equation: {
+      title: 'Month equation',
+      opening: 'Opening balance',
+      indicative: 'Indicative amounts: the month is not prepared yet.',
+    },
     openingBalance: {
-      title: 'Opening balance',
-      amountLabel: 'Amount',
-      indicativeLabel: 'Indicative automatic opening',
       unprepared: 'Month not prepared',
       automatic: 'Automatic',
       manual: 'Adjusted manually',
-      unpreparedHelp: 'Preparing the month initialises it and proposes the active recurring lines. Changing month does not open it.',
+      unpreparedHelp: 'Initialises the month with active recurring rules.',
       prepare: 'Prepare month',
       adjust: 'Adjust',
       reset: 'Return to automatic calculation',
@@ -121,14 +131,26 @@ describe('BudgetMensuel', () => {
     return pipe.transform(amountCents, TestBed.inject(SettingsService).settings(), type);
   }
 
-  function metricValues(): string[] {
-    const cells: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.metric-value');
+  /** Montants de l'équation, dans l'ordre : ouverture, revenus, dépenses, clôture, non alloué. */
+  function equationValues(): string[] {
+    const cells: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.equation-value');
     return Array.from(cells, (cell: HTMLElement) => cell.textContent?.trim() ?? '');
   }
 
-  function metricLabels(): string[] {
-    const cells: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.metric-label');
+  /** Libellés de l'équation, dans le même ordre que `equationValues`. */
+  function equationLabels(): string[] {
+    const cells: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.equation-label');
     return Array.from(cells, (cell: HTMLElement) => cell.textContent?.trim() ?? '');
+  }
+
+  /** Opérateurs de l'équation : case d'ouverture vide, puis +, −, =. */
+  function equationOperators(): string[] {
+    const cells: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.equation-operator');
+    return Array.from(cells, (cell: HTMLElement) => cell.textContent?.trim() ?? '');
+  }
+
+  function budgetedClosingCents(): number | null {
+    return TestBed.inject(BudgetService).monthSummary().budgetedClosingBalanceCents;
   }
 
   beforeEach(async () => {
@@ -160,10 +182,35 @@ describe('BudgetMensuel', () => {
     expect(component).toBeTruthy();
   });
 
-  it('exposes a labelled read-only section', () => {
-    const section: HTMLElement | null = fixture.nativeElement.querySelector('section');
-    expect(section?.getAttribute('aria-label')).toBe('Allocation du mois');
-    expect(section?.querySelectorAll('button, input, select, textarea')).toHaveLength(0);
+  it('renders the preparation rail and the equation as sibling islands without nesting', () => {
+    const overview: HTMLElement | null = fixture.nativeElement.querySelector('.overview');
+    const rail: HTMLElement | null = overview?.querySelector('.overview-preparation') ?? null;
+    const equationHost: HTMLElement | null = overview?.querySelector('.overview-equation') ?? null;
+    const equation: HTMLElement | null = equationHost?.querySelector('.equation') ?? null;
+
+    expect(overview?.children.length).toBe(2);
+    expect(rail?.parentElement).toBe(overview);
+    expect(equationHost?.parentElement).toBe(overview);
+    expect(equation?.parentElement).toBe(equationHost);
+    expect(equation?.querySelectorAll('.equation, .opening, .overview-preparation')).toHaveLength(0);
+    expect(equation?.querySelectorAll('button, input, select, textarea')).toHaveLength(0);
+  });
+
+  it('labels the equation island with its visible heading', () => {
+    const equation: HTMLElement | null = fixture.nativeElement.querySelector('.equation');
+    const heading: HTMLElement | null = fixture.nativeElement.querySelector('#budget-equation-title');
+
+    expect(equation?.getAttribute('aria-labelledby')).toBe('budget-equation-title');
+    expect(heading?.tagName).toBe('H2');
+    expect(heading?.textContent?.trim()).toBe('Équation du mois');
+  });
+
+  it('labels the secondary amount with the unallocated value without repeating the indicative heading', () => {
+    const secondary: HTMLElement | null = fixture.nativeElement.querySelector('.equation-secondary');
+
+    expect(secondary?.getAttribute('aria-label')).toBe('Montant non alloué');
+    expect(secondary?.querySelector('h3')).toBeNull();
+    expect(secondary?.textContent).toContain("Montants indicatifs : le mois n'est pas encore préparé.");
   });
 
   it('does not open the month automatically', () => {
@@ -176,8 +223,8 @@ describe('BudgetMensuel', () => {
     });
 
     it('renders zero income and expenses without sign', () => {
-      const values = metricValues();
-      expect(values).toEqual([expected(0), expected(0), expected(0)]);
+      const values = equationValues();
+      expect(values).toEqual([expected(0), expected(0), expected(0), expected(0), expected(0)]);
       expect(values.some(value => value.includes(MINUS_SIGN))).toBe(false);
       expect(values.some(value => value.startsWith('+'))).toBe(false);
     });
@@ -191,78 +238,162 @@ describe('BudgetMensuel', () => {
       fixture.detectChanges();
     });
 
-    it('renders income, expenses and unallocated amounts through MoneyPipe', () => {
-      expect(metricValues()).toEqual([
-        expected(300000, 'income'),
-        expected(100000, 'expense'),
+    it('renders income, expenses, unallocated and closing amounts through MoneyPipe', () => {
+      expect(equationValues()).toEqual([
+        expected(0),
+        expected(300000),
+        expected(100000),
+        expected(200000),
         expected(200000),
       ]);
     });
 
-    it('shows a plus sign on income and a minus sign on expenses', () => {
-      const values = metricValues();
-      expect(values[0].startsWith('+')).toBe(true);
-      expect(values[1].startsWith(MINUS_SIGN)).toBe(true);
+    it('shows the plus and minus operators in the formula', () => {
+      expect(equationOperators()).toEqual(['', '+', MINUS_SIGN, '=']);
     });
 
     it('shows no sign on a positive unallocated amount', () => {
-      const unallocated = metricValues()[2];
+      const unallocated = equationValues()[4];
       expect(unallocated.startsWith('+')).toBe(false);
       expect(unallocated.startsWith(MINUS_SIGN)).toBe(false);
     });
 
-    it('drops the expense sign when planned expenses are reset to zero', () => {
+    it('keeps the operators fixed when planned expenses are reset to zero', () => {
       TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 0);
       fixture.detectChanges();
 
-      const values = metricValues();
-      expect(values).toEqual([
-        expected(300000, 'income'),
+      expect(equationValues()).toEqual([
         expected(0),
         expected(300000),
+        expected(0),
+        expected(300000),
+        expected(300000),
       ]);
-      expect(values[0].startsWith('+')).toBe(true);
-      expect(values[1].startsWith(MINUS_SIGN)).toBe(false);
+      expect(equationOperators()).toEqual(['', '+', MINUS_SIGN, '=']);
     });
 
     it('keeps the minus sign and the real value on a negative unallocated amount', () => {
       TestBed.inject(BudgetService).setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 500000);
       fixture.detectChanges();
 
-      const unallocated = metricValues()[2];
-      expect(unallocated).toBe(expected(-200000));
+      const unallocated = equationValues()[4];
       expect(unallocated.startsWith(MINUS_SIGN)).toBe(true);
-      expect(unallocated).not.toBe(expected(0));
+      expect(unallocated).toBe(expected(-200000));
     });
 
     it('reflects a change of currency and locale from SettingsService', () => {
       TestBed.inject(SettingsService).updateSettings({ currency: 'USD', locale: 'en-US' });
       fixture.detectChanges();
 
-      const values = metricValues();
+      const values = equationValues();
       expect(values).toEqual([
-        expected(300000, 'income'),
-        expected(100000, 'expense'),
+        expected(0),
+        expected(300000),
+        expected(100000),
+        expected(200000),
         expected(200000),
       ]);
-      expect(values.every(value => value.includes('$'))).toBe(true);
     });
   });
 
   describe('translations', () => {
     it('renders the French labels by default', () => {
-      expect(metricLabels()).toEqual(['Revenus prévus', 'Dépenses prévues', 'Montant non alloué']);
+      expect(equationLabels()).toEqual([
+        "Solde d'ouverture",
+        'Revenus prévus',
+        'Dépenses prévues',
+        'Clôture budgétée',
+        'Montant non alloué',
+      ]);
     });
 
     it('renders the English labels after switching language', () => {
       TestBed.inject(TranslocoService).setActiveLang('en');
       fixture.detectChanges();
 
-      const section: HTMLElement | null = fixture.nativeElement.querySelector('section');
-      expect(section?.getAttribute('aria-label')).toBe('Monthly allocation');
-      expect(metricLabels()).toEqual(['Planned income', 'Planned expenses', 'Unallocated amount']);
+      expect(equationLabels()).toEqual([
+        'Opening balance',
+        'Planned income',
+        'Planned expenses',
+        'Budgeted closing balance',
+        'Unallocated amount',
+      ]);
     });
   });
+
+  describe('budgeted closing balance', () => {
+    function setPlanned(incomeCents: number, expenseCents: number): void {
+      const budget = TestBed.inject(BudgetService);
+      budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('income'), incomeCents);
+      budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), expenseCents);
+      fixture.detectChanges();
+    }
+
+    function setUnavailable(): void {
+      const budget = TestBed.inject(BudgetService);
+      const categoryService = TestBed.inject(CategoryService);
+      budget.openMonth(TEST_MONTH);
+      categoryService
+        .subcategories()
+        .forEach(subcategory => budget.setPlannedAmount(TEST_MONTH, subcategory.id, 0));
+      budget.setOpeningBalanceOverride(TEST_MONTH, -Number.MAX_SAFE_INTEGER);
+      budget.setPlannedAmount(TEST_MONTH, subcategoryIdOf('expense'), 1);
+      fixture.detectChanges();
+    }
+
+    it('renders a zero closing balance without sign', () => {
+      setPlanned(100000, 100000);
+
+      const closing = equationValues()[3];
+      expect(budgetedClosingCents()).toBe(0);
+      expect(closing).toBe(expected(0));
+      expect(closing.startsWith('+')).toBe(false);
+      expect(closing.startsWith(MINUS_SIGN)).toBe(false);
+    });
+
+    it('renders a negative closing balance with the minus sign', () => {
+      setPlanned(100000, 500000);
+
+      const closing = equationValues()[3];
+      expect(budgetedClosingCents()).toBe(-400000);
+      expect(closing).toBe(expected(-400000));
+      expect(closing.startsWith(MINUS_SIGN)).toBe(true);
+    });
+
+    it('follows the displayed month when it changes', () => {
+      setPlanned(300000, 100000);
+      expect(equationValues()[3]).toBe(expected(200000));
+
+      TestBed.inject(MonthContextService).setMonth('2026-08');
+      fixture.detectChanges();
+
+      const budget = TestBed.inject(BudgetService);
+      expect(equationValues()[3]).toBe(expected(budget.openingBalanceCentsFor('2026-08')));
+      expect(equationValues()[3]).not.toBe(expected(200000));
+    });
+
+    it('shows the localized unavailable state instead of a rounded value', () => {
+      setUnavailable();
+
+      const closing: HTMLElement | null = fixture.nativeElement.querySelector(
+        '.equation-result .equation-value',
+      );
+      expect(budgetedClosingCents()).toBeNull();
+      expect(closing?.textContent?.trim()).toBe('Indisponible');
+      expect(closing?.classList.contains('equation-value-unavailable')).toBe(true);
+    });
+
+    it('shows the English unavailable state after switching language', () => {
+      TestBed.inject(TranslocoService).setActiveLang('en');
+      setUnavailable();
+
+      const closing: HTMLElement | null = fixture.nativeElement.querySelector(
+        '.equation-result .equation-value',
+      );
+      expect(closing?.textContent?.trim()).toBe('Unavailable');
+    });
+  });
+
 
   describe('table layout', () => {
     const restores: (() => void)[] = [];
@@ -1165,11 +1296,11 @@ describe('BudgetMensuel', () => {
     }
 
     function signButton(): HTMLButtonElement | null {
-      return openingButton('.opening-sign');
+      return fixture.nativeElement.querySelector('.opening-sign') ?? null;
     }
 
     function openingInput(): HTMLInputElement | null {
-      return openingSection()?.querySelector<HTMLInputElement>('input.opening-input') ?? null;
+      return fixture.nativeElement.querySelector('input.opening-input') ?? null;
     }
 
     function errorElement(): HTMLElement | null {
@@ -1180,18 +1311,13 @@ describe('BudgetMensuel', () => {
       return openingSection()?.querySelector('.opening-badge')?.textContent?.trim() ?? '';
     }
 
-    /** Valeur du montant ouvert ou indicatif (unique rangée `.opening-item`). */
-    function itemValue(index: number): string {
-      const items = openingSection()?.querySelectorAll<HTMLElement>('.opening-item');
-      return items?.[index]?.querySelector('dd')?.textContent?.trim() ?? '';
-    }
-
+    /** Le montant d'ouverture n'apparaît qu'une fois, dans l'équation. */
     function openedAmountText(): string {
-      return itemValue(0);
+      return equationValues()[0] ?? '';
     }
 
     function indicativeText(): string {
-      return itemValue(0);
+      return equationValues()[0] ?? '';
     }
 
     function openEditor(): HTMLInputElement {
@@ -1216,6 +1342,29 @@ describe('BudgetMensuel', () => {
     function monthOf(monthKey: string) {
       return TestBed.inject(BudgetService).months().find(month => month.monthKey === monthKey);
     }
+
+    describe('layout and accessibility', () => {
+      it('labels the rail with its heading and keeps help and prepare action inside it', () => {
+        fixture.detectChanges();
+        const section = openingSection();
+        const heading = section?.querySelector('h2');
+        expect(section?.getAttribute('aria-labelledby')).toBe(heading?.id);
+        expect(heading?.textContent?.trim().length).toBeGreaterThan(0);
+        expect(section?.querySelector('.opening-help')).not.toBeNull();
+        expect(section?.querySelector('.opening-actions .opening-action-primary')).not.toBeNull();
+        expect(section?.querySelector('.opening-amount, .opening-item, .opening-main')).toBeNull();
+      });
+
+      it('exposes the prepared-state actions as named buttons inside the rail', () => {
+        prepareButton()?.click();
+        fixture.detectChanges();
+        const section = openingSection();
+        expect(section?.querySelector('.opening-help')).toBeNull();
+        expect(adjustButton()?.getAttribute('type')).toBe('button');
+        expect(adjustButton()?.textContent?.trim().length).toBeGreaterThan(0);
+        expect(section?.querySelector('#budget-opening-adjust')).not.toBeNull();
+      });
+    });
 
     describe('before preparation', () => {
       it('does not open a month when rendered or when the selected month changes', () => {
@@ -1258,7 +1407,7 @@ describe('BudgetMensuel', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(openingSection()?.querySelector('h2')?.textContent?.trim()).toBe('Opening balance');
+        expect(openingSection()?.querySelector('h2')?.textContent?.trim()).toBe('Month preparation');
         expect(statusText()).toBe('Month not prepared');
         expect(prepareButton()?.textContent?.trim()).toBe('Prepare month');
       });
@@ -1277,9 +1426,11 @@ describe('BudgetMensuel', () => {
         expect(plannedButtonFor('sub-1')?.textContent?.trim()).toBe(expected(245000, 'income'));
         expect(plannedButtonFor('sub-2')?.textContent?.trim()).toBe(expected(85000));
         expect(plannedButtonFor('sub-3')?.textContent?.trim()).toBe(expected(3999));
-        expect(metricValues()).toEqual([
-          expected(245000, 'income'),
-          expected(88999, 'expense'),
+        expect(equationValues()).toEqual([
+          expected(0),
+          expected(245000),
+          expected(88999),
+          expected(156001),
           expected(156001),
         ]);
       });
@@ -1293,7 +1444,7 @@ describe('BudgetMensuel', () => {
         expect(TestBed.inject(BudgetService).isMonthOpened(TEST_MONTH)).toBe(true);
         expect(plannedButtonFor('sub-1')?.textContent?.trim()).toBe('Non renseigné');
         expect(plannedButtonFor('sub-2')?.textContent?.trim()).toBe('Non renseigné');
-        expect(metricValues()).toEqual([expected(0), expected(0), expected(0)]);
+        expect(equationValues()).toEqual([expected(0), expected(0), expected(0), expected(0), expected(0)]);
       });
     });
 
@@ -1394,6 +1545,60 @@ describe('BudgetMensuel', () => {
         await fixture.whenStable();
         expect(input.value).toBe('0');
         expect(document.activeElement).toBe(input);
+      });
+
+      it('places the opening editor inside the equation only, and shows the opening value once', () => {
+        openEditor();
+
+        expect(fixture.nativeElement.querySelector('.equation-formula input.opening-input')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.overview-preparation input')).toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('.equation-formula .equation-value')).toHaveLength(3);
+      });
+
+      describe('closing preview while editing the opening balance', () => {
+        function typeDraft(raw: string): void {
+          const input = openEditor();
+          input.value = raw;
+          input.dispatchEvent(new Event('input'));
+          fixture.detectChanges();
+        }
+
+        function closingText(): string {
+          return fixture.nativeElement.querySelector('.equation-result .equation-value')?.textContent?.trim() ?? '';
+        }
+
+        it.each([
+          { raw: '12,5', cents: 1250 },
+          { raw: '0', cents: 0 },
+          { raw: '-3', cents: -300 },
+        ])('recomputes the closing balance from the draft "$raw" in real time', ({ raw, cents }) => {
+          typeDraft(raw);
+          const summary = TestBed.inject(BudgetService).monthSummary();
+          const flowCents = summary.incomePlannedCents - summary.expensePlannedCents;
+
+          expect(closingText()).toBe(expected(cents + flowCents));
+        });
+
+        it('shows the invalid-draft alert instead of a closing value for an incomplete entry', () => {
+          typeDraft('abc');
+
+          const alert: HTMLElement | null = fixture.nativeElement.querySelector('.equation-note-alert');
+          expect(alert?.getAttribute('role')).toBe('status');
+          expect(fixture.nativeElement.querySelector('.equation-result .equation-value')).toBeNull();
+        });
+
+        it('restores the saved closing balance when the draft is cancelled', () => {
+          const spy = spyOnSetOpeningBalanceOverride();
+          const input = openEditor();
+          input.value = '12,5';
+          input.dispatchEvent(new Event('input'));
+          fixture.detectChanges();
+          press(input, 'Escape');
+
+          expect(spy).not.toHaveBeenCalled();
+          expect(fixture.nativeElement.querySelector('.equation-formula input.opening-input')).toBeNull();
+          expect(closingText()).toBe(expected(budgetedClosingCents() ?? 0));
+        });
       });
 
       it('saves a positive amount in cents through BudgetService', async () => {
@@ -1570,6 +1775,8 @@ describe('BudgetMensuel', () => {
 
         expect(statusText()).toBe('Automatic');
         expect(adjustButton()?.textContent?.trim()).toBe('Adjust');
+        expect(fixture.nativeElement.querySelector('.equation-note')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.equation-secondary')?.getAttribute('aria-label')).toBe('Unallocated amount');
         const input = openEditor();
         expect(input.getAttribute('aria-label')).toBe('Adjusted opening balance, in euros');
         expect(signButton()?.getAttribute('aria-label')).toBe('Switch sign (positive or negative)');

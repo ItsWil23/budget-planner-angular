@@ -136,19 +136,28 @@
   "budgetMensuel": {
     "title": "Budget Mensuel",
     "allocation": {
-      "label": "Allocation du mois",
       "income": "Revenus prévus",
       "expense": "Dépenses prévues",
       "unallocated": "Montant non alloué"
     },
+    "budgetedClosingBalance": {
+      "label": "Clôture budgétée",
+      "unavailable": "Indisponible"
+    },
+    "preparation": {
+      "title": "Préparation du mois"
+    },
+    "equation": {
+      "title": "Équation du mois",
+      "opening": "Solde d'ouverture",
+      "indicative": "Montants indicatifs : le mois n'est pas encore préparé.",
+      "draftInvalid": "Saisie incomplète : clôture non calculée."
+    },
     "openingBalance": {
-      "title": "Solde d'ouverture",
-      "amountLabel": "Montant",
-      "indicativeLabel": "Ouverture automatique indicative",
       "unprepared": "Mois non préparé",
       "automatic": "Automatique",
       "manual": "Ajusté manuellement",
-      "unpreparedHelp": "Préparer le mois l'initialise et propose les lignes récurrentes actives. Changer de mois ne l'ouvre pas.",
+      "unpreparedHelp": "Initialise le mois avec les récurrences actives.",
       "prepare": "Préparer le mois",
       "adjust": "Ajuster",
       "reset": "Revenir au calcul automatique",
