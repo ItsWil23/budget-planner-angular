@@ -143,7 +143,7 @@ Ces sujets sont hors des 13 tâches clôturées et seront découpés en specs s�
 - [x] **TASK-021 — grille Budget Mensuel sur grand écran** : cartes plafonnées à 30rem et groupe centré ; nettoyage SCSS mesuré. Fait le 2026-11-16 (PR #61).
 - [x] **TASK-022 — grille adaptative des catégories selon la largeur** : nombre de colonnes selon la largeur (5 au maximum), groupes conservés, bascule en colonnes équilibrées dans le cas des grandes catégories. Fait le 2026-11-17 (PR #62).
 - [x] **TASK-023 — menu contextuel des actions d'une règle récurrente** : remplacer la ligne dépliable par un menu accessible clavier et tactile, comme prévu initialement pour TASK-020. Fait le 2026-11-17 (PR en attente de fusion).
-- [ ] **TASK-024 — cartes étroites sous 340px** : choix d'affichage des noms de catégories et sous-catégories (ellipse, deux lignes ou montants sous le nom), sans coupure lettre par lettre. Spec proposée le 2026-11-17 (`feat/card-narrow-labels`).
+- [x] **TASK-024 — cartes étroites sous 340px** : choix d'affichage des noms de catégories et sous-catégories (ellipse, deux lignes ou montants sous le nom), sans coupure lettre par lettre. Fait le 2026-11-17 (PR en attente de fusion).
 - **Validation appareil réel (reportée) :** test du clavier numérique mobile et du signe négatif en attente d'accès à un téléphone ; non bloquant pour la clôture du Lot 1, à reprendre après quelques lots.
 
 ## 5. Lot 2 — Transactions (finalisation)

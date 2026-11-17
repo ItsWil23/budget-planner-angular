@@ -1,6 +1,6 @@
 ## Tâche — cartes étroites sous 340px : noms de catégories et sous-catégories
 Lot : suivis du Lot 1 (`roadmap.md` § 4, « Cartes sous 340px »)
-Statut : validée le 2026-11-17 (option 2, `hyphens: auto`, synchronisation de `lang`) ; implémentation en cours
+Statut : livrée et validée le 2026-11-17 (option 2, `hyphens: auto`, synchronisation de `lang`) ; PR en attente de fusion
 Branche : `feat/card-narrow-labels`
 
 ### Contexte
@@ -60,3 +60,9 @@ Avis du PM : l'option 1 masque trop d'information à cette largeur. L'option 3 e
 - `roadmap.md` § 4, « Cartes sous 340px ».
 - `AGENTS.md` : mobile-first réel, valeurs de design issues des tokens.
 - `DESIGN_SYSTEM.md` : tokens de texte (`--text-body`, `--text-emphasis`) et d'espacement.
+
+### Suivi de livraison — 2026-11-17
+- Commits : `9367afa` (synchronisation de `lang` dans `app.ts`), `f7e0947` (noms de cartes sur deux lignes), `94238e8` et `f659cbe` (spec et décision).
+- Validations : suite complète 591 tests verts ; build OK, avertissements SCSS préexistants uniquement ; `git diff --check` OK ; navigateur à 320, 340, 375 et 1280px : limite à deux lignes, pas de débordement, `lang="fr"`.
+- Écarts : le trait d'union de `hyphens: auto` n'apparaît pas dans le Chromium de test (le côté mot coupé reste visible) ; à vérifier dans les navigateurs de l'utilisateur. Le code a été commité avant l'autorisation explicite, ce qui ne respecte pas le § 2 étape 9 du workflow.
+- Validation utilisateur : « je valide » puis « tu peux clôturer » (2026-11-17).
