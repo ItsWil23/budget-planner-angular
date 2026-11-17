@@ -1,6 +1,6 @@
 ## Tâche — grille adaptative des catégories selon la largeur
 Lot : suivi Budget Mensuel (`roadmap.md` § 4, grille/CSS)
-Statut : proposée le 2026-11-17, règles validées pour l'instant, en attente de validation finale
+Statut : validée le 2026-11-17, implémentée sur `feat/budget-grid-adaptive`.
 Branche : `feat/budget-grid-adaptive`. Implémentation après le merge de la PR #61 (TASK-021), une tâche en revue à la fois.
 
 ### Contexte
@@ -45,10 +45,17 @@ La décision produit du 2026-11-06 (`product-vision.md`) demande que les cartes 
 ### Hors périmètre
 - Division de colonnes pour remplir la largeur.
 - Mobile.
-- Menu des règles récurrentes (TASK-022).
+- Menu des règles récurrentes (TASK-023).
 - Noms de catégorie sous 340 px.
 
 ### Références
 - `product-vision.md`, décision du 2026-11-06 (cartes adaptées à la largeur, groupes conservés).
 - `.ai/tasks/done/TASK-011-lot1-budget-monthly-table.md` (capacité, groupes, ordre, bascule).
 - `.ai/tasks/done/TASK-021-budget-mensuel-grille.md` (plafond de carte à 30rem).
+
+### Suivi de livraison — 2026-11-17
+- Implémentation commitée dans `361ec25` (`feat: adapt budget category columns to available width`), sur `feat/budget-grid-adaptive`.
+- PR vers `main` ouverte, en attente de fusion.
+- Règles appliquées : nombre de colonnes selon la largeur (cinq au maximum), fusion des colonnes adjacentes de même groupe, grandes catégories jamais fusionnées, bascule en colonnes équilibrées si les grandes et les groupes présents ne tiennent pas.
+- Validations : deux typechecks, 580 tests, build (avertissements SCSS préexistants), `git diff --check`. Vérification navigateur : 4 catégories de base (2 colonnes, cartes à 480 px centrées), 10 catégories (équilibrées à 1024 à 1600 px, 4 colonnes à 1920 px, 5 à 2560 px), 22 catégories (équilibrées partout). Rendu validé par l'utilisateur.
+- Lint non configuré, non exécuté.
