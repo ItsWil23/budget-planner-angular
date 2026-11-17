@@ -5,6 +5,8 @@
   --table-column-min: 320px;
   /* Largeur maximale du groupe de KPI sur grand écran, centré : évite l'étirement des cartes. */
   --kpi-group-max: 90rem;
+  /* Largeur maximale d'une carte de catégorie en desktop : au-delà, le groupe de colonnes est centré. */
+  --card-max: 30rem;
   /* Hauteur de la topbar mobile (topbar.scss) : cible tactile, padding space-sm et bordures. */
   --topbar-height: calc(var(--size-touch-min) + 2 * var(--space-sm) + 2 * var(--border-width));
   /* Hauteur de la rangée de raccourcis : cible tactile et padding space-xs. */
@@ -17,10 +19,6 @@
   align-items: stretch;
   max-width: var(--kpi-group-max);
   margin-inline: auto;
-}
-
-.manager-placeholder {
-  min-block-size: var(--size-touch-min);
 }
 
 /* Rail de préparation à gauche (environ 280–320px), équation à droite, largeur plafonnée par le groupe. */
@@ -384,7 +382,8 @@ details[open] > summary.card-head .card-name::before {
 
   .columns {
     display: grid;
-    grid-template-columns: repeat(var(--column-count, 1), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--column-count, 1), minmax(0, var(--card-max)));
+    justify-content: center;
     gap: var(--space-lg);
   }
 
