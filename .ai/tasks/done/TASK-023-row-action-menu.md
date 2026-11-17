@@ -1,6 +1,6 @@
 ## Tâche — menu contextuel des actions d'une règle récurrente
 Lot : suivi du gestionnaire de règles (`roadmap.md` § 5, « Interface de gestion des RecurringRule »)
-Statut : proposée le 2026-11-17, en attente de validation
+Statut : validée et implémentée le 2026-11-17
 Branche : `feat/row-action-menu`
 
 ### Contexte
@@ -46,3 +46,10 @@ TASK-020 a livré les actions (Modifier, Désactiver, Réactiver) dans la zone d
 ### Références
 - `product-vision.md`, décision du 2026-11-06 (actions de ligne regroupées dans un menu contextuel).
 - `.ai/tasks/done/TASK-020-recurring-rule-management-dialog.md` (écart d'implémentation à corriger).
+
+### Suivi de livraison — 2026-11-17
+- Commit code : `298f62e` (`feat: add row action menu to recurring rules (TASK-023)`).
+- Validations : suite complète 589 tests verts ; build OK, avertissements de budget SCSS préexistants uniquement (`category-card.scss`, `budget-mensuel.scss`) ; `git diff --check` OK ; TypeScript app et spec OK.
+- Vérification navigateur : bouton « ⋯ » 44 × 44 px centré verticalement sur la ligne ; menu accessible au clavier ; Échap rend le focus au bouton ; aucun débordement horizontal à 375 px ni en 1280 px ; menu qui remonte au-dessus du bouton quand il n'a pas la place (dernière règle en 375 × 667).
+- Écarts par rapport à la spec : ajout du placement vers le haut du menu, demandé à la relecture visuelle (non prévu dans la spec, couvert par deux tests). Aucun libellé i18n ajouté : les libellés existants ont été réutilisés.
+- Validation utilisateur : « je valide » (2026-11-17).
