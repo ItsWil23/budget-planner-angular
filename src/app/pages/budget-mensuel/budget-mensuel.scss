@@ -161,7 +161,17 @@ details[open] > summary.card-head .card-name::before {
   min-width: 0;
   font: var(--text-emphasis);
   color: var(--color-text);
-  overflow-wrap: anywhere;
+}
+
+/* Limite de deux lignes portée par un enfant : `.card-name` est un conteneur flex. */
+.card-name-text {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .visually-hidden {
@@ -211,9 +221,14 @@ details[open] > summary.card-head .card-name::before {
 }
 
 .line-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font: var(--text-body);
   color: var(--color-text);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .amount {
