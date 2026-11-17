@@ -1,6 +1,6 @@
 ## Tâche — cartes étroites sous 340px : noms de catégories et sous-catégories
 Lot : suivis du Lot 1 (`roadmap.md` § 4, « Cartes sous 340px »)
-Statut : proposée le 2026-11-17, en attente d'un choix d'affichage puis de validation
+Statut : validée le 2026-11-17 (option 2, `hyphens: auto`, synchronisation de `lang`) ; implémentation en cours
 Branche : `feat/card-narrow-labels`
 
 ### Contexte
@@ -14,8 +14,12 @@ Sur Budget Mensuel, chaque carte réserve deux colonnes de montants (Prévu et R
 
 Le style actuel (`overflow-wrap: anywhere` sur `.card-name` et `.line-name`) autorise la coupure à n'importe quel caractère, même quand un espace permettrait un retour à la ligne normal.
 
-### Décision à valider
-Choisir le comportement des noms étroits :
+### Décision
+Option 2 retenue le 2026-11-17, avec `hyphens: auto` et synchronisation de l'attribut `lang` avec la langue active. Les options 1 et 3 sont écartées ; elles restent listées pour mémoire.
+
+Coupure constatée à 51px (police réelle 14px) : « Électricité » devient « Électric » / « ité », donc un mot trop long reste coupé ; `hyphens: auto` vise une coupure à la syllabe avec tiret.
+
+Options :
 
 1. **Troncature sur une ligne** : `white-space: nowrap` et `text-overflow: ellipsis`, avec le nom complet dans un attribut `title`. À 340px, « Salaire » tient en environ 3 caractères : information très réduite.
 2. **Deux lignes maximum** : retour à la ligne aux espaces, puis troncature à la deuxième ligne (`-webkit-line-clamp: 2`) ; coupure dans un mot seulement si le mot seul ne tient pas (`overflow-wrap: break-word`). Un mot long reste coupé.
@@ -23,19 +27,21 @@ Choisir le comportement des noms étroits :
 
 Avis du PM : l'option 1 masque trop d'information à cette largeur. L'option 3 est la seule qui garde un nom lisible à 320px et 340px ; l'option 2 est le compromis le plus simple.
 
-### Ce qu'il faut faire (après choix)
-1. Appliquer le comportement choisi à `.card-name` et `.line-name` dans `budget-mensuel.scss`, uniquement sous le seuil choisi. Écrire le style de base d'abord, puis la règle conditionnelle (mobile-first) avec `@container budget-card` ; seuil fixé après mesure.
-2. Option 1 uniquement : ajouter `[title]` avec le nom complet dans `budget-mensuel.html`.
-3. Option 3 uniquement : réorganiser le gabarit de ligne et d'en-tête dans `budget-mensuel.html` sous le seuil, sans changer le rendu au-dessus.
-4. Ajouter dans `budget-mensuel.spec.ts` les vérifications de gabarit propres au choix (présence de `title`, ou classe/structure). La mise en page n'est pas calculée par jsdom : elle est vérifiée dans le navigateur.
+### Ce qu'il faut faire
+1. Dans `budget-mensuel.scss`, appliquer `overflow-wrap: break-word`, `hyphens: auto` et une limite de deux lignes à `.card-name` et `.line-name`. `.card-name` est un conteneur flex, où la limite de lignes ne s'applique pas : le texte passe par un enfant `.card-name-text`.
+2. Dans `budget-mensuel.html`, envelopper le nom de catégorie dans un enfant `.card-name-text`. Pas d'attribut `title` (option 1 écartée).
+3. Synchroniser l'attribut `lang` de la balise `html` avec la langue active (FR ou EN), à l'exécution. L'emplacement exact (réglages ou Transloco) est à confirmer à l'implémentation ; `src/index.html` garde `lang="en"` comme valeur de départ.
+4. Ajouter dans `budget-mensuel.spec.ts` un test de structure (enfant `.card-name-text`, nom complet conservé) et un test de `lang` synchronisé avec la langue. La mise en page n'est pas calculée par jsdom : elle est vérifiée dans le navigateur.
 
 ### Fichiers concernés
 - `src/app/pages/budget-mensuel/budget-mensuel.scss`
-- `src/app/pages/budget-mensuel/budget-mensuel.html` (option 1 et option 3)
+- `src/app/pages/budget-mensuel/budget-mensuel.html`
+- Fichier qui synchronise `lang` avec la langue active, et `src/index.html` (à confirmer)
 - `src/app/pages/budget-mensuel/budget-mensuel.spec.ts`
 
 ### Critères d'acceptation
-- Aucun mot n'est coupé lettre par lettre dans une carte à 320px, 340px et 375px.
+- Aucun mot n'est coupé hors syllabe dans une carte à 320px, 340px et 375px ; un mot trop long est coupé avec tiret, et le texte est limité à deux lignes avec « … ».
+- L'attribut `lang` de la page suit la langue active (FR puis EN, vérifié dans le navigateur).
 - Un nom long (sous-catégorie ajoutée temporairement via les mocks, puis restaurée avec `git checkout`) se comporte selon le choix retenu.
 - Au-dessus du seuil, le rendu est identique à la version actuelle (mesures comparées avant et après).
 - Aucun débordement horizontal à 320px, 340px et 375px.
