@@ -125,6 +125,14 @@ describe('RecurringRuleManager', () => {
     fixture.detectChanges();
   }
 
+  function stubVisibleBottom(panelBottom: number, menuHeight: number): void {
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(menuHeight);
+    vi.spyOn(element<HTMLElement>('.panel'), 'getBoundingClientRect').mockReturnValue({
+      top: 0,
+      bottom: panelBottom,
+    } as DOMRect);
+  }
+
   function click(selector: string): void {
     if (selector === '[data-action="open-manager"]') {
       fixture.componentRef.setInput('opened', true);
@@ -156,6 +164,12 @@ describe('RecurringRuleManager', () => {
     setValue('#recurring-rule-amount', amount);
     setValue('#recurring-rule-day', day);
     if (endMonth) pickEndMonth(endMonth);
+  }
+
+  function addVersion(seriesId: string, amountCents: number): void {
+    const rule = recurringRuleService.rules().find(item => item.seriesId === seriesId);
+    if (!rule) throw new Error(`Missing series ${seriesId}`);
+    budgetService.applyRecurringRuleVersionChange(recurringRuleService.planVersionChange(rule.id, { amountCents }), false);
   }
 
   async function createFixture(): Promise<void> {
@@ -238,16 +252,17 @@ describe('RecurringRuleManager', () => {
     );
   });
 
-  it('keeps only one rule expanded at a time', async () => {
+  it('keeps only one version history expanded at a time', async () => {
     await createFixture();
+    addVersion('series-2', 90000);
+    addVersion('series-4', 12000);
     click('[data-action="open-manager"]');
-    click('[data-action="row-actions-series-1"]');
-    expect(element<HTMLElement>('[data-action="row-actions-series-1"]').getAttribute('aria-expanded')).toBe('true');
-    click('[data-action="row-actions-series-2"]');
+    click('[data-action="history-series-2"]');
+    click('[data-action="history-series-4"]');
 
     expect(fixture.nativeElement.querySelectorAll('.rule-summary[aria-expanded="true"]')).toHaveLength(1);
-    expect(element<HTMLElement>('[data-action="row-actions-series-1"]').getAttribute('aria-expanded')).toBe('false');
-    expect(element<HTMLElement>('[data-action="row-actions-series-2"]').getAttribute('aria-expanded')).toBe('true');
+    expect(element<HTMLElement>('[data-action="history-series-2"]').getAttribute('aria-expanded')).toBe('false');
+    expect(element<HTMLElement>('[data-action="history-series-4"]').getAttribute('aria-expanded')).toBe('true');
   });
 
   it('starts closed and emits a close event when the dialog is dismissed', async () => {
@@ -432,6 +447,7 @@ describe('RecurringRuleManager', () => {
     click('[data-action="activate-series-4"]');
     expect(recurringRuleService.activeRulesForMonth('2026-12').some(rule => rule.seriesId === 'series-4')).toBe(true);
 
+    click('[data-action="row-actions-series-4"]');
     click('[data-action="deactivate-series-4"]');
 
     expect(recurringRuleService.activeRulesForMonth('2026-12').some(rule => rule.seriesId === 'series-4')).toBe(false);
@@ -454,5 +470,114 @@ describe('RecurringRuleManager', () => {
     );
     expect(element<HTMLInputElement>('#recurring-rule-amount').value).toBe('1000.00');
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it('shows the history disclosure only for rules with several versions', async () => {
+    await createFixture();
+    addVersion('series-2', 90000);
+    click('[data-action="open-manager"]');
+
+    expect(element<HTMLElement>('[data-series-id="series-1"] .rule-summary').tagName).toBe('DIV');
+    expect(element<HTMLElement>('[data-series-id="series-2"] .rule-summary').tagName).toBe('BUTTON');
+  });
+
+  it('hides Modifier for an ended rule and offers Reactiver', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    click('[data-action="row-actions-series-3"]');
+
+    expect(fixture.nativeElement.querySelector('[data-action="edit-series-3"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-action="activate-series-3"]')).not.toBeNull();
+  });
+
+  it('opens one menu at a time', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    click('[data-action="row-actions-series-1"]');
+    click('[data-action="row-actions-series-2"]');
+
+    expect(fixture.nativeElement.querySelectorAll('.rule-menu')).toHaveLength(1);
+    expect(element<HTMLElement>('[data-series-id="series-2"] .rule-menu')).not.toBeNull();
+  });
+
+  it('closes the menu with Escape and returns focus to its trigger', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    click('[data-action="row-actions-series-1"]');
+    element<HTMLElement>('.rule-menu').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.rule-menu')).toBeNull();
+    expect(document.activeElement).toBe(element<HTMLElement>('[data-action="row-actions-series-1"]'));
+  });
+
+  it('moves focus through the menu items with arrow, Home and End keys', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    element<HTMLElement>('[data-action="row-actions-series-1"]').dispatchEvent(
+      new MouseEvent('click', { bubbles: true, detail: 0 }),
+    );
+    fixture.detectChanges();
+    TestBed.tick();
+
+    const items = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.rule-menu [role="menuitem"]'));
+    expect(items).toHaveLength(2);
+    expect(document.activeElement).toBe(items[0]);
+    items[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[1]);
+    items[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[0]);
+    items[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    expect(document.activeElement).toBe(items[1]);
+    items[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    expect(document.activeElement).toBe(items[0]);
+  });
+
+  it('closes the menu on a press outside it', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    click('[data-action="row-actions-series-1"]');
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.rule-menu')).toBeNull();
+  });
+
+  it('opens the menu upward when there is no room below the trigger', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    stubVisibleBottom(800, 120);
+    vi.spyOn(element<HTMLElement>('[data-action="row-actions-series-1"]'), 'getBoundingClientRect').mockReturnValue({
+      top: 700,
+      bottom: 744,
+    } as DOMRect);
+    click('[data-action="row-actions-series-1"]');
+    TestBed.tick();
+
+    expect(element<HTMLElement>('.rule-menu').classList).toContain('rule-menu-above');
+  });
+
+  it('keeps the menu below the trigger when there is room', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    stubVisibleBottom(800, 120);
+    vi.spyOn(element<HTMLElement>('[data-action="row-actions-series-1"]'), 'getBoundingClientRect').mockReturnValue({
+      top: 100,
+      bottom: 144,
+    } as DOMRect);
+    click('[data-action="row-actions-series-1"]');
+    TestBed.tick();
+
+    expect(element<HTMLElement>('.rule-menu').classList).not.toContain('rule-menu-above');
+  });
+
+  it('moves focus to the label field after choosing Modifier from the menu', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    click('[data-action="row-actions-series-1"]');
+    click('[data-action="edit-series-1"]');
+    TestBed.tick();
+
+    expect(document.activeElement?.id).toBe('recurring-rule-label');
   });
 });
