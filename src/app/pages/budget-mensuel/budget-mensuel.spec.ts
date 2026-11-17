@@ -619,6 +619,36 @@ describe('BudgetMensuel', () => {
         ).toBe(true);
         expect(columns.reduce((sum, column) => sum + column.items.length, 0)).toBe(source.length);
       });
+
+      it('keeps the packing invariants across many generated compositions', () => {
+        const RANK: Record<string, number> = { small: 0, medium: 1, large: 2 };
+        let seed = 7;
+        const nextRowCount = (): number => {
+          seed = (seed * 16807) % 2147483647;
+          return seed % 21;
+        };
+
+        for (let round = 0; round < 200; round += 1) {
+          const count = 1 + (round % 30);
+          const source = Array.from({ length: count }, (_, index) => ({ id: `item-${index}`, rowCount: nextRowCount() }));
+          const columns = buildCategoryColumns(source);
+
+          expect(columns.reduce((sum, column) => sum + column.items.length, 0)).toBe(count);
+          expect(columns.every(column => column.items.length > 0)).toBe(true);
+          expect(columns.map(column => RANK[column.size])).toEqual(
+            [...columns.map(column => RANK[column.size])].sort((a, b) => a - b),
+          );
+          for (const column of columns) {
+            expect(new Set(column.items.map(item => sizeGroupOf(item.rowCount))).size).toBe(1);
+            if (column.size === 'large') expect(column.items).toHaveLength(1);
+            if (column.size === 'small') expect(column.items.length).toBeLessThanOrEqual(3);
+            if (column.size === 'medium') expect(column.items.length).toBeLessThanOrEqual(2);
+            if (column.items.length > 1) expect(column.rows).toBeLessThanOrEqual(18);
+          }
+          const large = columns.filter(column => column.size === 'large').map(column => column.rows);
+          expect(large).toEqual([...large].sort((a, b) => a - b));
+        }
+      });
     });
 
     describe('desktop', () => {

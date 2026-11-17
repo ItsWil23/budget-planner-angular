@@ -6,7 +6,7 @@
   /* Largeur maximale du groupe de KPI sur grand écran, centré : évite l'étirement des cartes. */
   --kpi-group-max: 90rem;
   /* Largeur maximale d'une carte de catégorie en desktop : au-delà, le groupe de colonnes est centré. */
-  --card-max: 40rem;
+  --card-max: 30rem;
   /* Hauteur de la topbar mobile (topbar.scss) : cible tactile, padding space-sm et bordures. */
   --topbar-height: calc(var(--size-touch-min) + 2 * var(--space-sm) + 2 * var(--border-width));
   /* Hauteur de la rangée de raccourcis : cible tactile et padding space-xs. */

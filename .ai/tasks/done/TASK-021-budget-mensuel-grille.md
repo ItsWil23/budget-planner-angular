@@ -44,6 +44,7 @@ Mesure du 2026-11-16 avec quatre catégories : deux colonnes à toutes les large
 - Implémentation commitée dans `53621f4` (`feat: cap budget category cards on wide screens`).
 - Mesures après implémentation : à 1920 et 2560 px, cartes plafonnées à 640 px et groupe centré (marges égales de 140 px et 460 px). À 1024, 1280 et 1600 px, rendu inchangé (cartes de 325 à 620 px). À 375 px, aucun changement ni débordement.
 - Thèmes clair et sombre vérifiés à 2560 px.
+- Ajustement du 2026-11-17 : plafond ramené de 40rem à 30rem (480 px), groupe toujours centré (marges de 300 px à 1920 px et 620 px à 2560 px).
 - Nettoyage SCSS : seule règle morte trouvée, `.manager-placeholder`, supprimée. Les autres sélecteurs servent aux modes `columns` et `balanced`.
 - Reliquat : `budget-mensuel.scss` reste au-dessus du budget de 4 kB (7,02 kB au lieu de 7,03 kB) ; ce gain n'a pas été chassé au-delà du nettoyage sans perte de rendu, à traiter dans une tâche dédiée si nécessaire.
 - Validations : deux typechecks, 573 tests sur 35 fichiers, build (avertissements SCSS préexistants), `git diff --check`.
