@@ -30,13 +30,13 @@ Avis du PM : l'option 1 masque trop d'information à cette largeur. L'option 3 e
 ### Ce qu'il faut faire
 1. Dans `budget-mensuel.scss`, appliquer `overflow-wrap: break-word`, `hyphens: auto` et une limite de deux lignes à `.card-name` et `.line-name`. `.card-name` est un conteneur flex, où la limite de lignes ne s'applique pas : le texte passe par un enfant `.card-name-text`.
 2. Dans `budget-mensuel.html`, envelopper le nom de catégorie dans un enfant `.card-name-text`. Pas d'attribut `title` (option 1 écartée).
-3. Synchroniser l'attribut `lang` de la balise `html` avec la langue active (FR ou EN), à l'exécution. L'emplacement exact (réglages ou Transloco) est à confirmer à l'implémentation ; `src/index.html` garde `lang="en"` comme valeur de départ.
-4. Ajouter dans `budget-mensuel.spec.ts` un test de structure (enfant `.card-name-text`, nom complet conservé) et un test de `lang` synchronisé avec la langue. La mise en page n'est pas calculée par jsdom : elle est vérifiée dans le navigateur.
+3. Synchroniser l'attribut `lang` de `<html>` avec la langue active de Transloco, dans `src/app/app.ts` (et non dans les réglages). `src/index.html` garde `lang="en"` comme valeur de départ, remplacée au démarrage.
+4. Tests : `budget-mensuel.spec.ts` (structure `.card-name-text`, nom complet conservé) et `app.spec.ts` (`lang` suit la langue active). La mise en page n'est pas calculée par jsdom : elle est vérifiée dans le navigateur.
 
 ### Fichiers concernés
 - `src/app/pages/budget-mensuel/budget-mensuel.scss`
 - `src/app/pages/budget-mensuel/budget-mensuel.html`
-- Fichier qui synchronise `lang` avec la langue active, et `src/index.html` (à confirmer)
+- `src/app/app.ts` et `src/app/app.spec.ts` (synchronisation de `lang`)
 - `src/app/pages/budget-mensuel/budget-mensuel.spec.ts`
 
 ### Critères d'acceptation
