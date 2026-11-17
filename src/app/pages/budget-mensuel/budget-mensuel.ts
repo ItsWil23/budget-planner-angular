@@ -71,6 +71,7 @@ const MEDIUM_MAX_ROWS = 10;
 // Doit rester égal à --space-lg, l'espace entre colonnes du mode desktop.
 const COLUMN_GAP_PX = 16;
 const MIN_COLUMN_WIDTH_PX = 320;
+const MAX_COLUMNS = 5;
 const DESKTOP_QUERY = '(min-width: 1024px)';
 const CARD_ID_PREFIX = 'budget-category-';
 
@@ -121,6 +122,51 @@ export function buildCategoryColumns<T extends SizedItem>(items: readonly T[]): 
     .sort((first, second) => first.rowCount - second.rowCount)
     .map(item => ({ size: 'large', items: [item], rows: item.rowCount }));
   return [...packSmallColumns(bySize('small')), ...pairMediumColumns(bySize('medium')), ...largeColumns];
+}
+
+export type ColumnPlan<T extends SizedItem> =
+  | { readonly mode: 'columns'; readonly columns: ColumnSpec<T>[] }
+  | { readonly mode: 'balanced' };
+
+/** Nombre de colonnes de catégories possibles pour une largeur donnée, au plus 5. */
+export function maxColumnsFor(width: number): number {
+  return Math.min(MAX_COLUMNS, Math.floor((width + COLUMN_GAP_PX) / (MIN_COLUMN_WIDTH_PX + COLUMN_GAP_PX)));
+}
+
+/**
+ * Réduit le regroupement à `maxColumns` colonnes en fusionnant des colonnes adjacentes de même groupe.
+ * Bascule en disposition équilibrée si les grandes catégories et les groupes présents ne tiennent pas.
+ */
+export function planCategoryColumns<T extends SizedItem>(items: readonly T[], maxColumns: number): ColumnPlan<T> {
+  if (maxColumns < 2 || items.length === 0) return { mode: 'balanced' };
+  const columns = buildCategoryColumns(items);
+  const largeCount = columns.filter(column => column.size === 'large').length;
+  const groupCount = new Set(columns.filter(column => column.size !== 'large').map(column => column.size)).size;
+  if (largeCount + groupCount > maxColumns) return { mode: 'balanced' };
+
+  let merged = columns;
+  while (merged.length > maxColumns) {
+    let index = -1;
+    let rows = Infinity;
+    for (let candidate = 0; candidate < merged.length - 1; candidate += 1) {
+      const first = merged[candidate];
+      const second = merged[candidate + 1];
+      if (first.size === 'large' || first.size !== second.size) continue;
+      if (first.rows + second.rows < rows) {
+        rows = first.rows + second.rows;
+        index = candidate;
+      }
+    }
+    if (index < 0) return { mode: 'balanced' };
+    const first = merged[index];
+    const second = merged[index + 1];
+    merged = [
+      ...merged.slice(0, index),
+      { size: first.size, items: [...first.items, ...second.items], rows },
+      ...merged.slice(index + 2),
+    ];
+  }
+  return { mode: 'columns', columns: merged };
 }
 
 /**
@@ -242,14 +288,16 @@ export class BudgetMensuel {
     }));
   });
 
-  protected readonly columns = computed(() => buildCategoryColumns(this.categories()));
+  protected readonly plan = computed<ColumnPlan<CategoryView>>(() =>
+    this.isDesktop() ? planCategoryColumns(this.categories(), maxColumnsFor(this.hostWidth())) : { mode: 'balanced' },
+  );
 
-  protected readonly layout = computed<TableLayout>(() => {
-    const columnCount = this.columns().length;
-    if (!this.isDesktop() || columnCount === 0) return 'balanced';
-    const requiredWidth = columnCount * MIN_COLUMN_WIDTH_PX + (columnCount - 1) * COLUMN_GAP_PX;
-    return this.hostWidth() >= requiredWidth ? 'columns' : 'balanced';
+  protected readonly columns = computed(() => {
+    const plan = this.plan();
+    return plan.mode === 'columns' ? plan.columns : [];
   });
+
+  protected readonly layout = computed<TableLayout>(() => this.plan().mode);
 
   constructor() {
     this.trackHostWidth();
