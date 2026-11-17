@@ -849,6 +849,14 @@ describe('BudgetMensuel', () => {
         expect(cards.every(card => card.open)).toBe(true);
       });
 
+      it('keeps each category name whole in its clamped text element', () => {
+        const names = elementsOf<HTMLElement>('.card-head .card-name');
+        expect(elementsOf('.card-head .card-name-text')).toHaveLength(categoryCount());
+        for (const name of names) {
+          expect(name.querySelector('.card-name-text')?.textContent?.trim()).toBe(name.textContent?.trim());
+        }
+      });
+
       it('gives each shortcut a target card', () => {
         const shortcuts = elementsOf<HTMLAnchorElement>('a.shortcut');
         expect(shortcuts).toHaveLength(categoryCount());

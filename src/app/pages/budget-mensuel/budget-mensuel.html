@@ -70,7 +70,7 @@
 </section>
 
 <ng-template #cardHead let-category>
-  <span class="card-name">{{ category.name }}</span>
+  <span class="card-name"><span class="card-name-text">{{ category.name }}</span></span>
   <span class="total">
     <span class="total-label">{{ 'budgetMensuel.table.columns.planned' | transloco }}</span>
     <span class="total-value">{{ cardAmount(category.plannedCents) | money: settings() : cardSign(category.plannedCents, category.type) }}</span>
