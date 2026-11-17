@@ -130,68 +130,109 @@
               [class.rule-series-expanded]="expandedSeriesId() === group.seriesId"
               [attr.data-series-id]="group.seriesId"
             >
-              <button
-                type="button"
-                class="rule-summary"
-                [attr.data-action]="'row-actions-' + group.seriesId"
-                [attr.aria-label]="'budgetMensuel.recurringRules.actions' | transloco: { name: group.latest.label }"
-                [attr.aria-expanded]="expandedSeriesId() === group.seriesId"
-                (click)="toggleSeries(group.seriesId)"
-              >
-                  <span class="rule-summary-primary">
-                    <span class="rule-label">{{ group.latest.label }}</span>
-                    <span class="rule-amount-status">
-                      <span class="rule-amount">{{ group.latest.amountCents | money: settings() }}</span>
-                      <span class="rule-status">{{ ruleStatusKey(group.latest) | transloco }}</span>
-                    </span>
-                  </span>
-                  <span class="rule-summary-secondary">
-                    <span class="rule-category">{{ group.categoryName }} / {{ group.subcategoryName }}</span>
-                    <span class="rule-period">
-                      {{ periodStartKey(group.latest) | transloco: { month: displayMonth(group.latest.startMonth) } }}
-                      @if (group.latest.endMonth) {
-                        <span class="rule-period-end">{{ 'budgetMensuel.recurringRules.toMonth' | transloco: { month: displayMonth(group.latest.endMonth) } }}</span>
-                      }
-                    </span>
-                  </span>
-              </button>
-              @if (expandedSeriesId() === group.seriesId) {
-                <div class="rule-expanded-content">
-                  <div class="rule-actions">
-                    @if (canEdit(group.latest)) {
-                      <button type="button" [attr.data-action]="'edit-' + group.seriesId" (click)="startEdit(group.latest)">
-                        {{ 'budgetMensuel.recurringRules.edit' | transloco }}
-                      </button>
-                    }
-                    <button
-                      type="button"
-                      [attr.data-action]="(shouldActivate(group.latest) ? 'activate-' : 'deactivate-') + group.seriesId"
-                      (click)="setRuleActive(group.latest, shouldActivate(group.latest))"
-                    >
-                      {{ (shouldActivate(group.latest) ? 'budgetMensuel.recurringRules.activate' : 'budgetMensuel.recurringRules.deactivate') | transloco }}
-                    </button>
+              <div class="rule-row">
+                @if (group.versions.length > 1) {
+                  <button
+                    type="button"
+                    class="rule-summary"
+                    [attr.data-action]="'history-' + group.seriesId"
+                    [attr.aria-expanded]="expandedSeriesId() === group.seriesId"
+                    (click)="toggleSeries(group.seriesId)"
+                  >
+                    <ng-container *ngTemplateOutlet="ruleSummary; context: { $implicit: group }" />
+                  </button>
+                } @else {
+                  <div class="rule-summary">
+                    <ng-container *ngTemplateOutlet="ruleSummary; context: { $implicit: group }" />
                   </div>
-                  @if (group.versions.length > 1) {
-                    <ol class="rule-history" [attr.aria-label]="'budgetMensuel.recurringRules.history' | transloco">
-                      @for (version of group.versions; track version.id) {
-                        @if (version.id !== group.latest.id) {
-                          <li>
-                            <span>{{ version.label }}</span>
-                            <span>{{ version.amountCents | money: settings() }}</span>
-                            <span>{{ periodStartKey(version) | transloco: { month: displayMonth(version.startMonth) } }}</span>
-                            @if (version.endMonth) {
-                              <span class="rule-period-end">{{ 'budgetMensuel.recurringRules.toMonth' | transloco: { month: displayMonth(version.endMonth) } }}</span>
-                            }
-                          </li>
-                        }
+                }
+                <div class="rule-menu-wrap">
+                  <button
+                    type="button"
+                    class="rule-menu-trigger"
+                    aria-haspopup="menu"
+                    [attr.data-action]="'row-actions-' + group.seriesId"
+                    [attr.data-menu-trigger]="group.seriesId"
+                    [attr.aria-expanded]="openMenuSeriesId() === group.seriesId"
+                    [attr.aria-label]="'budgetMensuel.recurringRules.actions' | transloco: { name: group.latest.label }"
+                    (click)="toggleMenu(group.seriesId, $event)"
+                  >
+                    <svg class="rule-menu-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                      <circle cx="4" cy="10" r="1.5" />
+                      <circle cx="10" cy="10" r="1.5" />
+                      <circle cx="16" cy="10" r="1.5" />
+                    </svg>
+                  </button>
+                  @if (openMenuSeriesId() === group.seriesId) {
+                    <div
+                      class="rule-menu"
+                      [class.rule-menu-above]="menuPlacement() === 'above'"
+                      role="menu"
+                      [attr.aria-label]="'budgetMensuel.recurringRules.actions' | transloco: { name: group.latest.label }"
+                      (keydown)="onMenuKeydown($event, group.seriesId)"
+                    >
+                      @if (canEdit(group.latest)) {
+                        <button
+                          type="button"
+                          role="menuitem"
+                          [attr.data-action]="'edit-' + group.seriesId"
+                          (click)="editFromMenu(group.latest)"
+                        >
+                          {{ 'budgetMensuel.recurringRules.edit' | transloco }}
+                        </button>
                       }
-                    </ol>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        [attr.data-action]="(shouldActivate(group.latest) ? 'activate-' : 'deactivate-') + group.seriesId"
+                        (click)="setRuleActiveFromMenu(group, shouldActivate(group.latest))"
+                      >
+                        {{ (shouldActivate(group.latest) ? 'budgetMensuel.recurringRules.activate' : 'budgetMensuel.recurringRules.deactivate') | transloco }}
+                      </button>
+                    </div>
                   }
+                </div>
+              </div>
+              @if (expandedSeriesId() === group.seriesId && group.versions.length > 1) {
+                <div class="rule-expanded-content">
+                  <ol class="rule-history" [attr.aria-label]="'budgetMensuel.recurringRules.history' | transloco">
+                    @for (version of group.versions; track version.id) {
+                      @if (version.id !== group.latest.id) {
+                        <li>
+                          <span>{{ version.label }}</span>
+                          <span>{{ version.amountCents | money: settings() }}</span>
+                          <span>{{ periodStartKey(version) | transloco: { month: displayMonth(version.startMonth) } }}</span>
+                          @if (version.endMonth) {
+                            <span class="rule-period-end">{{ 'budgetMensuel.recurringRules.toMonth' | transloco: { month: displayMonth(version.endMonth) } }}</span>
+                          }
+                        </li>
+                      }
+                    }
+                  </ol>
                 </div>
               }
             </li>
           }
         </ul>
+
+        <ng-template #ruleSummary let-group>
+          <span class="rule-summary-primary">
+            <span class="rule-label">{{ group.latest.label }}</span>
+            <span class="rule-amount-status">
+              <span class="rule-amount">{{ group.latest.amountCents | money: settings() }}</span>
+              <span class="rule-status">{{ ruleStatusKey(group.latest) | transloco }}</span>
+            </span>
+          </span>
+          <span class="rule-summary-secondary">
+            <span class="rule-category">{{ group.categoryName }} / {{ group.subcategoryName }}</span>
+            <span class="rule-period">
+              {{ periodStartKey(group.latest) | transloco: { month: displayMonth(group.latest.startMonth) } }}
+              @if (group.latest.endMonth) {
+                <span class="rule-period-end">{{ 'budgetMensuel.recurringRules.toMonth' | transloco: { month: displayMonth(group.latest.endMonth) } }}</span>
+              }
+            </span>
+          </span>
+        </ng-template>
       }
     </div>
   </app-modal>
