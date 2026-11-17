@@ -11,7 +11,7 @@ import { MonthContextService } from '../../services/month-context';
 import { RecurringRuleService } from '../../services/recurring-rule';
 import { SettingsService } from '../../services/settings';
 import { TransactionService } from '../../services/transaction';
-import { BudgetMensuel, buildCategoryColumns, sizeGroupOf, type ColumnSpec } from './budget-mensuel';
+import { BudgetMensuel, buildCategoryColumns, maxColumnsFor, planCategoryColumns, sizeGroupOf, type ColumnSpec } from './budget-mensuel';
 
 const TEST_MONTH = '2026-07';
 const MINUS_SIGN = '\u2212';
@@ -647,6 +647,70 @@ describe('BudgetMensuel', () => {
           }
           const large = columns.filter(column => column.size === 'large').map(column => column.rows);
           expect(large).toEqual([...large].sort((a, b) => a - b));
+        }
+      });
+
+      it('maps the available width to at most five columns', () => {
+        expect([655, 656, 992, 9999].map(maxColumnsFor)).toEqual([1, 2, 3, 5]);
+      });
+
+      it('merges adjacent columns of the same group down to the maximum column count', () => {
+        const plan = planCategoryColumns(itemsOf(1, 1, 1, 1, 6, 6, 6, 6), 3);
+        expect(plan.mode).toBe('columns');
+        if (plan.mode === 'columns') {
+          expect(rowsByColumn(plan.columns)).toEqual([[1, 1, 1, 1], [6, 6], [6, 6]]);
+        }
+      });
+
+      it('never merges large categories', () => {
+        const plan = planCategoryColumns(itemsOf(12, 13, 14), 3);
+        expect(plan.mode).toBe('columns');
+        if (plan.mode === 'columns') {
+          expect(plan.columns.map(column => column.size)).toEqual(['large', 'large', 'large']);
+          expect(plan.columns.every(column => column.items.length === 1)).toBe(true);
+        }
+      });
+
+      it('switches to balanced when the large categories and groups cannot fit the column count', () => {
+        expect(planCategoryColumns(itemsOf(12, 13, 14, 15, 16, 17), 5).mode).toBe('balanced');
+        expect(planCategoryColumns(itemsOf(1, 12, 13), 2).mode).toBe('balanced');
+        expect(planCategoryColumns(itemsOf(1, 1, 12), 2).mode).toBe('columns');
+      });
+
+      it('switches to balanced below two columns', () => {
+        expect(planCategoryColumns(itemsOf(1, 2), 1).mode).toBe('balanced');
+      });
+
+      it('keeps the merged layout invariants across many generated compositions', () => {
+        const RANK: Record<string, number> = { small: 0, medium: 1, large: 2 };
+        let seed = 11;
+        const nextRowCount = (): number => {
+          seed = (seed * 16807) % 2147483647;
+          return seed % 21;
+        };
+
+        for (let round = 0; round < 200; round += 1) {
+          const count = 1 + (round % 25);
+          const maxColumns = 2 + (round % 4);
+          const source = Array.from({ length: count }, (_, index) => ({ id: `item-${index}`, rowCount: nextRowCount() }));
+          const plan = planCategoryColumns(source, maxColumns);
+          const columns = buildCategoryColumns(source);
+          const largeCount = columns.filter(column => column.size === 'large').length;
+          const groupCount = new Set(columns.filter(column => column.size !== 'large').map(column => column.size)).size;
+
+          expect(plan.mode === 'balanced').toBe(largeCount + groupCount > maxColumns);
+          if (plan.mode === 'columns') {
+            expect(plan.columns.length).toBeLessThanOrEqual(maxColumns);
+            expect(plan.columns.reduce((sum, column) => sum + column.items.length, 0)).toBe(count);
+            expect(plan.columns.every(column => column.items.length > 0)).toBe(true);
+            expect(plan.columns.map(column => RANK[column.size])).toEqual(
+              [...plan.columns.map(column => RANK[column.size])].sort((a, b) => a - b),
+            );
+            for (const column of plan.columns) {
+              expect(new Set(column.items.map(item => sizeGroupOf(item.rowCount))).size).toBe(1);
+              if (column.size === 'large') expect(column.items).toHaveLength(1);
+            }
+          }
         }
       });
     });
