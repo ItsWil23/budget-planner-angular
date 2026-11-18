@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TransactionList } from '../../components/ui/transaction-list/transaction-list';
 import { CategoryService } from '../../services/category';
@@ -7,6 +7,7 @@ import { Modal } from '../../components/ui/modal/modal';
 import { TransactionForm } from '../../components/ui/transaction-form/transaction-form';
 import { TransactionService } from '../../services/transaction';
 import { BudgetService, TransactionAggregateOverflowError } from '../../services/budget';
+import { MonthContextService } from '../../services/month-context';
 
 @Component({
   selector: 'app-transactions',
@@ -25,7 +26,10 @@ export class Transactions {
   protected readonly transactionService = inject(TransactionService);
   protected readonly budgetService = inject(BudgetService);
 
-  protected readonly transactions = this.transactionService.presentationTransactions;
+  protected readonly monthContext = inject(MonthContextService);
+  protected readonly transactions = computed(() =>
+    this.transactionService.transactionsForMonth(this.monthContext.monthKey()),
+  );
   protected readonly categoryService = inject(CategoryService);
   protected readonly categories = this.categoryService.categories;
   protected readonly subcategories = this.categoryService.subcategories;
@@ -41,7 +45,8 @@ export class Transactions {
       throw error;
     }
 
-    this.transactionService.add(transaction);
+    const added = this.transactionService.add(transaction);
+    this.monthContext.setMonth(added.monthKey);
     this.closeModal();
   }
 

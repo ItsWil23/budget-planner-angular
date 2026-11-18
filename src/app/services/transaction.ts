@@ -6,6 +6,17 @@ import { MoneyService } from './money';
 export const TRANSACTION_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
+ * Date du jour au format AAAA-MM-JJ, en heure locale (et non UTC).
+ */
+export function todayLocalIsoDate(): string {
+  const now = new Date();
+  const year = String(now.getFullYear()).padStart(4, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Valide la date et les centimes d'une saisie de transaction. Partagé par `add()` et par le précontrôle
  * de `BudgetService`, pour que les deux acceptent exactement les mêmes entrées.
  *

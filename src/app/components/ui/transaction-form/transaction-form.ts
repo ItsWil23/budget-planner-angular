@@ -11,6 +11,7 @@ import { TransactionInput } from '../../../models/transactions';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { MoneyService } from '../../../services/money';
+import { todayLocalIsoDate } from '../../../services/transaction';
 
 @Component({
   selector: 'app-transaction-form',
@@ -38,7 +39,7 @@ export class TransactionForm {
     subcategoryId: ['', Validators.required],
     label: ['', Validators.required],
     amountText: ['', [(control: AbstractControl) => this.amountErrors(control.value)]],
-    date: [new Date().toISOString().substring(0, 10), Validators.required],
+    date: [todayLocalIsoDate(), Validators.required],
   });
 
   constructor() {

@@ -281,6 +281,10 @@ Les données budgétaires sont sensibles. Les risques réels, par ordre de gravi
 | 2026-11-06 | Gestion des récurrences : entrée depuis Budget Mensuel, dialogue accessible et adaptatif, liste défilante et création en haut. Création/édition dans le dialogue sans modales imbriquées ; actions de ligne regroupées dans un menu contextuel ; désactivation/réactivation conserve l'historique. |
 | 2026-11-09 | Exactitude monétaire : les saisies décimales utilisateur sont parsées directement en centimes entiers sûrs, et l'affichage monétaire doit formater depuis les centimes sans conversion intermédiaire en flottant en euros. Les migrations de saisie Prévu et Transaction sont séparées. |
 | 2026-11-09 | Synthèse Budget Mensuel : l'île de préparation reste dans un emplacement fixe à gauche de l'île équation ; son contenu reflète l'état préparé/non préparé sans déplacer l'équation. L'équation présente ouverture + revenus prévus − dépenses prévues = clôture budgétée ; le montant non alloué est secondaire. En mobile, les deux îles s'empilent en réservant l'emplacement de préparation. |
+| 2026-11-18 | Transactions : une catégorie sans sous-catégorie reste visible et désactivée en saisie, avec un lien vers la page Catégories pour en créer une (pas de mini-dialogue dans la modale) |
+| 2026-11-18 | Transactions : la date par défaut du formulaire est toujours la date du jour, en heure locale, quel que soit le mois sélectionné |
+| 2026-11-18 | Transactions : la suppression demande une confirmation et reste annulable (undo) |
+| 2026-11-18 | Transactions : après un ajout, le mois affiché bascule automatiquement sur le mois de la transaction ajoutée |
 
 ## 14. Évolutions envisagées (hors périmètre v3)
 
