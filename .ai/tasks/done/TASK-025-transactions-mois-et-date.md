@@ -1,6 +1,6 @@
 ## Tâche : liste des transactions par mois et date par défaut locale
 Lot : 2 (`roadmap.md` § 5, TASK-025)
-Statut : à implémenter
+Statut : livrée et validée le 2026-11-18 ; PR en attente de fusion
 Branche : `feat/lot2-transactions-month` (à créer depuis `main` à jour)
 
 ### Contexte
@@ -45,3 +45,10 @@ Décisions du 2026-11-18 (`product-vision.md` § 13) : la date par défaut est t
 - `product-vision.md` § 13, décision du 2026-11-18 (date par défaut).
 - `domain-model.md` § 2, `Transaction` (`monthKey` dérivé de `date`).
 - `AGENTS.md`, règles générales (services, montants en centimes, signals, pas de `any`).
+
+### Suivi de livraison — 2026-11-18
+- Commits : `fccbd1b` (code), `3ebbedf` (docs : roadmap, décisions, spec), `d747643` (commandes slash, séparé). Archivage sur la même branche.
+- Validations : `npx ng test --no-watch` 35 fichiers, 597 tests verts ; `npm run build` réussi (avertissements de budget SCSS préexistants) ; `tsc` app et spec sans erreur ; `git diff --check` propre ; tests de date verts avec `TZ=Pacific/Kiritimati`. Lint non configuré, non exécuté.
+- Revue usage : rendu validé par l'utilisateur sur mobile et desktop. Thèmes clair et sombre non précisés, à confirmer.
+- Écarts : aucun écart de périmètre. Bascule du mois après ajout ajoutée à la spec avant implémentation (`product-vision.md` § 13, 2026-11-18).
+- Roadmap : statut et numéro de PR à mettre à jour après fusion.
