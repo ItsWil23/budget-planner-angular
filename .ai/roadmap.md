@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-11-16
+> Dernière mise à jour : 2026-11-18
 
 ## 1. Pourquoi cet ordre
 
@@ -142,30 +142,32 @@ Ces sujets sont hors des 13 tâches clôturées et seront découpés en specs s�
 - [x] **TASK-020 — dialogue de gestion des règles récurrentes** : création en tête, liste défilante, édition dans le même dialogue, actions accessibles par menu; date d'effet localisée et choix de synchronisation seulement pour une série existante. Dépend de TASK-019. Fait le 2026-11-16 (PR #59).
 - [x] **TASK-021 — grille Budget Mensuel sur grand écran** : cartes plafonnées à 30rem et groupe centré ; nettoyage SCSS mesuré. Fait le 2026-11-16 (PR #61).
 - [x] **TASK-022 — grille adaptative des catégories selon la largeur** : nombre de colonnes selon la largeur (5 au maximum), groupes conservés, bascule en colonnes équilibrées dans le cas des grandes catégories. Fait le 2026-11-17 (PR #62).
-- [x] **TASK-023 — menu contextuel des actions d'une règle récurrente** : remplacer la ligne dépliable par un menu accessible clavier et tactile, comme prévu initialement pour TASK-020. Fait le 2026-11-17 (PR en attente de fusion).
-- [x] **TASK-024 — cartes étroites sous 340px** : choix d'affichage des noms de catégories et sous-catégories (ellipse, deux lignes ou montants sous le nom), sans coupure lettre par lettre. Fait le 2026-11-17 (PR en attente de fusion).
+- [x] **TASK-023 — menu contextuel des actions d'une règle récurrente** : remplacer la ligne dépliable par un menu accessible clavier et tactile, comme prévu initialement pour TASK-020. Fait le 2026-11-17 (PR #63).
+- [x] **TASK-024 — cartes étroites sous 340px** : choix d'affichage des noms de catégories et sous-catégories (ellipse, deux lignes ou montants sous le nom), sans coupure lettre par lettre. Fait le 2026-11-17 (PR #64).
 - **Validation appareil réel (reportée) :** test du clavier numérique mobile et du signe négatif en attente d'accès à un téléphone ; non bloquant pour la clôture du Lot 1, à reprendre après quelques lots.
+- **Clôture du lot 1 (2026-11-18)** : definition of done atteinte ; la validation appareil réel reste reportée et non bloquante.
 
 ## 5. Lot 2 — Transactions (finalisation)
 
-Déjà fait en phase A : liste, modal, formulaire d'ajout, filtrage catégorie/sous-catégorie. Reste à faire :
+Déjà fait en phase A : liste, modal, formulaire d'ajout, filtrage catégorie/sous-catégorie. Interface de gestion des `RecurringRule` depuis Budget Mensuel livrée (TASK-020, TASK-023).
 
-- Sous-catégorie obligatoire dans le formulaire ; catégorie sans sous-catégorie visible mais désactivée, avec
-  raccourci pour en créer une (`domain-model.md` § 2).
-- Édition et suppression d'une transaction existante (`readOnly` déjà prévu dans `TransactionList`).
-- Styling SCSS selon le nouveau design system (pas encore fait), incluant le débordement horizontal préexistant de la table à 375px (environ 531px de table dans 359px disponibles), repéré pendant TASK-017.
-- Interface de gestion des `RecurringRule` depuis Budget Mensuel : bouton ouvrant un dialogue accessible et adaptatif.
-  Les actions Modifier/Désactiver sont regroupées dans un menu contextuel par ligne, pas affichées en permanence.
-- Pagination et tri : non bloquants pour la definition of done du produit, à faire si le temps le permet.
+### Ordre de réalisation du lot 2 (décidé le 2026-11-18)
 
-Écarts relevés en revue de code du 2026-10-22, à corriger dans ce lot :
+Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` § 2). Spec produite pour chaque tâche avant son démarrage.
 
-- La liste ne filtre pas par mois sélectionné alors que la route est `monthScoped: true` (`MonthContextService`). À traiter comme tâche du Lot 2, pas comme suivi du Lot 1.
-- Date par défaut du formulaire calculée via `toISOString()` (UTC) au lieu de l'heure locale : décale le jour
-  entre minuit et l'heure du fuseau.
-- Montant minimal du formulaire fixé à `Validators.min(0.1)` : exclut les montants de 1 à 9 centimes, à corriger
-  en `Validators.min(0.01)` (le domaine autorise tout centime positif).
-- Génération de l'`id` et dérivation du `type` faites dans `TransactionForm` plutôt que dans `TransactionService`.
+1. [ ] **TASK-025 — liste et formulaire par mois** : liste filtrée sur le mois sélectionné (`MonthContextService`) ; date par défaut = date du jour en heure locale, quel que soit le mois sélectionné ; après un ajout, le mois affiché bascule sur celui de la transaction (décisions du 2026-11-18).
+2. [ ] **TASK-026 — service de transactions** : `update` et `remove` ; dérivation du `type` déplacée de `TransactionForm` vers `TransactionService` ; précontrôle des agrégats et de la cascade du solde avant mutation (comme `assertTransactionAddable`). Testable sans interface.
+3. [ ] **TASK-027 — édition et suppression** : édition dans la modale ; suppression avec confirmation et annulation possible (undo), décision du 2026-11-18.
+4. [ ] **TASK-028 — catégorie sans sous-catégorie** : visible mais désactivée dans le formulaire, avec explication et lien vers la page Catégories (décision du 2026-11-18).
+5. [ ] **TASK-029 — styling** : SCSS selon `DESIGN_SYSTEM.md`, dont le débordement horizontal de la table à 375px (environ 531px de table dans 359px disponibles), repéré pendant TASK-017.
+6. [ ] **TASK-030 (optionnelle) — pagination et tri** : non bloquants pour la definition of done du produit.
+
+Écarts relevés en revue de code du 2026-10-22, état au 2026-11-18 :
+
+- Liste non filtrée par mois : à traiter en TASK-025.
+- Date par défaut calculée via `toISOString()` (UTC) : à traiter en TASK-025.
+- Montant minimal `Validators.min(0.1)` : **résolu** par TASK-016 (saisie en centimes via `parseEurosInput`, tout centime positif accepté).
+- Génération de l'`id` : **déjà faite** dans `TransactionService.add()`. Reste la dérivation du `type` dans `TransactionForm`, à traiter en TASK-026.
 
 ## 6. Lot 3 — Dashboard
 
