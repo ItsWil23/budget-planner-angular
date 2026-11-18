@@ -1,0 +1,70 @@
+:host {
+  display: contents;
+}
+
+.rule-menu-wrap {
+  position: relative;
+}
+
+.rule-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--size-touch-min);
+  min-height: var(--size-touch-min);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.rule-menu-icon {
+  width: var(--size-icon);
+  height: var(--size-icon);
+  fill: currentColor;
+}
+
+.rule-menu {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: calc(100% + var(--space-xs));
+  inset-inline-end: 0;
+  display: grid;
+  min-inline-size: 12rem;
+  padding: var(--space-xs);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-card);
+}
+
+.rule-menu-above {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + var(--space-xs));
+}
+
+/* Les items sont projetés par le parent : leurs styles doivent traverser l'encapsulation. */
+:host ::ng-deep .rule-menu [role='menuitem'] {
+  box-sizing: border-box;
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-md);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font: var(--text-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+:host ::ng-deep .rule-menu [role='menuitem']:hover {
+  background-color: var(--color-accent-soft);
+}
+
+.rule-menu-trigger:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-accent);
+  outline-offset: var(--size-focus-offset);
+}

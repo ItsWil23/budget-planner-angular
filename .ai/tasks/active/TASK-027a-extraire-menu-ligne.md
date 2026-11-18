@@ -1,7 +1,7 @@
 ## Tâche : extraire le menu « ⋯ » de ligne en composant partagé
 Lot : 2 (`roadmap.md` § 5, TASK-027a, prérequis de TASK-027b et TASK-027c)
 Statut : à implémenter
-Branche : `feat/lot2-row-menu` (à créer depuis `main` à jour)
+Branche : `feat/lot2-transactions-edit-delete` (branche commune à TASK-027a, 027b et 027c ; une seule PR à la fin)
 
 ### Contexte
 Le menu « ⋯ » par ligne de TASK-023 (règles récurrentes) est codé directement dans `recurring-rule-manager` : bouton déclencheur, panneau `role="menu"`, placement au-dessus ou en dessous selon la place disponible, navigation clavier (flèches, Début, Fin, Échap, Tab) et fermeture au clic extérieur. Les transactions (TASK-027b et TASK-027c) ont besoin du même menu. `AGENTS.md` demande de réutiliser un composant existant plutôt que de dupliquer : cette tâche le sort de `recurring-rule-manager` dans `components/ui/row-menu`, sans changer ni le comportement ni l'apparence.

@@ -1,0 +1,32 @@
+<div class="rule-menu-wrap">
+  <button
+    #trigger
+    type="button"
+    class="rule-menu-trigger"
+    aria-haspopup="menu"
+    [attr.data-action]="triggerAction()"
+    [attr.data-menu-trigger]="menuKey()"
+    [attr.aria-expanded]="opened()"
+    [attr.aria-label]="label()"
+    (click)="toggle($event)"
+  >
+    <svg class="rule-menu-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <circle cx="4" cy="10" r="1.5" />
+      <circle cx="10" cy="10" r="1.5" />
+      <circle cx="16" cy="10" r="1.5" />
+    </svg>
+  </button>
+  @if (opened()) {
+    <div
+      #menu
+      class="rule-menu"
+      [class.rule-menu-above]="placement() === 'above'"
+      role="menu"
+      [attr.aria-label]="label()"
+      (keydown)="onMenuKeydown($event)"
+      (click)="onMenuClick($event)"
+    >
+      <ng-content />
+    </div>
+  }
+</div>
