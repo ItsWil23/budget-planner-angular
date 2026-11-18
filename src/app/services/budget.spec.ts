@@ -19,7 +19,7 @@ describe('Budget Service', () => {
 
   beforeEach(() => {
     categoryService = new CategoryService();
-    transactionService = new TransactionService(new MoneyService());
+    transactionService = new TransactionService(new MoneyService(), categoryService);
     monthContext = new MonthContextService();
     recurringRuleService = new RecurringRuleService(monthContext);
     service = new BudgetService(
@@ -124,7 +124,6 @@ describe('Budget Service', () => {
       label: 'Test dépense',
       categoryId: 'cat-2',
       subcategoryId: 'sub-2',
-      type: 'expense',
       date: '2026-10-09',
       amountCents: 1,
     };
@@ -132,7 +131,6 @@ describe('Budget Service', () => {
       label: 'Test revenu',
       categoryId: 'cat-1',
       subcategoryId: 'sub-1',
-      type: 'income',
       date: '2026-10-09',
       amountCents: 1,
     };
@@ -185,6 +183,44 @@ describe('Budget Service', () => {
       expect(transactionService.transactions()).toBe(transactionsBefore);
       expect(service.openingBalanceCentsFor('2026-08')).toBe(augustOpeningBefore);
       expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(Number.MAX_SAFE_INTEGER);
+    });
+
+    it('refuse sans mutation une suppression qui ferait dépasser le solde de clôture par la cascade', () => {
+      transactionService.add({ ...incomeInput, date: '2026-07-15', amountCents: 1000 });
+      const expense = transactionService.add({ ...expenseInput, date: '2026-07-15', amountCents: 100 });
+      service.openMonth('2026-07');
+      service.openMonth('2026-08');
+      const julyNet = service.actualClosingBalanceCentsFor('2026-07') - service.openingBalanceCentsFor('2026-07');
+      service.setOpeningBalanceOverride('2026-07', Number.MAX_SAFE_INTEGER - 50 - julyNet);
+      const transactionsBefore = transactionService.transactions();
+
+      expect(() => service.assertTransactionRemovable(expense.id)).toThrow(TransactionAggregateOverflowError);
+      expect(transactionService.transactions()).toBe(transactionsBefore);
+      expect(service.actualClosingBalanceCentsFor('2026-07')).toBe(Number.MAX_SAFE_INTEGER - 50);
+    });
+
+    it('refuse sans mutation une modification qui ferait dépasser la somme réelle de la nouvelle sous-catégorie', () => {
+      const expense = transactionService.add({ ...expenseInput, subcategoryId: 'sub-3', amountCents: 1 });
+      const transactionsBefore = transactionService.transactions();
+
+      expect(() =>
+        service.assertTransactionUpdatable(expense.id, {
+          ...expenseInput,
+          amountCents: Number.MAX_SAFE_INTEGER,
+        }),
+      ).toThrow(TransactionAggregateOverflowError);
+      expect(transactionService.transactions()).toBe(transactionsBefore);
+    });
+
+    it('contrôle une modification qui change le type (revenu → dépense) contre les totaux de dépenses', () => {
+      const income = transactionService.add(incomeInput);
+      const transactionsBefore = transactionService.transactions();
+
+      expect(() =>
+        service.assertTransactionUpdatable(income.id, { ...expenseInput, amountCents: Number.MAX_SAFE_INTEGER }),
+      ).toThrow(TransactionAggregateOverflowError);
+      expect(transactionService.transactions()).toBe(transactionsBefore);
+      expect(() => service.assertTransactionUpdatable(income.id, expenseInput)).not.toThrow();
     });
   });
 
@@ -941,7 +977,6 @@ describe('Budget Service', () => {
         categoryId: 'cat-2',
         subcategoryId: 'sub-2',
         date: '2026-07-15',
-        type: 'expense',
         amountCents: 1000,
       });
       expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
@@ -956,7 +991,6 @@ describe('Budget Service', () => {
         categoryId: 'cat-2',
         subcategoryId: 'sub-2',
         date: '2026-08-10',
-        type: 'expense',
         amountCents: 500,
       });
       expect(findSubcategory(service.monthSummary(), 'sub-2').actualAmountCents).toBe(86000);
@@ -1007,7 +1041,6 @@ describe('Budget Service', () => {
         categoryId: 'cat-2',
         subcategoryId: 'sub-2',
         date: '2026-07-15',
-        type: 'expense',
         amountCents: 10000,
       });
 
@@ -1046,7 +1079,6 @@ describe('Budget Service', () => {
         categoryId: 'cat-2',
         subcategoryId: 'sub-2',
         date: '2026-07-20',
-        type: 'expense',
         amountCents: 1000,
       });
 
@@ -1070,7 +1102,6 @@ describe('Budget Service', () => {
         categoryId: 'cat-2',
         subcategoryId: 'sub-2',
         date: '2026-07-20',
-        type: 'expense',
         amountCents: 1000,
       });
 
@@ -1164,7 +1195,6 @@ describe('Budget Service', () => {
         categoryId: 'cat-2',
         subcategoryId: 'sub-2',
         date: '2026-08-20',
-        type: 'expense',
         amountCents: 1000,
       });
       expect(service.monthSummary().actualClosingBalanceCents).toBe(

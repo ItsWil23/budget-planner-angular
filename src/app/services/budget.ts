@@ -10,11 +10,11 @@ import {
   BudgetSubcategorySummary,
 } from '../models/budget-summary';
 import { RecurringRule, RecurringRuleVersionChange } from '../models/recurring-rule';
-import { Transaction, TransactionInput } from '../models/transactions';
+import { RemovedTransaction, Transaction, TransactionInput } from '../models/transactions';
 import { CategoryService } from './category';
 import { MonthContextService } from './month-context';
 import { RecurringRuleService } from './recurring-rule';
-import { assertValidTransactionInput, TransactionService } from './transaction';
+import { assertValidTransactionInput, resolveTransactionType, TransactionService } from './transaction';
 
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -185,6 +185,21 @@ function computeMonthBalances(
   return balances;
 }
 
+/** Ce qui détermine les totaux et la cascade d'une transaction pendant le précontrôle. */
+type TransactionFootprint = Pick<
+  Transaction,
+  'categoryId' | 'subcategoryId' | 'monthKey' | 'amountCents' | 'type'
+>;
+
+function netByMonthKey(transactions: readonly TransactionFootprint[]): Map<string, bigint> {
+  const netByKey = new Map<string, bigint>();
+  for (const transaction of transactions) {
+    const cents = BigInt(transaction.amountCents);
+    const net = transaction.type === 'income' ? cents : -cents;
+    netByKey.set(transaction.monthKey, (netByKey.get(transaction.monthKey) ?? BigInt(0)) + net);
+  }
+  return netByKey;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -496,73 +511,127 @@ export class BudgetService {
   }
 
   /**
-   * Précontrôle synchrone et sans mutation d'un ajout de transaction. Vérifie en BigInt que la somme réelle
-   * de la sous-catégorie, de la catégorie et du type (revenus ou dépenses) du mois restent sûres, puis simule
-   * la cascade des soldes d'ouverture et de clôture (mois initialisés et mois suivants) avant et après l'ajout.
+   * Précontrôle synchrone et sans mutation d'un ajout de transaction. Doit être suivi immédiatement, sans attente,
+   * de `TransactionService.add()` avec la même saisie.
    *
-   * Doit être suivi immédiatement, sans attente, de `TransactionService.add()` avec la même saisie.
-   *
-   * @throws Error si la date ou le montant ne sont pas valides
+   * @throws Error si la date, le montant, la catégorie ou la sous-catégorie ne sont pas valides
    * @throws TransactionAggregateOverflowError si un total réel ou un solde propagé ne serait plus sûr
    */
   assertTransactionAddable(input: TransactionInput): void {
     assertValidTransactionInput(input);
+    this.assertTransactionMutationSafe(null, this.footprintOfInput(input));
+  }
 
-    const monthKey = input.date.slice(0, 7);
-    const candidateCents = BigInt(input.amountCents);
-    const candidateIsIncome = input.type === 'income';
-    const transactions = this.transactionService.transactions();
+  /**
+   * Précontrôle synchrone et sans mutation d'une modification. Doit être suivi immédiatement, sans attente,
+   * de `TransactionService.update()` avec le même `id` et la même saisie.
+   *
+   * @throws Error si la saisie n'est pas valide ou si la transaction est introuvable
+   * @throws TransactionAggregateOverflowError si un total réel ou un solde propagé ne serait plus sûr
+   */
+  assertTransactionUpdatable(id: string, input: TransactionInput): void {
+    assertValidTransactionInput(input);
+    const current = this.findTransactionOrThrow(id);
+    this.assertTransactionMutationSafe(current, this.footprintOfInput(input));
+  }
 
-    const sumWhere = (predicate: (transaction: Transaction) => boolean): bigint =>
-      transactions.reduce(
-        (total, transaction) =>
-          predicate(transaction) ? total + BigInt(transaction.amountCents) : total,
-        BigInt(0),
-      );
-    const sameMonth = (transaction: Transaction): boolean => transaction.monthKey === monthKey;
+  /**
+   * Précontrôle synchrone et sans mutation d'une suppression. Doit être suivi immédiatement, sans attente,
+   * de `TransactionService.remove()` avec le même `id`.
+   *
+   * @throws Error('Transaction not found') si la transaction est introuvable
+   * @throws TransactionAggregateOverflowError si un solde propagé ne serait plus sûr
+   */
+  assertTransactionRemovable(id: string): void {
+    this.assertTransactionMutationSafe(this.findTransactionOrThrow(id), null);
+  }
 
-    const subcategoryTotal =
-      sumWhere(
-        transaction =>
-          sameMonth(transaction) && transaction.subcategoryId === input.subcategoryId,
-      ) + candidateCents;
-    const categoryTotal =
-      sumWhere(
-        transaction => sameMonth(transaction) && transaction.categoryId === input.categoryId,
-      ) + candidateCents;
-    const typeTotal =
-      sumWhere(
-        transaction =>
-          sameMonth(transaction) && (transaction.type === 'income') === candidateIsIncome,
-      ) + candidateCents;
-    if (
-      subcategoryTotal > MAX_SAFE_CENTS_BIGINT ||
-      categoryTotal > MAX_SAFE_CENTS_BIGINT ||
-      typeTotal > MAX_SAFE_CENTS_BIGINT
-    ) {
-      throw new TransactionAggregateOverflowError();
+  /**
+   * Précontrôle synchrone et sans mutation d'une restauration. Doit être suivi immédiatement, sans attente,
+   * de `TransactionService.restore()` avec la même valeur.
+   *
+   * @throws Error('Transaction already exists') si une transaction de même `id` est déjà présente
+   * @throws TransactionAggregateOverflowError si un total réel ou un solde propagé ne serait plus sûr
+   */
+  assertTransactionRestorable(removed: RemovedTransaction): void {
+    const alreadyPresent = this.transactionService
+      .transactions()
+      .some(transaction => transaction.id === removed.transaction.id);
+    if (alreadyPresent) {
+      throw new Error('Transaction already exists');
     }
+    this.assertTransactionMutationSafe(null, removed.transaction);
+  }
 
-    const netBeforeByMonthKey = new Map<string, bigint>();
-    for (const transaction of transactions) {
-      const cents = BigInt(transaction.amountCents);
-      const net = transaction.type === 'income' ? cents : -cents;
-      netBeforeByMonthKey.set(
-        transaction.monthKey,
-        (netBeforeByMonthKey.get(transaction.monthKey) ?? BigInt(0)) + net,
-      );
+  private findTransactionOrThrow(id: string): Transaction {
+    const transaction = this.transactionService.transactions().find(current => current.id === id);
+    if (!transaction) {
+      throw new Error('Transaction not found');
     }
-    const netAfterByMonthKey = new Map(netBeforeByMonthKey);
-    netAfterByMonthKey.set(
-      monthKey,
-      (netAfterByMonthKey.get(monthKey) ?? BigInt(0)) +
-        (candidateIsIncome ? candidateCents : -candidateCents),
+    return transaction;
+  }
+
+  private footprintOfInput(input: TransactionInput): TransactionFootprint {
+    return {
+      categoryId: input.categoryId,
+      subcategoryId: input.subcategoryId,
+      monthKey: input.date.slice(0, 7),
+      amountCents: input.amountCents,
+      type: resolveTransactionType(input, this.categoryService),
+    };
+  }
+
+  /**
+   * Simule, sans rien modifier, le retrait d'une transaction (`removed`) puis l'ajout d'une autre (`added`).
+   * Vérifie en BigInt les sommes réelles de la sous-catégorie, de la catégorie et du type des clés touchées,
+   * puis compare la cascade des soldes d'ouverture et de clôture avant et après.
+   */
+  private assertTransactionMutationSafe(
+    removed: Transaction | null,
+    added: TransactionFootprint | null,
+  ): void {
+    const current: readonly Transaction[] = this.transactionService.transactions();
+    const remaining = removed ? current.filter(transaction => transaction.id !== removed.id) : current;
+    const after: readonly TransactionFootprint[] = added ? [...remaining, added] : remaining;
+    const touched = [removed, added].filter(
+      (footprint): footprint is TransactionFootprint => footprint !== null,
     );
+
+    for (const footprint of touched) {
+      const sumWhere = (predicate: (transaction: TransactionFootprint) => boolean): bigint =>
+        after.reduce(
+          (total, transaction) =>
+            predicate(transaction) ? total + BigInt(transaction.amountCents) : total,
+          BigInt(0),
+        );
+      const sameMonth = (transaction: TransactionFootprint): boolean =>
+        transaction.monthKey === footprint.monthKey;
+
+      const subcategoryTotal = sumWhere(
+        transaction => sameMonth(transaction) && transaction.subcategoryId === footprint.subcategoryId,
+      );
+      const categoryTotal = sumWhere(
+        transaction => sameMonth(transaction) && transaction.categoryId === footprint.categoryId,
+      );
+      const typeTotal = sumWhere(
+        transaction => sameMonth(transaction) && transaction.type === footprint.type,
+      );
+      if (
+        subcategoryTotal > MAX_SAFE_CENTS_BIGINT ||
+        categoryTotal > MAX_SAFE_CENTS_BIGINT ||
+        typeTotal > MAX_SAFE_CENTS_BIGINT
+      ) {
+        throw new TransactionAggregateOverflowError();
+      }
+    }
+
+    const netBeforeByMonthKey = netByMonthKey(current);
+    const netAfterByMonthKey = netByMonthKey(after);
 
     const months = [...this._months()].sort((left, right) =>
       left.monthKey.localeCompare(right.monthKey),
     );
-    const affectedKeys = new Set<string>([monthKey]);
+    const affectedKeys = new Set<string>(touched.map(footprint => footprint.monthKey));
     for (const month of months) {
       affectedKeys.add(month.monthKey);
       affectedKeys.add(shiftMonthKey(month.monthKey, 1));
