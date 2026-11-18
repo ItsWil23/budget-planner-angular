@@ -1,6 +1,6 @@
 ## Tâche : extraire le menu « ⋯ » de ligne en composant partagé
 Lot : 2 (`roadmap.md` § 5, TASK-027a, prérequis de TASK-027b et TASK-027c)
-Statut : à implémenter
+Statut : livrée et validée le 2026-11-18 ; PR en attente (avec 027b et 027c)
 Branche : `feat/lot2-transactions-edit-delete` (branche commune à TASK-027a, 027b et 027c ; une seule PR à la fin)
 
 ### Contexte
@@ -45,3 +45,10 @@ Choix du PM (décidé le 2026-11-18 : extraction d'abord) :
 - `product-vision.md` § 13, décision du 2026-11-06 (actions de ligne regroupées dans un menu contextuel).
 - `DESIGN_SYSTEM.md` : tokens de couleur, d'espacement et de rayon ; aucune ombre portée.
 - `AGENTS.md` : réutiliser avant de créer ; mobile-first ; aucune fonction dépendante du survol.
+
+### Suivi de livraison — 2026-11-18
+- Commits : `84477c7` (extraction du composant), `8c3f657` (renommage des classes en `row-menu-*`, styles des items déplacés chez le parent, sans `::ng-deep`). Même branche que 027b et 027c.
+- Validations : `npx ng test --no-watch` vert, dont les tests existants de `recurring-rule-manager` ; `tsc` app et spec sans erreur ; `npm run build` réussi (avertissements SCSS de budget préexistants) ; `git diff --check` propre. Lint non configuré, non exécuté.
+- Revue usage : validée par l'utilisateur à 375 px et 1280 px, thèmes clair et sombre (menu identique, items conformes).
+- Écarts : branche commune `feat/lot2-transactions-edit-delete` au lieu de `feat/lot2-row-menu` (une seule PR pour TASK-027). Classes renommées : les sélecteurs de `recurring-rule-manager.spec.ts` ont été mis à jour, sans changer les assertions. Le bloc de style des items est dupliqué dans `transaction-list.scss` (accepté, voir 027b).
+- Roadmap : statut et numéro de PR à mettre à jour après la fusion de la PR unique de TASK-027.

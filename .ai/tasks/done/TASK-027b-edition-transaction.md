@@ -1,6 +1,6 @@
 ## Tâche : modifier une transaction depuis la liste
 Lot : 2 (`roadmap.md` § 5, TASK-027b, après TASK-027a)
-Statut : à implémenter
+Statut : livrée et validée le 2026-11-18 ; PR en attente (avec 027a et 027c)
 Branche : `feat/lot2-transactions-edit-delete` (branche commune à TASK-027a, 027b et 027c ; une seule PR à la fin)
 
 ### Contexte
@@ -62,3 +62,11 @@ Choix du PM :
 - `product-vision.md` § 13, décisions du 2026-11-18 (bascule du mois après ajout, extension retenue ici pour la modification).
 - `domain-model.md` § 2, `Transaction` (`type` déduit de la catégorie, sous-catégorie obligatoire).
 - `AGENTS.md` : composants standalone, signals, montants en centimes, textes via Transloco, pas de `any`.
+
+### Suivi de livraison — 2026-11-18
+- Commit : `69e2504` (implementation, 12 fichiers). Archivage sur la même branche.
+- Validations : `npx ng test --no-watch` 36 fichiers, 630 tests verts ; `tsc` app et spec sans erreur ; `git diff --check` propre. Lint non configuré, non exécuté.
+- Revue usage : validée par l'utilisateur sur la page partagée.
+- Écarts : colonne dédiée au menu au lieu de la dernière cellule (lecture acceptée) ; la colonne ajoutée aggrave le débordement à 375 px, à traiter en TASK-029. Retour du focus géré dans la page (requête sur `[data-menu-trigger]`), accepté. Édition limitée aux transactions du mois affiché.
+- Avertissements de build : le bundle initial dépasse le budget de 500 kB (506,9 kB), apparu depuis 027a ; le lazy loading des routes (lot 7) le résoudra. Le SCSS de `recurring-rule-manager` est à 4,75 kB pour 4 kB, était déjà au-dessus du budget.
+- Roadmap : statut et numéro de PR à mettre à jour après la fusion de la PR unique de TASK-027.
