@@ -59,12 +59,10 @@ Choix du PM, Ã  valider Ã  la revue de spec :
 - `product-vision.md` Â§ 13, dÃ©cision du 2026-11-03 (cascade des soldes, changements de transactions qui recalculent la clÃ´ture rÃ©elle).
 - `AGENTS.md` : rÃ¨gles gÃ©nÃ©rales (services, montants en centimes, signals, pas de `any`).
 
-### Suivi de livraison — 2026-11-18
-- Commit : 7607d9 (code, 9 fichiers). Archivage sur la même branche.
-- Validations : 
-px ng test --no-watch 35 fichiers, 610 tests verts ; 	sc app et spec sans erreur ; 
-pm run build réussi (avertissements de budget SCSS préexistants) ; git diff --check propre. Lint non configuré, non exécuté.
+### Suivi de livraison â€” 2026-11-18
+- Commit : `b7607d9` (code, 9 fichiers). Archivage sur la mÃªme branche.
+- Validations : `npx ng test --no-watch` 35 fichiers, 610 tests verts ; `tsc` app et spec sans erreur ; `npm run build` rÃ©ussi (avertissements de budget SCSS prÃ©existants) ; `git diff --check` propre. Lint non configurÃ©, non exÃ©cutÃ©.
 - Revue usage : sans objet, aucun changement visuel attendu (service et logique du formulaire uniquement).
-- Écarts : pages/budget-mensuel/budget-mensuel.spec.ts modifié, absent de la liste de la spec, nécessaire car il appelait dd() avec 	ype. udget.spec.ts partage l'instance categoryService. Message de estore sur id existant : Transaction already exists. Une assertion retirée dans 	ransaction-form.spec.ts (	ype: 'expense'), car le formulaire n'émet plus 	ype.
-- Précontrôle : le dépassement et la cascade sont couverts pour remove et update ; le changement de type est couvert par un test dédié.
-- Roadmap : statut et numéro de PR à mettre à jour après fusion.
+- Ã‰carts : `pages/budget-mensuel/budget-mensuel.spec.ts` modifiÃ©, absent de la liste de la spec, nÃ©cessaire car il appelait `add()` avec `type`. `budget.spec.ts` partage l'instance `categoryService`. Message de `restore` sur id existant : `Transaction already exists`. Une assertion retirÃ©e dans `transaction-form.spec.ts` (`type: 'expense'`), car le formulaire n'Ã©met plus `type`.
+- PrÃ©contrÃ´le : le dÃ©passement et la cascade sont couverts pour remove et update ; le changement de type est couvert par un test dÃ©diÃ©.
+- Roadmap : statut et numÃ©ro de PR Ã  mettre Ã  jour aprÃ¨s fusion.

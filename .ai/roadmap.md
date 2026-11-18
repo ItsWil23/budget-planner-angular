@@ -156,7 +156,7 @@ Déjà fait en phase A : liste, modal, formulaire d'ajout, filtrage catégorie/s
 Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` § 2). Spec produite pour chaque tâche avant son démarrage.
 
 1. [x] **TASK-025 — liste et formulaire par mois** : liste filtrée sur le mois sélectionné (`MonthContextService`) ; date par défaut = date du jour en heure locale, quel que soit le mois sélectionné ; après un ajout, le mois affiché bascule sur celui de la transaction (décisions du 2026-11-18). Fait le 2026-11-18 (PR #65).
-2. [ ] **TASK-026 — service de transactions** : `update` et `remove` ; dérivation du `type` déplacée de `TransactionForm` vers `TransactionService` ; précontrôle des agrégats et de la cascade du solde avant mutation (comme `assertTransactionAddable`). Testable sans interface.
+2. [x] **TASK-026 — service de transactions** : `update` et `remove` ; dérivation du `type` déplacée de `TransactionForm` vers `TransactionService` ; précontrôle des agrégats et de la cascade du solde avant mutation (comme `assertTransactionAddable`). Testable sans interface. Fait le 2026-11-18 (PR #67).
 3. [ ] **TASK-027 — édition et suppression** : édition dans la modale ; suppression avec confirmation et annulation possible (undo), décision du 2026-11-18.
 4. [ ] **TASK-028 — catégorie sans sous-catégorie** : visible mais désactivée dans le formulaire, avec explication et lien vers la page Catégories (décision du 2026-11-18).
 5. [ ] **TASK-029 — styling** : SCSS selon `DESIGN_SYSTEM.md`, dont le débordement horizontal de la table à 375px (environ 531px de table dans 359px disponibles), repéré pendant TASK-017.
@@ -167,7 +167,7 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
 - Liste non filtrée par mois : **résolu** par TASK-025 (PR #65).
 - Date par défaut calculée via `toISOString()` (UTC) : **résolu** par TASK-025 (PR #65).
 - Montant minimal `Validators.min(0.1)` : **résolu** par TASK-016 (saisie en centimes via `parseEurosInput`, tout centime positif accepté).
-- Génération de l'`id` : **déjà faite** dans `TransactionService.add()`. Reste la dérivation du `type` dans `TransactionForm`, à traiter en TASK-026.
+- Génération de l'`id` : **déjà faite** dans `TransactionService.add()`. Dérivation du `type` dans `TransactionForm` : **résolue** par TASK-026 (PR #67).
 
 ## 6. Lot 3 — Dashboard
 
