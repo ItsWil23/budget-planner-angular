@@ -18,15 +18,20 @@
     [transactions]="transactions()"
     [categories]="categories()"
     [subcategories]="subcategories()"
+    (editTransaction)="openEdit($event.id)"
   />
 </div>
 @if (isModalOpened()) {
   <div>
-    <app-modal [title]="'transactions.newButton' | transloco" (closed)="onModalClosed()">
+    <app-modal
+      [title]="(editingId() ? 'transactions.editTitle' : 'transactions.newButton') | transloco"
+      (closed)="onModalClosed()"
+    >
       <app-transaction-form
         [formCategories]="categories()"
         [formSubcategories]="subcategories()"
         [aggregateOverflow]="aggregateOverflow()"
+        [transaction]="editingTransaction()"
         (transactionSubmit)="onTransactionSubmit($event)"
         (draftChange)="onTransactionDraftChange()"
         (cancel)="onTransactionCancel()"

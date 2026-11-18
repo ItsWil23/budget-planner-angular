@@ -88,6 +88,7 @@
   "transactions": {
     "title": "Transactions",
     "newButton": "New transaction",
+    "editTitle": "Edit transaction",
     "addTooltip": "Add a new transaction"
   },
   "transactionList": {
@@ -98,6 +99,8 @@
       "date": "Date",
       "amount": "Amount"
     },
+    "actions": "Actions for {{name}}",
+    "edit": "Edit",
     "empty": "No transactions yet."
   },
   "transactionForm": {
@@ -112,6 +115,7 @@
     "amountTooLarge": "Amount too large to be saved: enter an amount up to €90,071,992,547,409.91.",
     "aggregateOverflow": "Transaction rejected: the category, subcategory or month total would exceed the application's exact calculation capacity. Enter a smaller amount.",
     "submit": "Add",
+    "save": "Save",
     "cancel": "Cancel"
   },
   "modal": {

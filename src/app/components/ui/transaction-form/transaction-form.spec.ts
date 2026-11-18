@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import type { Category, Subcategory } from '../../../models/category';
-import type { TransactionInput } from '../../../models/transactions';
+import type { Transaction, TransactionInput } from '../../../models/transactions';
 import { vi } from 'vitest';
 
 import { TransactionForm } from './transaction-form';
@@ -19,6 +19,7 @@ describe('TransactionForm', () => {
             fr: {
               transactionForm: {
                 submit: 'Ajouter',
+                save: 'Enregistrer',
                 cancel: 'Annuler',
                 amountInvalid: 'INVALID AMOUNT',
                 amountTooLarge: 'TOO LARGE',
@@ -52,6 +53,81 @@ describe('TransactionForm', () => {
     const localFixture = TestBed.createComponent(TransactionForm);
 
     expect(localFixture.componentInstance.newTransactionForm.controls.date.value).toBe('2026-11-18');
+  });
+
+  describe('mode édition', () => {
+    const categories: Category[] = [
+      { id: 'cat-1', name: 'Alimentation', type: 'expense', color: '#000000' },
+      { id: 'cat-2', name: 'Logement', type: 'expense', color: '#111111' },
+    ];
+    const subcategories: Subcategory[] = [
+      { id: 'sub-1', name: 'Courses', categoryId: 'cat-1', icon: 'basket' },
+      { id: 'sub-2', name: 'Loyer', categoryId: 'cat-2', icon: 'home' },
+      { id: 'sub-3', name: 'Charges', categoryId: 'cat-2', icon: 'bolt' },
+    ];
+
+    function editableTransaction(overrides: Partial<Transaction>): Transaction {
+      return {
+        id: 'tx-1',
+        label: 'Loyer octobre',
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-10-09',
+        monthKey: '2026-10',
+        amountCents: 123405,
+        type: 'expense',
+        createdAt: '2026-10-01T08:00:00.000Z',
+        ...overrides,
+      };
+    }
+
+    function createEditForm(transaction: Transaction): ComponentFixture<TransactionForm> {
+      const editFixture = TestBed.createComponent(TransactionForm);
+      editFixture.componentRef.setInput('formCategories', categories);
+      editFixture.componentRef.setInput('formSubcategories', subcategories);
+      editFixture.componentRef.setInput('transaction', transaction);
+      editFixture.detectChanges();
+      return editFixture;
+    }
+
+    it('pré-remplit libellé, catégorie, sous-catégorie et date', () => {
+      const editFixture = createEditForm(editableTransaction({}));
+      const controls = editFixture.componentInstance.newTransactionForm.controls;
+
+      expect(controls.label.value).toBe('Loyer octobre');
+      expect(controls.categoryId.value).toBe('cat-2');
+      expect(controls.subcategoryId.value).toBe('sub-2');
+      expect(controls.date.value).toBe('2026-10-09');
+    });
+
+    it.each([
+      [123405, '1234,05'],
+      [1, '0,01'],
+    ])('pré-remplit le montant de %i centimes en « %s »', (amountCents: number, expectedText: string) => {
+      const editFixture = createEditForm(editableTransaction({ amountCents }));
+
+      expect(editFixture.componentInstance.newTransactionForm.controls.amountText.value).toBe(expectedText);
+    });
+
+    it('affiche le libellé Enregistrer sur le bouton en édition', () => {
+      const editFixture = createEditForm(editableTransaction({}));
+
+      expect(editFixture.nativeElement.querySelector('button[type="submit"]').textContent.trim()).toBe(
+        'Enregistrer',
+      );
+    });
+
+    it('réinitialise la sous-catégorie au changement de catégorie puis accepte une nouvelle sous-catégorie', () => {
+      const editFixture = createEditForm(editableTransaction({}));
+      const form = editFixture.componentInstance.newTransactionForm;
+
+      form.controls.categoryId.setValue('cat-1');
+      expect(form.controls.subcategoryId.value).toBe('');
+
+      form.controls.categoryId.setValue('cat-2');
+      form.controls.subcategoryId.setValue('sub-3');
+      expect(form.controls.subcategoryId.value).toBe('sub-3');
+    });
   });
 
   describe('montant en centimes exacts', () => {

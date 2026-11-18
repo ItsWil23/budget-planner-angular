@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import {
   AbstractControl,
   ReactiveFormsModule,
@@ -7,10 +7,11 @@ import {
   FormBuilder,
 } from '@angular/forms';
 import { Category, Subcategory } from '../../../models/category';
-import { TransactionInput } from '../../../models/transactions';
+import { Transaction, TransactionInput } from '../../../models/transactions';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { MoneyService } from '../../../services/money';
+import { SettingsService } from '../../../services/settings';
 import { todayLocalIsoDate } from '../../../services/transaction';
 
 @Component({
@@ -19,10 +20,11 @@ import { todayLocalIsoDate } from '../../../services/transaction';
   templateUrl: './transaction-form.html',
   styleUrl: './transaction-form.scss',
 })
-export class TransactionForm {
+export class TransactionForm implements OnInit {
   @Input() formCategories: Category[] = [];
   @Input() formSubcategories: Subcategory[] = [];
   @Input() aggregateOverflow = false;
+  @Input() transaction: Transaction | null = null;
 
   @Output() transactionSubmit = new EventEmitter<TransactionInput>();
   @Output() draftChange = new EventEmitter<void>();
@@ -30,6 +32,7 @@ export class TransactionForm {
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly moneyService = inject(MoneyService);
+  private readonly settings = inject(SettingsService).settings;
   protected filteredSubcategories: Subcategory[] = [];
   protected readonly amountErrorId = 'transactionAmountError';
   protected readonly aggregateErrorId = 'transactionAggregateError';
@@ -55,6 +58,21 @@ export class TransactionForm {
     this.newTransactionForm.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.draftChange.emit());
+  }
+
+  ngOnInit(): void {
+    const transaction = this.transaction;
+    if (!transaction) return;
+
+    // La catégorie d'abord : son changement réinitialise la sous-catégorie.
+    const controls = this.newTransactionForm.controls;
+    controls.categoryId.setValue(transaction.categoryId);
+    controls.subcategoryId.setValue(transaction.subcategoryId);
+    controls.label.setValue(transaction.label);
+    controls.amountText.setValue(
+      this.moneyService.toEditableString(transaction.amountCents, this.settings().locale),
+    );
+    controls.date.setValue(transaction.date);
   }
 
   protected amountErrorKey(): string | null {

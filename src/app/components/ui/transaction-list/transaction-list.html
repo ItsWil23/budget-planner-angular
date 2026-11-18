@@ -5,7 +5,10 @@
       <th>{{ 'transactionList.headers.category' | transloco }}</th>
       <th>{{ 'transactionList.headers.subcategory' | transloco }}</th>
       <th>{{ 'transactionList.headers.date' | transloco }}</th>
-      <th>{{ 'transactionList.headers.amount' | transloco }}</th>
+      <th class="amount-header">{{ 'transactionList.headers.amount' | transloco }}</th>
+      @if (!readOnly) {
+        <th></th>
+      }
     </tr>
   </thead>
   <tbody>
@@ -29,10 +32,28 @@
         >
           {{ tx.amountCents | money: settings() : tx.type }}
         </td>
+        @if (!readOnly) {
+          <td class="actions-cell">
+            <app-row-menu
+              [label]="'transactionList.actions' | transloco: { name: tx.label }"
+              [menuKey]="tx.id"
+              [triggerAction]="'row-actions-' + tx.id"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                [attr.data-action]="'edit-' + tx.id"
+                (click)="editTransaction.emit(tx)"
+              >
+                {{ 'transactionList.edit' | transloco }}
+              </button>
+            </app-row-menu>
+          </td>
+        }
       </tr>
     } @empty {
       <tr>
-        <td colspan="5">{{ 'transactionList.empty' | transloco }}</td>
+        <td [attr.colspan]="readOnly ? 5 : 6">{{ 'transactionList.empty' | transloco }}</td>
       </tr>
     }
   </tbody>

@@ -183,6 +183,124 @@ describe('Transactions', () => {
     });
   });
 
+  describe('modification d’une transaction', () => {
+    let monthContext: MonthContextService;
+    let original: TransactionPresentation;
+
+    function editInput(overrides: Partial<TransactionInput> = {}): TransactionInput {
+      return {
+        label: original.label,
+        categoryId: original.categoryId,
+        subcategoryId: original.subcategoryId,
+        date: original.date,
+        amountCents: original.amountCents,
+        ...overrides,
+      };
+    }
+
+    function listed(id: string): TransactionPresentation | undefined {
+      return transactionService.presentationTransactions().find(transaction => transaction.id === id);
+    }
+
+    beforeEach(() => {
+      monthContext = TestBed.inject(MonthContextService);
+      monthContext.setMonth('2026-10');
+      original = component['transactions']()[0];
+      expect(original).toBeDefined();
+    });
+
+    it('ouvre la modale pré-remplie avec la transaction', () => {
+      component.openEdit(original.id);
+      fixture.detectChanges();
+
+      const labelInput: HTMLInputElement = fixture.nativeElement.querySelector('#transactionLabel');
+      expect(labelInput.value).toBe(original.label);
+      expect(formElement()).not.toBeNull();
+    });
+
+    it('enregistre la modification en conservant id et date de création', () => {
+      const updateSpy = vi.spyOn(transactionService, 'update');
+
+      component.openEdit(original.id);
+      fixture.detectChanges();
+      component.onTransactionSubmit(editInput({ label: 'Libellé modifié', amountCents: 999 }));
+      fixture.detectChanges();
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        original.id,
+        editInput({ label: 'Libellé modifié', amountCents: 999 }),
+      );
+      expect(listed(original.id)).toEqual(
+        expect.objectContaining({
+          id: original.id,
+          label: 'Libellé modifié',
+          amountCents: 999,
+          createdAt: original.createdAt,
+        }),
+      );
+      expect(formElement()).toBeNull();
+    });
+
+    it('reste en modale sans mutation quand la modification dépasserait les totaux', () => {
+      const updateSpy = vi.spyOn(transactionService, 'update');
+      vi.spyOn(budgetService, 'assertTransactionUpdatable').mockImplementation(() => {
+        throw new TransactionAggregateOverflowError();
+      });
+      const before = JSON.stringify(transactionService.presentationTransactions());
+
+      component.openEdit(original.id);
+      fixture.detectChanges();
+      component.onTransactionSubmit(editInput({ label: 'Refusé' }));
+      fixture.detectChanges();
+
+      expect(updateSpy).not.toHaveBeenCalled();
+      expect(JSON.stringify(transactionService.presentationTransactions())).toBe(before);
+      expect(formElement()).not.toBeNull();
+      expect(aggregateAlert()?.textContent?.trim()).toBe('AGGREGATE OVERFLOW');
+    });
+
+    it('ferme la modale sans rien modifier à l’annulation', () => {
+      const updateSpy = vi.spyOn(transactionService, 'update');
+      const before = JSON.stringify(transactionService.presentationTransactions());
+
+      component.openEdit(original.id);
+      fixture.detectChanges();
+      component.onTransactionCancel();
+      fixture.detectChanges();
+
+      expect(updateSpy).not.toHaveBeenCalled();
+      expect(JSON.stringify(transactionService.presentationTransactions())).toBe(before);
+      expect(formElement()).toBeNull();
+    });
+
+    it('bascule sur le mois de la transaction modifiée et l’affiche', () => {
+      component.openEdit(original.id);
+      component.onTransactionSubmit(editInput({ date: '2026-11-05' }));
+      fixture.detectChanges();
+
+      expect(monthContext.monthKey()).toBe('2026-11');
+      expect(listed(original.id)?.monthKey).toBe('2026-11');
+      expect(visibleTransactionIds()).toContain(original.id);
+    });
+
+    it('rend le focus au déclencheur du menu de la ligne après fermeture', async () => {
+      component.openEdit(original.id);
+      fixture.detectChanges();
+      component.onTransactionCancel();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const trigger: HTMLElement | null = fixture.nativeElement.querySelector(
+        `[data-menu-trigger="${original.id}"]`,
+      );
+      expect(document.activeElement).toBe(trigger);
+    });
+
+    function visibleTransactionIds(): string[] {
+      return component['transactions']().map(transaction => transaction.id);
+    }
+  });
+
   describe('liste filtrée par mois', () => {
     let monthContext: MonthContextService;
 
