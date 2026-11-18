@@ -1,12 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { TransactionInput } from '../models/transactions';
 import { MOCK_TRANSACTIONS } from '../mocks/mock-transactions';
 import { MoneyService } from './money';
-import { TransactionService } from './transaction';
+import { TransactionService, todayLocalIsoDate } from './transaction';
 
 describe('TransactionService', () => {
   let service: TransactionService;
   let addedTransaction: TransactionInput;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   beforeEach(() => {
     service = new TransactionService(new MoneyService());
@@ -173,6 +177,22 @@ describe('TransactionService', () => {
       const october = service.transactionsForMonth('2026-10');
 
       expect(october.every(t => typeof t.amountEuros === 'number')).toBe(true);
+    });
+  });
+
+  describe('todayLocalIsoDate()', () => {
+    it('renvoie la date locale du jour, y compris tôt le matin, au format AAAA-MM-JJ', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 10, 18, 0, 30));
+
+      expect(todayLocalIsoDate()).toBe('2026-11-18');
+    });
+
+    it('complète le mois et le jour sur deux chiffres', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 0, 5, 23, 59));
+
+      expect(todayLocalIsoDate()).toBe('2026-01-05');
     });
   });
 

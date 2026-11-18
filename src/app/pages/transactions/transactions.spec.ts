@@ -10,7 +10,9 @@ import { vi } from 'vitest';
 import { Transactions } from './transactions';
 import { TransactionService } from '../../services/transaction';
 import { BudgetService, TransactionAggregateOverflowError } from '../../services/budget';
-import { TransactionInput } from '../../models/transactions';
+import { MonthContextService } from '../../services/month-context';
+import { TransactionInput, TransactionPresentation } from '../../models/transactions';
+import { MOCK_TRANSACTIONS } from '../../mocks/mock-transactions';
 
 describe('Transactions', () => {
   let component: Transactions;
@@ -179,6 +181,42 @@ describe('Transactions', () => {
       expect(transactionCount()).toBe(countBefore);
       expect(formElement()).not.toBeNull();
       expect(aggregateAlert()?.textContent?.trim()).toBe('AGGREGATE OVERFLOW');
+    });
+  });
+
+  describe('liste filtrée par mois', () => {
+    let monthContext: MonthContextService;
+
+    function visibleTransactions(): TransactionPresentation[] {
+      return component['transactions']();
+    }
+
+    beforeEach(() => {
+      monthContext = TestBed.inject(MonthContextService);
+      monthContext.setMonth('2026-10');
+    });
+
+    it('n’affiche que les transactions du mois sélectionné', () => {
+      const expectedIds = MOCK_TRANSACTIONS.filter(t => t.monthKey === '2026-10').map(t => t.id);
+
+      expect(visibleTransactions().map(t => t.id)).toEqual(expectedIds);
+      expect(visibleTransactions().every(t => t.monthKey === '2026-10')).toBe(true);
+    });
+
+    it('met la liste à jour quand le mois change', () => {
+      monthContext.setMonth('2026-11');
+
+      expect(visibleTransactions().map(t => t.id)).toEqual(
+        MOCK_TRANSACTIONS.filter(t => t.monthKey === '2026-11').map(t => t.id),
+      );
+    });
+
+    it('bascule sur le mois de la transaction ajoutée et l’affiche', () => {
+      component.onTransactionSubmit({ ...incomeInput, date: '2026-11-05' });
+
+      expect(monthContext.monthKey()).toBe('2026-11');
+      expect(visibleTransactions().some(t => t.label === incomeInput.label && t.date === '2026-11-05')).toBe(true);
+      expect(visibleTransactions().every(t => t.monthKey === '2026-11')).toBe(true);
     });
   });
 });

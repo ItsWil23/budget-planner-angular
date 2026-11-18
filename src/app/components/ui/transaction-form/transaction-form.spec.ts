@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import type { Category, Subcategory } from '../../../models/category';
 import type { TransactionInput } from '../../../models/transactions';
+import { vi } from 'vitest';
 
 import { TransactionForm } from './transaction-form';
 
@@ -38,6 +39,19 @@ describe('TransactionForm', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('pré-remplit la date avec la date locale du jour, même tôt le matin', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 18, 0, 30));
+
+    const localFixture = TestBed.createComponent(TransactionForm);
+
+    expect(localFixture.componentInstance.newTransactionForm.controls.date.value).toBe('2026-11-18');
   });
 
   describe('montant en centimes exacts', () => {
