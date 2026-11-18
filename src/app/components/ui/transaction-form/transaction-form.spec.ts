@@ -108,8 +108,9 @@ describe('TransactionForm', () => {
       expect(emittedTransactions[0].amountCents).toBe(expectedCents);
       expect(emittedTransactions[0]).not.toHaveProperty('amountEuros');
       expect(emittedTransactions[0]).toEqual(
-        expect.objectContaining({ categoryId: 'cat-1', subcategoryId: 'sub-1', type: 'expense' }),
+        expect.objectContaining({ categoryId: 'cat-1', subcategoryId: 'sub-1' }),
       );
+      expect(emittedTransactions[0]).not.toHaveProperty('type');
     });
 
     it.each(['', '   ', '0', '0,00', '-0', '-12,50', '.5', '1,234', 'abc', '1 000', '1e3'])(

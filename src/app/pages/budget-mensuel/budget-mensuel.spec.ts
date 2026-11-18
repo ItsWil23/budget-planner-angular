@@ -988,7 +988,6 @@ describe('BudgetMensuel', () => {
           subcategoryId: subcategoryIdOf('expense'),
           date: `${TEST_MONTH}-15`,
           amountCents,
-          type: 'expense',
         });
       }
 
@@ -1067,7 +1066,6 @@ describe('BudgetMensuel', () => {
             subcategoryId: subcategoryIdOf('income'),
             date: `${TEST_MONTH}-15`,
             amountCents: 10000,
-            type: 'income',
           });
         });
 

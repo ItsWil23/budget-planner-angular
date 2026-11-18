@@ -24,7 +24,6 @@ describe('Transactions', () => {
     label: 'Salaire test',
     categoryId: 'cat-1',
     subcategoryId: 'sub-1',
-    type: 'income',
     date: '2026-10-09',
     amountCents: 100,
   };

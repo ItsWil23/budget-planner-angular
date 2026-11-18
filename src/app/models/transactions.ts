@@ -12,7 +12,12 @@ export interface Transaction {
   createdAt: string;
 }
 
-export type TransactionInput = Omit<Transaction, 'id' | 'monthKey' | 'createdAt'>;
+export type TransactionInput = Omit<Transaction, 'id' | 'monthKey' | 'createdAt' | 'type'>;
+
+export interface RemovedTransaction {
+  transaction: Transaction;
+  index: number;
+}
 
 export type TransactionPresentation = Transaction & {
   amountEuros: number;

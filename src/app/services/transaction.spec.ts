@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { TransactionInput } from '../models/transactions';
 import { MOCK_TRANSACTIONS } from '../mocks/mock-transactions';
+import { CategoryService } from './category';
 import { MoneyService } from './money';
 import { TransactionService, todayLocalIsoDate } from './transaction';
 
@@ -13,7 +14,7 @@ describe('TransactionService', () => {
   });
 
   beforeEach(() => {
-    service = new TransactionService(new MoneyService());
+    service = new TransactionService(new MoneyService(), new CategoryService());
 
     // Préparer une nouvelle transaction pour les tests d'ajout
     addedTransaction = {
@@ -22,7 +23,6 @@ describe('TransactionService', () => {
       subcategoryId: 'sub-1',
       date: '2026-10-06',
       amountCents: 123,
-      type: 'income',
     };
   });
 
@@ -144,6 +144,93 @@ describe('TransactionService', () => {
           type: 'income',
         }),
       );
+    });
+  });
+
+  describe('type dérivé et catégories', () => {
+    it('déduit le type de la catégorie, même pour une dépense', () => {
+      const created = service.add({ ...addedTransaction, categoryId: 'cat-2', subcategoryId: 'sub-2' });
+
+      expect(created.type).toBe('expense');
+    });
+
+    it('refuse une catégorie inconnue sans rien modifier', () => {
+      const before = service.transactions();
+
+      expect(() => service.add({ ...addedTransaction, categoryId: 'cat-x' })).toThrow('Category not found');
+      expect(service.transactions()).toBe(before);
+    });
+
+    it.each([
+      ['add', (input: TransactionInput) => service.add(input)],
+      ['update', (input: TransactionInput) => service.update(MOCK_TRANSACTIONS[0].id, input)],
+    ])('%s refuse une sous-catégorie d’une autre catégorie sans rien modifier', (_name, mutate) => {
+      const before = service.transactions();
+
+      expect(() => mutate({ ...addedTransaction, subcategoryId: 'sub-2' })).toThrow('Subcategory not in category');
+      expect(service.transactions()).toBe(before);
+    });
+  });
+
+  describe('update()', () => {
+    it('garde id et createdAt, recalcule monthKey et type, et déplace la transaction de mois', () => {
+      const original = service.transactions()[0];
+
+      const updated = service.update(original.id, {
+        ...addedTransaction,
+        categoryId: 'cat-2',
+        subcategoryId: 'sub-2',
+        date: '2026-11-02',
+      });
+
+      expect(updated.id).toBe(original.id);
+      expect(updated.createdAt).toBe(original.createdAt);
+      expect(updated.monthKey).toBe('2026-11');
+      expect(updated.type).toBe('expense');
+      expect(service.transactions()[0]).toEqual(updated);
+      expect(service.transactionsForMonth('2026-11').map(t => t.id)).toContain(original.id);
+    });
+
+    it('lève une erreur si la transaction est introuvable', () => {
+      expect(() => service.update('inconnu', addedTransaction)).toThrow('Transaction not found');
+    });
+
+    it('valide la saisie avant toute mutation', () => {
+      const before = service.transactions();
+
+      expect(() => service.update(before[0].id, { ...addedTransaction, amountCents: 0 })).toThrow('Invalid amount');
+      expect(() => service.update(before[0].id, { ...addedTransaction, date: '06/10/2026' })).toThrow(
+        'Invalid date format',
+      );
+      expect(service.transactions()).toBe(before);
+    });
+  });
+
+  describe('remove() et restore()', () => {
+    it('restaure exactement la liste d’origine à la même position', () => {
+      const before = service.transactions();
+      const target = before[2];
+
+      const removed = service.remove(target.id);
+      expect(removed).toEqual({ transaction: target, index: 2 });
+      expect(service.transactions()).toHaveLength(before.length - 1);
+
+      service.restore(removed);
+      expect(service.transactions()).toEqual(before);
+    });
+
+    it('refuse de restaurer une transaction dont l’id est déjà présent', () => {
+      const removed = service.remove(service.transactions()[0].id);
+      service.restore(removed);
+
+      expect(() => service.restore(removed)).toThrow('Transaction already exists');
+    });
+
+    it('lève une erreur si la transaction à supprimer est introuvable', () => {
+      const before = service.transactions();
+
+      expect(() => service.remove('inconnu')).toThrow('Transaction not found');
+      expect(service.transactions()).toBe(before);
     });
   });
 

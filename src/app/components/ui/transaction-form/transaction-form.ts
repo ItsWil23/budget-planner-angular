@@ -79,7 +79,6 @@ export class TransactionForm {
       label: validForm.label,
       date: validForm.date,
       amountCents,
-      type: this.getCategoryById(validForm.categoryId).type,
     };
 
     this.transactionSubmit.emit(newTransaction);
@@ -96,13 +95,5 @@ export class TransactionForm {
   private parsePositiveCents(raw: string): number | null {
     const parsed = this.moneyService.parseEurosInput(raw);
     return parsed.valid && parsed.cents > 0 ? parsed.cents : null;
-  }
-
-  private getCategoryById(categoryId: string): Category {
-    const foundCategory: Category | undefined = this.formCategories.find(
-      (category: Category) => category.id === categoryId,
-    );
-    if (!foundCategory) throw new Error('Category not found');
-    return foundCategory;
   }
 }
