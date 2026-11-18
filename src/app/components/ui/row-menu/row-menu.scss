@@ -2,11 +2,11 @@
   display: contents;
 }
 
-.rule-menu-wrap {
+.row-menu-wrap {
   position: relative;
 }
 
-.rule-menu-trigger {
+.row-menu-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -22,13 +22,13 @@
   cursor: pointer;
 }
 
-.rule-menu-icon {
+.row-menu-icon {
   width: var(--size-icon);
   height: var(--size-icon);
   fill: currentColor;
 }
 
-.rule-menu {
+.row-menu-panel {
   position: absolute;
   z-index: 2;
   inset-block-start: calc(100% + var(--space-xs));
@@ -41,30 +41,12 @@
   background-color: var(--surface-card);
 }
 
-.rule-menu-above {
+.row-menu-panel-above {
   inset-block-start: auto;
   inset-block-end: calc(100% + var(--space-xs));
 }
 
-/* Les items sont projetés par le parent : leurs styles doivent traverser l'encapsulation. */
-:host ::ng-deep .rule-menu [role='menuitem'] {
-  box-sizing: border-box;
-  min-height: var(--size-touch-min);
-  padding: 0 var(--space-md);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--color-text);
-  font: var(--text-body);
-  text-align: start;
-  cursor: pointer;
-}
-
-:host ::ng-deep .rule-menu [role='menuitem']:hover {
-  background-color: var(--color-accent-soft);
-}
-
-.rule-menu-trigger:focus-visible {
+.row-menu-trigger:focus-visible {
   outline: var(--size-focus-ring) solid var(--color-accent);
   outline-offset: var(--size-focus-offset);
 }

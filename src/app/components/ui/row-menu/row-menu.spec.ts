@@ -20,7 +20,7 @@ describe('RowMenu', () => {
   let fixture: ComponentFixture<RowMenuHost>;
   let trigger: HTMLButtonElement;
 
-  const menu = (): HTMLElement | null => fixture.nativeElement.querySelector('.rule-menu');
+  const menu = (): HTMLElement | null => fixture.nativeElement.querySelector('.row-menu-panel');
   const items = (): HTMLButtonElement[] => Array.from(fixture.nativeElement.querySelectorAll('[role="menuitem"]'));
 
   beforeEach(async () => {

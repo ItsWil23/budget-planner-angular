@@ -284,3 +284,22 @@ button:hover {
     text-align: end;
   }
 }
+
+/* Items du menu de ligne : projetés par app-row-menu, donc stylés par le parent. */
+app-row-menu [role='menuitem'] {
+  box-sizing: border-box;
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-md);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font: var(--text-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+app-row-menu [role='menuitem']:hover {
+  background-color: var(--color-accent-soft);
+}
+

@@ -496,18 +496,18 @@ describe('RecurringRuleManager', () => {
     click('[data-action="row-actions-series-1"]');
     click('[data-action="row-actions-series-2"]');
 
-    expect(fixture.nativeElement.querySelectorAll('.rule-menu')).toHaveLength(1);
-    expect(element<HTMLElement>('[data-series-id="series-2"] .rule-menu')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.row-menu-panel')).toHaveLength(1);
+    expect(element<HTMLElement>('[data-series-id="series-2"] .row-menu-panel')).not.toBeNull();
   });
 
   it('closes the menu with Escape and returns focus to its trigger', async () => {
     await createFixture();
     click('[data-action="open-manager"]');
     click('[data-action="row-actions-series-1"]');
-    element<HTMLElement>('.rule-menu').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    element<HTMLElement>('.row-menu-panel').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.rule-menu')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.row-menu-panel')).toBeNull();
     expect(document.activeElement).toBe(element<HTMLElement>('[data-action="row-actions-series-1"]'));
   });
 
@@ -520,7 +520,7 @@ describe('RecurringRuleManager', () => {
     fixture.detectChanges();
     TestBed.tick();
 
-    const items = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.rule-menu [role="menuitem"]'));
+    const items = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.row-menu-panel [role="menuitem"]'));
     expect(items).toHaveLength(2);
     expect(document.activeElement).toBe(items[0]);
     items[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
@@ -540,7 +540,7 @@ describe('RecurringRuleManager', () => {
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.rule-menu')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.row-menu-panel')).toBeNull();
   });
 
   it('opens the menu upward when there is no room below the trigger', async () => {
@@ -554,7 +554,7 @@ describe('RecurringRuleManager', () => {
     click('[data-action="row-actions-series-1"]');
     TestBed.tick();
 
-    expect(element<HTMLElement>('.rule-menu').classList).toContain('rule-menu-above');
+    expect(element<HTMLElement>('.row-menu-panel').classList).toContain('row-menu-panel-above');
   });
 
   it('keeps the menu below the trigger when there is room', async () => {
@@ -568,7 +568,7 @@ describe('RecurringRuleManager', () => {
     click('[data-action="row-actions-series-1"]');
     TestBed.tick();
 
-    expect(element<HTMLElement>('.rule-menu').classList).not.toContain('rule-menu-above');
+    expect(element<HTMLElement>('.row-menu-panel').classList).not.toContain('row-menu-panel-above');
   });
 
   it('moves focus to the label field after choosing Modifier from the menu', async () => {
