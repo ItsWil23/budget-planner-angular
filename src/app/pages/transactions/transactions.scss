@@ -60,3 +60,35 @@
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
 }
+
+.delete-message {
+  margin: 0 0 var(--space-lg);
+  color: var(--color-text);
+  font: var(--text-body);
+}
+
+.delete-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-sm);
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .btn {
+    min-height: var(--size-touch-min);
+    justify-content: center;
+    background: none;
+    border: var(--border-width) solid var(--border);
+  }
+
+  .btn-secondary {
+    color: var(--color-text);
+  }
+
+  .btn-danger {
+    color: var(--color-danger);
+  }
+}

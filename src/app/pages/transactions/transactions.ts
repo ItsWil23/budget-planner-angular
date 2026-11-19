@@ -1,13 +1,20 @@
-import { Component, ElementRef, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { Component, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { TransactionList } from '../../components/ui/transaction-list/transaction-list';
 import { CategoryService } from '../../services/category';
-import { TransactionInput } from '../../models/transactions';
+import { RemovedTransaction, TransactionInput, TransactionPresentation } from '../../models/transactions';
 import { Modal } from '../../components/ui/modal/modal';
 import { TransactionForm } from '../../components/ui/transaction-form/transaction-form';
+import { UndoToast } from '../../components/ui/undo-toast/undo-toast';
 import { TransactionService } from '../../services/transaction';
 import { BudgetService, TransactionAggregateOverflowError } from '../../services/budget';
 import { MonthContextService } from '../../services/month-context';
+
+interface UndoNotice {
+  id: number;
+  message: string;
+  removed: RemovedTransaction | null;
+}
 
 @Component({
   selector: 'app-transactions',
@@ -15,6 +22,7 @@ import { MonthContextService } from '../../services/month-context';
     TransactionList,
     Modal,
     TransactionForm,
+    UndoToast,
     TranslocoPipe,
   ],
   templateUrl: './transactions.html',
@@ -24,8 +32,13 @@ export class Transactions {
   protected readonly isModalOpened = signal(false);
   protected readonly aggregateOverflow = signal(false);
   protected readonly editingId = signal<string | null>(null);
+  protected readonly deleteTarget = signal<TransactionPresentation | null>(null);
+  protected readonly notices = signal<UndoNotice[]>([]);
   protected readonly transactionService = inject(TransactionService);
   protected readonly budgetService = inject(BudgetService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly newButton = viewChild<ElementRef<HTMLButtonElement>>('newButton');
+  private noticeCounter = 0;
 
   protected readonly monthContext = inject(MonthContextService);
   protected readonly transactions = computed(() =>
@@ -79,6 +92,71 @@ export class Transactions {
     this.isModalOpened.set(true);
   }
 
+  onTransactionDelete(id: string): void {
+    this.deleteTarget.set(this.transactions().find(transaction => transaction.id === id) ?? null);
+  }
+
+  cancelDelete(): void {
+    const target = this.deleteTarget();
+    this.deleteTarget.set(null);
+    if (target) this.focusRowMenu(target.id);
+  }
+
+  confirmDelete(): void {
+    const target = this.deleteTarget();
+    if (!target) return;
+    this.deleteTarget.set(null);
+
+    const refused = (): void => this.replaceNotices(this.transloco.translate('transactions.deleteRefused'), null);
+    if (!this.precheck(() => this.budgetService.assertTransactionRemovable(target.id), refused)) return;
+
+    const removed = this.transactionService.remove(target.id);
+    this.replaceNotices(
+      this.transloco.translate('transactions.deleted', { label: target.label }),
+      removed,
+    );
+  }
+
+  undoDelete(notice: UndoNotice): void {
+    const removed = notice.removed;
+    if (!removed) return;
+
+    // Le refus garde la même notification : le bouton reste et le délai initial continue sans redémarrer.
+    const refused = (): void => this.setNoticeMessage(notice.id, this.transloco.translate('transactions.deleteRefused'));
+    if (!this.precheck(() => this.budgetService.assertTransactionRestorable(removed), refused)) return;
+
+    this.transactionService.restore(removed);
+    this.removeNotice(notice.id);
+  }
+
+  private setNoticeMessage(id: number, message: string): void {
+    this.notices.update(notices => notices.map(notice => (notice.id === id ? { ...notice, message } : notice)));
+  }
+
+  removeNotice(id: number): void {
+    const toastHadFocus = this.isFocusInToast();
+    this.notices.update(notices => notices.filter(notice => notice.id !== id));
+    if (toastHadFocus) this.focusNewButton();
+  }
+
+  // Une nouvelle notification remplace la précédente : une annulation en attente devient définitive.
+  private replaceNotices(message: string, removed: RemovedTransaction | null): void {
+    const toastHadFocus = this.isFocusInToast();
+    this.noticeCounter += 1;
+    this.notices.set([{ id: this.noticeCounter, message, removed }]);
+    // Une notification avec bouton prend le focus elle-même ; sans bouton, le focus revient à « Nouvelle transaction ».
+    if (toastHadFocus && removed === null) this.focusNewButton();
+  }
+
+  private isFocusInToast(): boolean {
+    const toast: HTMLElement | null = this.host.nativeElement.querySelector('app-undo-toast');
+    return toast?.contains(document.activeElement) ?? false;
+  }
+
+  private focusNewButton(): void {
+    afterNextRender(() => this.newButton()?.nativeElement.focus(), { injector: this.injector });
+  }
+
   private submitEdit(id: string, input: TransactionInput): void {
     if (!this.precheck(() => this.budgetService.assertTransactionUpdatable(id, input))) return;
 
@@ -87,14 +165,17 @@ export class Transactions {
     this.closeModal();
   }
 
-  // Renvoie false si la saisie dépasse les totaux agrégés : la modale reste ouverte avec le brouillon.
-  private precheck(check: () => void): boolean {
+  // Renvoie false si l'opération dépasse les totaux agrégés : la modale reste ouverte avec le brouillon.
+  private precheck(
+    check: () => void,
+    onRefused: () => void = () => this.aggregateOverflow.set(true),
+  ): boolean {
     try {
       check();
       return true;
     } catch (error: unknown) {
       if (error instanceof TransactionAggregateOverflowError) {
-        this.aggregateOverflow.set(true);
+        onRefused();
         return false;
       }
       throw error;

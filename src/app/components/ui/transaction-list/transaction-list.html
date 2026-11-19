@@ -47,6 +47,14 @@
               >
                 {{ 'transactionList.edit' | transloco }}
               </button>
+              <button
+                type="button"
+                role="menuitem"
+                [attr.data-action]="'delete-' + tx.id"
+                (click)="deleteTransaction.emit(tx.id)"
+              >
+                {{ 'transactionList.delete' | transloco }}
+              </button>
             </app-row-menu>
           </td>
         }

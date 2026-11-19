@@ -89,7 +89,14 @@
     "title": "Transactions",
     "newButton": "New transaction",
     "editTitle": "Edit transaction",
-    "addTooltip": "Add a new transaction"
+    "addTooltip": "Add a new transaction",
+    "deleteTitle": "Delete transaction",
+    "deleteMessage": "Delete “{{label}}”?",
+    "deleteConfirm": "Delete",
+    "deleteCancel": "Cancel",
+    "deleted": "Transaction “{{label}}” deleted.",
+    "undo": "Undo delete",
+    "deleteRefused": "Operation refused: the totals would exceed the application's exact calculation capacity."
   },
   "transactionList": {
     "headers": {
@@ -101,6 +108,7 @@
     },
     "actions": "Actions for {{name}}",
     "edit": "Edit",
+    "delete": "Delete",
     "empty": "No transactions yet."
   },
   "transactionForm": {

@@ -59,6 +59,7 @@ describe('TransactionList', () => {
                 empty: 'Aucune transaction pour le moment.',
                 actions: 'Actions pour {{name}}',
                 edit: 'Modifier',
+                delete: 'Supprimer',
               },
             },
           },
@@ -128,6 +129,20 @@ describe('TransactionList', () => {
       editItem('tx-expense')?.click();
 
       expect(emitted).toEqual([TEST_TRANSACTIONS[1]]);
+    });
+
+    it('émet l’identifiant de la ligne au clic sur Supprimer', () => {
+      const emitted: string[] = [];
+      component.deleteTransaction.subscribe((id: string) => emitted.push(id));
+
+      openMenu('tx-expense');
+      const deleteItem: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-action="delete-tx-expense"]',
+      );
+      expect(deleteItem?.textContent?.trim()).toBe('Supprimer');
+      deleteItem?.click();
+
+      expect(emitted).toEqual(['tx-expense']);
     });
 
     it('n’affiche aucun menu quand la liste est en lecture seule', () => {
