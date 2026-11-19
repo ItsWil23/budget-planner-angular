@@ -114,6 +114,8 @@
   "transactionForm": {
     "category": "Catégorie",
     "categoryPlaceholder": "— Choisir une catégorie —",
+    "categoryHint": "Une transaction requiert une sous-catégorie. Catégories sans sous-catégorie : {{categoryNames}}.",
+    "categoryLink": "Créer une sous-catégorie dans Catégories",
     "subcategory": "Sous-Catégorie",
     "subcategoryPlaceholder": "— Choisir une sous-catégorie —",
     "label": "Libellé",

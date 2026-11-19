@@ -1,12 +1,22 @@
 <form [formGroup]="newTransactionForm" (ngSubmit)="onSubmitTransactionForm()">
   <div class="form-group">
     <label for="transactionCategory">{{ 'transactionForm.category' | transloco }}</label>
-    <select id="transactionCategory" formControlName="categoryId">
+    <select
+      id="transactionCategory"
+      formControlName="categoryId"
+      [attr.aria-describedby]="unselectableCategoryNames() ? categoryHintId : null"
+    >
       <option value="" disabled>{{ 'transactionForm.categoryPlaceholder' | transloco }}</option>
       @for(category of formCategories; track category.id){
-        <option [value]="category.id">{{ category.name }}</option>
+        <option [value]="category.id" [disabled]="!hasSubcategory(category.id)">{{ category.name }}</option>
       }
     </select>
+    @if (unselectableCategoryNames(); as categoryNames) {
+      <p [id]="categoryHintId" class="category-hint">
+        {{ 'transactionForm.categoryHint' | transloco: { categoryNames } }}
+        <a routerLink="/categories">{{ 'transactionForm.categoryLink' | transloco }}</a>
+      </p>
+    }
   </div>
 
   <div class="form-group">

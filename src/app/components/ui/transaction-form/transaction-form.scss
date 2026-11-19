@@ -1,0 +1,18 @@
+.category-hint {
+  margin: var(--space-xs) 0 0;
+  font: var(--text-caption);
+  color: var(--color-text-muted);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--size-touch-min);
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  a:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+}
