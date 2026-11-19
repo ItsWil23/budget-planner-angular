@@ -156,7 +156,7 @@ Déjà fait en phase A : liste, modal, formulaire d'ajout, filtrage catégorie/s
 Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` § 2). Spec produite pour chaque tâche avant son démarrage.
 
 1. [x] **TASK-025 — liste et formulaire par mois** : liste filtrée sur le mois sélectionné (`MonthContextService`) ; date par défaut = date du jour en heure locale, quel que soit le mois sélectionné ; après un ajout, le mois affiché bascule sur celui de la transaction (décisions du 2026-11-18). Fait le 2026-11-18 (PR #65).
-2. [ ] **TASK-026 — service de transactions** : `update` et `remove` ; dérivation du `type` déplacée de `TransactionForm` vers `TransactionService` ; précontrôle des agrégats et de la cascade du solde avant mutation (comme `assertTransactionAddable`). Testable sans interface.
+2. [x] **TASK-026 — service de transactions** : `update` et `remove` ; dérivation du `type` déplacée de `TransactionForm` vers `TransactionService` ; précontrôle des agrégats et de la cascade du solde avant mutation (comme `assertTransactionAddable`). Testable sans interface. Fait le 2026-11-18 (PR #67).
 3. [ ] **TASK-027 — édition et suppression**, découpée le 2026-11-18 :
    - **027a** : composant partagé `row-menu`, extrait du menu de TASK-023 sans changement visuel ;
    - **027b** : édition d'une transaction (menu « ⋯ », formulaire en mode édition, `update` après précontrôle) ;
@@ -170,7 +170,7 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
 - Liste non filtrée par mois : **résolu** par TASK-025 (PR #65).
 - Date par défaut calculée via `toISOString()` (UTC) : **résolu** par TASK-025 (PR #65).
 - Montant minimal `Validators.min(0.1)` : **résolu** par TASK-016 (saisie en centimes via `parseEurosInput`, tout centime positif accepté).
-- Génération de l'`id` : **déjà faite** dans `TransactionService.add()`. Reste la dérivation du `type` dans `TransactionForm`, à traiter en TASK-026.
+- Génération de l'`id` : **déjà faite** dans `TransactionService.add()`. Dérivation du `type` dans `TransactionForm` : **résolue** par TASK-026 (PR #67).
 
 ## 6. Lot 3 — Dashboard
 
