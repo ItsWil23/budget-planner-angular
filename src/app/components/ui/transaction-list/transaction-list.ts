@@ -5,6 +5,7 @@ import { DatePipe } from '@angular/common';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SettingsService } from '../../../services/settings';
 import { MoneyPipe } from '../money-pipe/money-pipe';
+import { RowMenu } from '../row-menu/row-menu';
 
 @Component({
   selector: 'app-transaction-list',
@@ -12,6 +13,7 @@ import { MoneyPipe } from '../money-pipe/money-pipe';
     DatePipe,
     TranslocoPipe,
     MoneyPipe,
+    RowMenu,
   ],
   templateUrl: './transaction-list.html',
   styleUrl: './transaction-list.scss',

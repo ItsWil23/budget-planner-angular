@@ -1,5 +1,6 @@
 <div class="page-header">
   <button
+    #newButton
     type="button"
     class="btn new-transaction-btn"
     (click)="openModal()"
@@ -18,15 +19,42 @@
     [transactions]="transactions()"
     [categories]="categories()"
     [subcategories]="subcategories()"
+    (editTransaction)="openEdit($event.id)"
+    (deleteTransaction)="onTransactionDelete($event)"
   />
 </div>
+@if (deleteTarget(); as target) {
+  <app-modal [title]="'transactions.deleteTitle' | transloco" (closed)="cancelDelete()">
+    <p class="delete-message">{{ 'transactions.deleteMessage' | transloco: { label: target.label } }}</p>
+    <div class="delete-actions">
+      <button type="button" class="btn btn-secondary" data-action="cancel-delete" (click)="cancelDelete()">
+        {{ 'transactions.deleteCancel' | transloco }}
+      </button>
+      <button type="button" class="btn btn-danger" data-action="confirm-delete" (click)="confirmDelete()">
+        {{ 'transactions.deleteConfirm' | transloco }}
+      </button>
+    </div>
+  </app-modal>
+}
+@for (notice of notices(); track notice.id) {
+  <app-undo-toast
+    [message]="notice.message"
+    [actionLabel]="notice.removed ? ('transactions.undo' | transloco) : null"
+    (action)="undoDelete(notice)"
+    (expired)="removeNotice(notice.id)"
+  />
+}
 @if (isModalOpened()) {
   <div>
-    <app-modal [title]="'transactions.newButton' | transloco" (closed)="onModalClosed()">
+    <app-modal
+      [title]="(editingId() ? 'transactions.editTitle' : 'transactions.newButton') | transloco"
+      (closed)="onModalClosed()"
+    >
       <app-transaction-form
         [formCategories]="categories()"
         [formSubcategories]="subcategories()"
         [aggregateOverflow]="aggregateOverflow()"
+        [transaction]="editingTransaction()"
         (transactionSubmit)="onTransactionSubmit($event)"
         (draftChange)="onTransactionDraftChange()"
         (cancel)="onTransactionCancel()"

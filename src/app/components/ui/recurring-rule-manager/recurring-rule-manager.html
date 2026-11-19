@@ -146,52 +146,30 @@
                     <ng-container *ngTemplateOutlet="ruleSummary; context: { $implicit: group }" />
                   </div>
                 }
-                <div class="rule-menu-wrap">
+                <app-row-menu
+                  [label]="'budgetMensuel.recurringRules.actions' | transloco: { name: group.latest.label }"
+                  [menuKey]="group.seriesId"
+                  [triggerAction]="'row-actions-' + group.seriesId"
+                >
+                  @if (canEdit(group.latest)) {
+                    <button
+                      type="button"
+                      role="menuitem"
+                      [attr.data-action]="'edit-' + group.seriesId"
+                      (click)="editFromMenu(group.latest)"
+                    >
+                      {{ 'budgetMensuel.recurringRules.edit' | transloco }}
+                    </button>
+                  }
                   <button
                     type="button"
-                    class="rule-menu-trigger"
-                    aria-haspopup="menu"
-                    [attr.data-action]="'row-actions-' + group.seriesId"
-                    [attr.data-menu-trigger]="group.seriesId"
-                    [attr.aria-expanded]="openMenuSeriesId() === group.seriesId"
-                    [attr.aria-label]="'budgetMensuel.recurringRules.actions' | transloco: { name: group.latest.label }"
-                    (click)="toggleMenu(group.seriesId, $event)"
+                    role="menuitem"
+                    [attr.data-action]="(shouldActivate(group.latest) ? 'activate-' : 'deactivate-') + group.seriesId"
+                    (click)="setRuleActiveFromMenu(group, shouldActivate(group.latest))"
                   >
-                    <svg class="rule-menu-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                      <circle cx="4" cy="10" r="1.5" />
-                      <circle cx="10" cy="10" r="1.5" />
-                      <circle cx="16" cy="10" r="1.5" />
-                    </svg>
+                    {{ (shouldActivate(group.latest) ? 'budgetMensuel.recurringRules.activate' : 'budgetMensuel.recurringRules.deactivate') | transloco }}
                   </button>
-                  @if (openMenuSeriesId() === group.seriesId) {
-                    <div
-                      class="rule-menu"
-                      [class.rule-menu-above]="menuPlacement() === 'above'"
-                      role="menu"
-                      [attr.aria-label]="'budgetMensuel.recurringRules.actions' | transloco: { name: group.latest.label }"
-                      (keydown)="onMenuKeydown($event, group.seriesId)"
-                    >
-                      @if (canEdit(group.latest)) {
-                        <button
-                          type="button"
-                          role="menuitem"
-                          [attr.data-action]="'edit-' + group.seriesId"
-                          (click)="editFromMenu(group.latest)"
-                        >
-                          {{ 'budgetMensuel.recurringRules.edit' | transloco }}
-                        </button>
-                      }
-                      <button
-                        type="button"
-                        role="menuitem"
-                        [attr.data-action]="(shouldActivate(group.latest) ? 'activate-' : 'deactivate-') + group.seriesId"
-                        (click)="setRuleActiveFromMenu(group, shouldActivate(group.latest))"
-                      >
-                        {{ (shouldActivate(group.latest) ? 'budgetMensuel.recurringRules.activate' : 'budgetMensuel.recurringRules.deactivate') | transloco }}
-                      </button>
-                    </div>
-                  }
-                </div>
+                </app-row-menu>
               </div>
               @if (expandedSeriesId() === group.seriesId && group.versions.length > 1) {
                 <div class="rule-expanded-content">

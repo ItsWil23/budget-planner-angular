@@ -1,4 +1,4 @@
-import { computed, Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRender, inject, input, output, signal } from '@angular/core';
+import { computed, Component, DestroyRef, ElementRef, Injector, afterNextRender, inject, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -6,6 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { MoneyPipe } from '../money-pipe/money-pipe';
 import { Modal } from '../modal/modal';
 import { MonthPicker } from '../month-picker/month-picker';
+import { RowMenu } from '../row-menu/row-menu';
 import {
   RecurringRule,
   RecurringRuleInput,
@@ -28,11 +29,10 @@ interface RecurringRuleGroup {
 }
 
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
-const CLIPPING_OVERFLOW = new Set(['auto', 'scroll', 'hidden', 'clip']);
 
 @Component({
   selector: 'app-recurring-rule-manager',
-  imports: [Modal, MonthPicker, MoneyPipe, NgTemplateOutlet, ReactiveFormsModule, TranslocoPipe],
+  imports: [Modal, MonthPicker, MoneyPipe, NgTemplateOutlet, ReactiveFormsModule, RowMenu, TranslocoPipe],
   templateUrl: './recurring-rule-manager.html',
   styleUrl: './recurring-rule-manager.scss',
 })
@@ -51,8 +51,6 @@ export class RecurringRuleManager {
   readonly opened = input(false);
   readonly closed = output<void>();
   protected readonly expandedSeriesId = signal<string | null>(null);
-  protected readonly openMenuSeriesId = signal<string | null>(null);
-  protected readonly menuPlacement = signal<'below' | 'above'>('below');
   protected readonly editingRuleId = signal<string | null>(null);
   protected readonly pendingChange = signal<RecurringRuleVersionChange | null>(null);
   protected readonly syncChoice = signal(false);
@@ -109,7 +107,6 @@ export class RecurringRuleManager {
   protected closeManager(): void {
     this.resetForm();
     this.expandedSeriesId.set(null);
-    this.openMenuSeriesId.set(null);
     this.closed.emit();
   }
 
@@ -117,58 +114,7 @@ export class RecurringRuleManager {
     this.expandedSeriesId.update(current => current === seriesId ? null : seriesId);
   }
 
-  protected toggleMenu(seriesId: string, event: MouseEvent): void {
-    if (this.openMenuSeriesId() === seriesId) {
-      this.openMenuSeriesId.set(null);
-      return;
-    }
-    const fromKeyboard = event.detail === 0;
-    this.openMenuSeriesId.set(seriesId);
-    this.menuPlacement.set('below');
-    afterNextRender(
-      () => {
-        this.placeMenu(seriesId);
-        // Un clic produit au clavier (detail 0) place le focus sur le premier item.
-        if (fromKeyboard) this.menuItems(seriesId)[0]?.focus();
-      },
-      { injector: this.injector },
-    );
-  }
-
-  @HostListener('document:pointerdown', ['$event.target'])
-  protected onDocumentPointerDown(target: EventTarget | null): void {
-    if (this.openMenuSeriesId() === null) return;
-    if (target instanceof Element && target.closest('.rule-menu-wrap')) return;
-    this.openMenuSeriesId.set(null);
-  }
-
-  protected onMenuKeydown(event: KeyboardEvent, seriesId: string): void {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      this.closeMenu(seriesId);
-      return;
-    }
-    if (event.key === 'Tab') {
-      this.openMenuSeriesId.set(null);
-      return;
-    }
-
-    const items = this.menuItems(seriesId);
-    const index = items.indexOf(event.target as HTMLButtonElement);
-    const last = items.length - 1;
-    let target: HTMLButtonElement | undefined;
-    if (event.key === 'ArrowDown') target = items[index >= last ? 0 : index + 1];
-    else if (event.key === 'ArrowUp') target = items[index <= 0 ? last : index - 1];
-    else if (event.key === 'Home') target = items[0];
-    else if (event.key === 'End') target = items[last];
-    if (!target) return;
-    event.preventDefault();
-    target.focus();
-  }
-
   protected editFromMenu(rule: RecurringRule): void {
-    this.openMenuSeriesId.set(null);
     this.startEdit(rule);
     afterNextRender(() => this.host.nativeElement.querySelector<HTMLInputElement>('#recurring-rule-label')?.focus(), {
       injector: this.injector,
@@ -176,47 +122,12 @@ export class RecurringRuleManager {
   }
 
   protected setRuleActiveFromMenu(group: RecurringRuleGroup, active: boolean): void {
-    this.openMenuSeriesId.set(null);
     this.setRuleActive(group.latest, active);
     afterNextRender(() => this.menuTrigger(group.seriesId)?.focus(), { injector: this.injector });
   }
 
-  private closeMenu(seriesId: string): void {
-    this.openMenuSeriesId.set(null);
-    this.menuTrigger(seriesId)?.focus();
-  }
-
-  private placeMenu(seriesId: string): void {
-    const trigger = this.menuTrigger(seriesId);
-    const menu = trigger?.parentElement?.querySelector<HTMLElement>('.rule-menu');
-    if (!trigger || !menu) return;
-
-    const triggerRect = trigger.getBoundingClientRect();
-    const bounds = this.visibleBounds(trigger);
-    const spaceBelow = bounds.bottom - triggerRect.bottom;
-    const spaceAbove = triggerRect.top - bounds.top;
-    if (spaceBelow < menu.offsetHeight && spaceAbove > spaceBelow) {
-      this.menuPlacement.set('above');
-    }
-  }
-
-  // Bornes verticales visibles : le conteneur défilant le plus proche, sinon la fenêtre.
-  private visibleBounds(element: HTMLElement): { top: number; bottom: number } {
-    for (let parent = element.parentElement; parent; parent = parent.parentElement) {
-      if (!CLIPPING_OVERFLOW.has(getComputedStyle(parent).overflowY)) continue;
-      const rect = parent.getBoundingClientRect();
-      return { top: Math.max(0, rect.top), bottom: Math.min(window.innerHeight, rect.bottom) };
-    }
-    return { top: 0, bottom: window.innerHeight };
-  }
-
   private menuTrigger(seriesId: string): HTMLButtonElement | null {
     return this.host.nativeElement.querySelector<HTMLButtonElement>(`[data-menu-trigger="${seriesId}"]`);
-  }
-
-  private menuItems(seriesId: string): HTMLButtonElement[] {
-    const wrap = this.menuTrigger(seriesId)?.parentElement;
-    return Array.from(wrap?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? []);
   }
 
   protected saveRule(): void {

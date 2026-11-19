@@ -50,7 +50,7 @@
   </div>
 
   <div class="form-action-buttons">
-    <button type="submit">{{ 'transactionForm.submit' | transloco }}</button>
+    <button type="submit">{{ (transaction ? 'transactionForm.save' : 'transactionForm.submit') | transloco }}</button>
     <button type="button" (click)="cancel.emit()">{{ 'transactionForm.cancel' | transloco }}</button>
   </div>
 </form>

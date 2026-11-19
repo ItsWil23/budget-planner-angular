@@ -1,0 +1,15 @@
+<div class="undo-toast" role="status">
+  <span class="message">{{ message() }}</span>
+  @if (actionLabel(); as label) {
+    <button
+      #actionButton
+      type="button"
+      class="action-btn"
+      data-action="undo-toast-action"
+      (click)="action.emit()"
+    >
+      {{ label }}
+    </button>
+  }
+  <span class="progress" aria-hidden="true" [style.animation-duration.ms]="durationMs()"></span>
+</div>

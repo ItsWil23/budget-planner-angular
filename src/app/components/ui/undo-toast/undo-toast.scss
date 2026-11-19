@@ -1,0 +1,75 @@
+// Mobile d'abord : la notification flotte au-dessus de la barre de navigation basse (fixe sous 768px).
+.undo-toast {
+  position: fixed;
+  left: var(--space-md);
+  right: var(--space-md);
+  bottom: calc(var(--size-bottom-nav) + var(--space-md) + env(safe-area-inset-bottom));
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--surface-card);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font: var(--text-body);
+  overflow: hidden;
+
+  @media (min-width: 768px) {
+    left: auto;
+    right: var(--space-lg);
+    bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+    max-width: 28rem;
+  }
+}
+
+.message {
+  flex: 1;
+  min-width: 0;
+}
+
+// Barre de progression dans la bordure basse : se vide de droite à gauche sur la durée de la notification.
+// Décorative (aria-hidden) ; la notification est annoncée une seule fois par role="status".
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--border-width);
+  background-color: var(--color-accent);
+  transform-origin: left center;
+  animation: undo-toast-countdown linear forwards;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes undo-toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.action-btn {
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-md);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+}

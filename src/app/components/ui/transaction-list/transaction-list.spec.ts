@@ -57,6 +57,9 @@ describe('TransactionList', () => {
               transactionList: {
                 headers: { label: 'Libellé' },
                 empty: 'Aucune transaction pour le moment.',
+                actions: 'Actions pour {{name}}',
+                edit: 'Modifier',
+                delete: 'Supprimer',
               },
             },
           },
@@ -85,9 +88,69 @@ describe('TransactionList', () => {
   it('should render the empty state message in a full-width row', () => {
     fixture.detectChanges();
     const emptyCell: HTMLTableCellElement | null = fixture.nativeElement.querySelector(
-      'tbody td[colspan="5"]',
+      'tbody td[colspan="6"]',
     );
     expect(emptyCell?.textContent?.trim()).toBe('Aucune transaction pour le moment.');
+  });
+
+  describe('menu de ligne', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('categories', TEST_CATEGORIES);
+      fixture.componentRef.setInput('subcategories', TEST_SUBCATEGORIES);
+      fixture.componentRef.setInput('transactions', TEST_TRANSACTIONS);
+      fixture.detectChanges();
+    });
+
+    function openMenu(id: string): void {
+      const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        `[data-action="row-actions-${id}"]`,
+      );
+      trigger?.click();
+      fixture.detectChanges();
+    }
+
+    function editItem(id: string): HTMLButtonElement | null {
+      return fixture.nativeElement.querySelector(`[data-action="edit-${id}"]`);
+    }
+
+    it('affiche un menu par ligne avec l’entrée Modifier', () => {
+      expect(fixture.nativeElement.querySelectorAll('app-row-menu')).toHaveLength(2);
+      openMenu('tx-income');
+      expect(editItem('tx-income')?.textContent?.trim()).toBe('Modifier');
+    });
+
+    it('émet la transaction éditée au clic sur Modifier', () => {
+      const emitted: TransactionPresentation[] = [];
+      component.editTransaction.subscribe((transaction: TransactionPresentation) =>
+        emitted.push(transaction),
+      );
+
+      openMenu('tx-expense');
+      editItem('tx-expense')?.click();
+
+      expect(emitted).toEqual([TEST_TRANSACTIONS[1]]);
+    });
+
+    it('émet l’identifiant de la ligne au clic sur Supprimer', () => {
+      const emitted: string[] = [];
+      component.deleteTransaction.subscribe((id: string) => emitted.push(id));
+
+      openMenu('tx-expense');
+      const deleteItem: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-action="delete-tx-expense"]',
+      );
+      expect(deleteItem?.textContent?.trim()).toBe('Supprimer');
+      deleteItem?.click();
+
+      expect(emitted).toEqual(['tx-expense']);
+    });
+
+    it('n’affiche aucun menu quand la liste est en lecture seule', () => {
+      fixture.componentRef.setInput('readOnly', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-row-menu')).toBeNull();
+    });
   });
 
   describe('money formatting', () => {
