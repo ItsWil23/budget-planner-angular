@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import type { Category, Subcategory } from '../../../models/category';
 import type { Transaction, TransactionInput } from '../../../models/transactions';
@@ -24,6 +25,8 @@ describe('TransactionForm', () => {
                 amountInvalid: 'INVALID AMOUNT',
                 amountTooLarge: 'TOO LARGE',
                 aggregateOverflow: 'AGGREGATE OVERFLOW',
+                categoryHint: 'HINT {{categoryNames}}',
+                categoryLink: 'CREATE SUBCATEGORY',
               },
             },
           },
@@ -31,6 +34,7 @@ describe('TransactionForm', () => {
           preloadLangs: true,
         }),
       ],
+      providers: [provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionForm);
@@ -127,6 +131,80 @@ describe('TransactionForm', () => {
       form.controls.categoryId.setValue('cat-2');
       form.controls.subcategoryId.setValue('sub-3');
       expect(form.controls.subcategoryId.value).toBe('sub-3');
+    });
+  });
+
+  describe('catégories sans sous-catégorie', () => {
+    const categories: Category[] = [
+      { id: 'cat-1', name: 'Alimentation', type: 'expense', color: '#000000' },
+      { id: 'cat-2', name: 'Épargne', type: 'expense', color: '#111111' },
+      { id: 'cat-3', name: 'Loisirs & sorties', type: 'expense', color: '#222222' },
+    ];
+    const subcategories: Subcategory[] = [
+      { id: 'sub-1', name: 'Courses', categoryId: 'cat-1', icon: 'basket' },
+    ];
+
+    function render(shownCategories: Category[]): void {
+      fixture.componentRef.setInput('formCategories', shownCategories);
+      fixture.componentRef.setInput('formSubcategories', subcategories);
+      fixture.detectChanges();
+    }
+
+    function categoryOption(id: string): HTMLOptionElement {
+      return fixture.nativeElement.querySelector(`#transactionCategory option[value="${id}"]`);
+    }
+
+    it('conserve toutes les catégories dans l’ordre et désactive celles sans sous-catégorie', () => {
+      render(categories);
+
+      const options: HTMLOptionElement[] = Array.from(
+        fixture.nativeElement.querySelectorAll('#transactionCategory option:not([value=""])'),
+      );
+      expect(options.map((option: HTMLOptionElement) => option.value)).toEqual(['cat-1', 'cat-2', 'cat-3']);
+      expect(categoryOption('cat-1').disabled).toBe(false);
+      expect(categoryOption('cat-2').disabled).toBe(true);
+      expect(categoryOption('cat-3').disabled).toBe(true);
+      expect(categoryOption('cat-2').textContent?.trim()).toBe('Épargne');
+    });
+
+    it('affiche les noms exacts des catégories sans sous-catégorie et un lien vers Catégories', () => {
+      render(categories);
+
+      const hint: HTMLElement = fixture.nativeElement.querySelector('#transactionCategoryHint');
+      const link: HTMLAnchorElement | null = hint.querySelector('a');
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('#transactionCategory');
+
+      expect(hint.textContent).toContain('HINT Épargne, Loisirs & sorties');
+      expect(link?.textContent?.trim()).toBe('CREATE SUBCATEGORY');
+      expect(link?.getAttribute('href')).toBe('/categories');
+      expect(select.getAttribute('aria-describedby')).toBe('transactionCategoryHint');
+    });
+
+    it('masque l’aide quand toutes les catégories sont sélectionnables', () => {
+      render([categories[0]]);
+
+      expect(fixture.nativeElement.querySelector('#transactionCategoryHint')).toBeNull();
+      expect(fixture.nativeElement.querySelector('#transactionCategory').hasAttribute('aria-describedby')).toBe(
+        false,
+      );
+    });
+
+    it('émet une transaction valide avec une catégorie sélectionnable', () => {
+      const emitted: TransactionInput[] = [];
+      component.transactionSubmit.subscribe((transaction: TransactionInput) => emitted.push(transaction));
+      render(categories);
+
+      component.newTransactionForm.controls.categoryId.setValue('cat-1');
+      component.newTransactionForm.controls.subcategoryId.setValue('sub-1');
+      component.newTransactionForm.controls.label.setValue('Courses');
+      component.newTransactionForm.controls.amountText.setValue('12,50');
+      fixture.nativeElement.querySelector('form').dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true }),
+      );
+
+      expect(emitted).toEqual([
+        expect.objectContaining({ categoryId: 'cat-1', subcategoryId: 'sub-1', amountCents: 1250 }),
+      ]);
     });
   });
 

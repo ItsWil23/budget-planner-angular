@@ -114,6 +114,8 @@
   "transactionForm": {
     "category": "Category",
     "categoryPlaceholder": "— Choose a category —",
+    "categoryHint": "A transaction requires a subcategory. Categories without a subcategory: {{categoryNames}}.",
+    "categoryLink": "Create a subcategory in Categories",
     "subcategory": "Subcategory",
     "subcategoryPlaceholder": "— Choose a subcategory —",
     "label": "Label",

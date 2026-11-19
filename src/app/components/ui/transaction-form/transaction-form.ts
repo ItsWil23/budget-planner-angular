@@ -9,6 +9,7 @@ import {
 import { Category, Subcategory } from '../../../models/category';
 import { Transaction, TransactionInput } from '../../../models/transactions';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { MoneyService } from '../../../services/money';
 import { SettingsService } from '../../../services/settings';
@@ -16,7 +17,7 @@ import { todayLocalIsoDate } from '../../../services/transaction';
 
 @Component({
   selector: 'app-transaction-form',
-  imports: [ReactiveFormsModule, TranslocoPipe],
+  imports: [ReactiveFormsModule, RouterLink, TranslocoPipe],
   templateUrl: './transaction-form.html',
   styleUrl: './transaction-form.scss',
 })
@@ -36,6 +37,7 @@ export class TransactionForm implements OnInit {
   protected filteredSubcategories: Subcategory[] = [];
   protected readonly amountErrorId = 'transactionAmountError';
   protected readonly aggregateErrorId = 'transactionAggregateError';
+  protected readonly categoryHintId = 'transactionCategoryHint';
 
   newTransactionForm = this.formBuilder.nonNullable.group({
     categoryId: ['', Validators.required],
@@ -73,6 +75,19 @@ export class TransactionForm implements OnInit {
       this.moneyService.toEditableString(transaction.amountCents, this.settings().locale),
     );
     controls.date.setValue(transaction.date);
+  }
+
+  protected hasSubcategory(categoryId: string): boolean {
+    return this.formSubcategories.some(
+      (subcategory: Subcategory) => subcategory.categoryId === categoryId,
+    );
+  }
+
+  protected unselectableCategoryNames(): string {
+    return this.formCategories
+      .filter((category: Category) => !this.hasSubcategory(category.id))
+      .map((category: Category) => category.name)
+      .join(', ');
   }
 
   protected amountErrorKey(): string | null {
