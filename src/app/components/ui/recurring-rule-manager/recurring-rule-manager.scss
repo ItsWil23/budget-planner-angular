@@ -78,8 +78,7 @@
     color: var(--color-text-muted);
   }
 
-  input,
-  select {
+  input {
     box-sizing: border-box;
     width: 100%;
     min-height: var(--size-touch-min);
@@ -99,31 +98,6 @@
     margin: 0;
     color: var(--color-danger);
     font: var(--text-caption);
-  }
-}
-
-/* Chevron dessiné à l'intérieur du champ, à distance des bords du token. */
-.select-field {
-  position: relative;
-  display: block;
-  min-width: 0;
-
-  select {
-    appearance: none;
-    padding-inline-end: calc(var(--space-md) + 2 * var(--space-sm));
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset-inline-end: var(--space-md);
-    inset-block-start: calc(50% - var(--space-xs));
-    width: var(--space-sm);
-    height: var(--space-sm);
-    border-inline-end: var(--size-bar-thickness) solid var(--color-text-muted);
-    border-block-end: var(--size-bar-thickness) solid var(--color-text-muted);
-    transform: rotate(45deg);
-    pointer-events: none;
   }
 }
 

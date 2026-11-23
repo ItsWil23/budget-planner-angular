@@ -12,22 +12,31 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+  gap: var(--space-sm);
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-lg);
+  font: var(--text-emphasis);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: background-color var(--duration-base) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 
   &:active:not(:disabled) {
     transform: scale(0.98);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+    outline: var(--size-focus-ring) solid var(--color-accent);
+    outline-offset: var(--size-focus-offset);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:active:not(:disabled) {
+      transform: none;
+    }
   }
 }
 
@@ -36,7 +45,8 @@
   width: 100%;
   justify-content: center;
   background-color: var(--color-accent);
-  color: white;
+  /* Texte sur accent : 7,3:1 en thème sombre, 4,5:1 en thème clair (AA). */
+  color: var(--surface-card);
 
   @media (min-width: 768px) {
     width: auto;
@@ -54,16 +64,17 @@
 }
 
 .transactions-list-card {
-  margin-top: var(--spacing-lm);
-  padding: var(--spacing-lm);
+  margin-top: var(--space-xl);
+  padding: var(--space-xl);
 
-  background-color: var(--color-surface);
+  background-color: var(--surface-card);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius-lg);
 }
 
 .delete-message {
   margin: 0 0 var(--space-lg);
-  color: var(--color-text);
+  color: var(--text-primary);
   font: var(--text-body);
 }
 
@@ -85,7 +96,7 @@
   }
 
   .btn-secondary {
-    color: var(--color-text);
+    color: var(--text-primary);
   }
 
   .btn-danger {

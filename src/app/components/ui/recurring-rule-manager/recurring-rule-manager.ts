@@ -7,6 +7,7 @@ import { MoneyPipe } from '../money-pipe/money-pipe';
 import { Modal } from '../modal/modal';
 import { MonthPicker } from '../month-picker/month-picker';
 import { RowMenu } from '../row-menu/row-menu';
+import { SelectField, SelectFieldOption } from '../select-field/select-field';
 import {
   RecurringRule,
   RecurringRuleInput,
@@ -32,7 +33,7 @@ const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 @Component({
   selector: 'app-recurring-rule-manager',
-  imports: [Modal, MonthPicker, MoneyPipe, NgTemplateOutlet, ReactiveFormsModule, RowMenu, TranslocoPipe],
+  imports: [Modal, MonthPicker, MoneyPipe, NgTemplateOutlet, ReactiveFormsModule, RowMenu, SelectField, TranslocoPipe],
   templateUrl: './recurring-rule-manager.html',
   styleUrl: './recurring-rule-manager.scss',
 })
@@ -63,6 +64,12 @@ export class RecurringRuleManager {
   protected readonly categories = this.categoryService.categories;
   protected readonly subcategories = computed(() =>
     this.categoryService.getSubcategoriesForCategory(this.selectedCategoryId()),
+  );
+  protected readonly categoryOptions = computed<SelectFieldOption[]>(() =>
+    this.categories().map(category => ({ value: category.id, label: category.name })),
+  );
+  protected readonly subcategoryOptions = computed<SelectFieldOption[]>(() =>
+    this.subcategories().map(subcategory => ({ value: subcategory.id, label: subcategory.name })),
   );
   protected readonly effectiveMonthKey = this.monthContext.nextSystemMonthKey;
   protected readonly effectiveMonthLabel = computed(() => this.formatMonth(this.monthContext.nextSystemMonthKey));
@@ -102,6 +109,14 @@ export class RecurringRuleManager {
     this.form.controls.endMonth.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(endMonth => {
       this.endMonthDraft.set(endMonth);
     });
+  }
+
+  protected categoryInvalid(): boolean {
+    return this.errorKey() !== null && !this.form.controls.categoryId.value;
+  }
+
+  protected subcategoryInvalid(): boolean {
+    return this.errorKey() !== null && !this.form.controls.subcategoryId.value;
   }
 
   protected closeManager(): void {

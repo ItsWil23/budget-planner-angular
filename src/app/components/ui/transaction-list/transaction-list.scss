@@ -1,60 +1,383 @@
-table {
+/*
+ * Mobile-first : chaque ligne est une grille de quatre colonnes
+ * (pastille | libellé et détails | montant et date | menu).
+ * Le rendu de table classique s'applique quand la liste dispose d'assez de largeur (requête de conteneur),
+ * et non selon la fenêtre : la barre latérale fait varier la largeur disponible.
+ */
+
+:host {
+  display: block;
+  container-type: inline-size;
+  container-name: transaction-list;
+}
+
+.transaction-table,
+.transaction-table tbody {
+  display: block;
   width: 100%;
   border-collapse: collapse;
 }
 
-.header-row th{
-  font-size: var(--font5);
-  font-weight: 400;
-  color: var(--color-text-muted);
-  text-align: left;
-  padding-bottom:  var(--spacing-md);
+/* En-têtes masqués visuellement, mais toujours lus par les lecteurs d'écran. */
+.transaction-table thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.header-row th.amount-header {
-  text-align: right;
+/* La ligne ouverte passe au-dessus des suivantes : son menu n'est plus recouvert par leur déclencheur. */
+.transaction-table .transaction-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(calc(var(--size-touch-min) * 2), 1fr) auto auto;
+  grid-template-areas:
+    'pastille chevron text amount menu'
+    'pastille chevron text date menu';
+  column-gap: var(--space-sm);
+  padding: var(--space-md) 0;
 }
 
-.transaction-row {
-  border-bottom: 1px solid var(--color-border);
+.transaction-table .transaction-row:has(.row-menu-panel) {
+  z-index: 2;
 }
 
-tbody tr:last-child {
-  border-bottom: none;
+.transaction-table.read-only .transaction-row {
+  grid-template-columns: auto auto minmax(calc(var(--size-touch-min) * 2), 1fr) auto;
+  grid-template-areas:
+    'pastille chevron text amount'
+    'pastille chevron text date';
 }
 
+.transaction-row + .transaction-row {
+  border-top: var(--border-width) solid var(--border);
+}
+
+/* display: contents expose le bouton et le détail comme éléments de la grille. */
 .label-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+  display: contents;
 }
 
 .pastille {
+  grid-area: pastille;
+  align-self: center;
   display: inline-flex;
-
-  width: var(--spacing-xl);
-  height: var(--spacing-xl);
+  box-sizing: border-box;
+  width: var(--space-2xl);
+  height: var(--space-2xl);
   border-radius: var(--radius-full);
-
   align-items: center;
   justify-content: center;
+}
+
+/* Cible de dépliage couvrant toute la ligne ; le menu est au-dessus (voir .actions-cell). */
+.row-toggle {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.row-toggle:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-accent);
+  outline-offset: calc(var(--size-focus-offset) * -1);
+}
+
+/* display: contents : le libellé et le chevron deviennent des pistes de la grille, alignées sur la ligne entière. */
+.label-body {
+  display: contents;
+  font: var(--text-emphasis);
+  color: var(--text-primary);
+}
+
+.label-text {
+  grid-area: text;
+  align-self: start;
+  min-width: 0;
+}
+
+.label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  grid-area: chevron;
+  align-self: center;
+  width: var(--space-lg);
+  height: var(--space-lg);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.transaction-row.expanded .chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}
+
+.transaction-row.expanded .label {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.row-details {
+  min-width: 0;
+  font: var(--text-caption);
+  color: var(--text-muted);
+}
+
+.row-details > span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-row.expanded .row-details > span {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .icon {
   font-size: 0;
 }
 
+.category-cell,
+.subcategory-cell {
+  display: none;
+}
 
+.date-cell {
+  grid-area: date;
+  justify-self: end;
+  font: var(--text-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Montant : sur une seule ligne tant que la piste libellé garde son minimum ; sinon il se replie entre groupes de chiffres. */
 .amount-cell {
-  text-align: right;
+  grid-area: amount;
+  align-self: start;
+  justify-self: end;
+  min-width: 0;
+  font: var(--num-body);
   font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: normal;
+}
+
+.amount-group {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.actions-cell {
+  grid-area: menu;
+  align-self: center;
+  position: relative;
+  z-index: 1;
+}
+
+.transaction-table .empty-row td {
+  display: block;
+  padding: var(--space-md) 0;
+  font: var(--text-body);
+  color: var(--text-muted);
 }
 
 .amount-income {
   color: var(--color-income);
 }
+
 .amount-expense {
-  color: var(--color-expense);
+  color: var(--text-primary);
+}
+
+@container transaction-list (min-width: 720px) {
+  /* Colonnes desktop : date et montant à leur contenu usuel (un montant extrême se replie entre groupes) ;
+   * catégorie et sous-catégorie de même largeur ; le libellé garde au moins ~200 px. */
+  .transaction-table {
+    table-layout: fixed;
+    --transaction-date-width: calc(var(--size-touch-min) * 2.75);
+    --transaction-amount-width: calc(var(--size-touch-min) * 3);
+  }
+
+  .transaction-table,
+  .transaction-table tbody {
+    display: table;
+  }
+
+  .transaction-table tbody {
+    display: table-row-group;
+  }
+
+  .transaction-table thead {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  .transaction-table thead {
+    display: table-header-group;
+  }
+
+  .transaction-table .header-row {
+    display: table-row;
+  }
+
+  .transaction-table .header-row th {
+    padding: 0 var(--space-md) var(--space-md);
+    font: var(--text-caption);
+    color: var(--text-muted);
+    text-align: left;
+  }
+
+  .transaction-table .header-row th.amount-header,
+  .transaction-table .header-row th.col-date {
+    text-align: right;
+  }
+
+  /* Largeur restante (conteneur moins colonnes fixes) répartie en 1,2 : 1 : 1 entre libellé, catégorie et sous-catégorie.
+   * Largeurs explicites : les libellés longs passent à la ligne et ne peuvent pas élargir une autre colonne. */
+  .transaction-table {
+    --transaction-fixed-width: calc(var(--transaction-date-width) + var(--transaction-amount-width) + var(--size-touch-min));
+    --transaction-flex-width: calc(100cqi - var(--transaction-fixed-width));
+  }
+
+  .transaction-table .header-row .col-label {
+    width: calc(var(--transaction-flex-width) * 1.2 / 3.2);
+  }
+
+  .transaction-table .header-row .col-category,
+  .transaction-table .header-row .col-subcategory {
+    width: calc(var(--transaction-flex-width) / 3.2);
+  }
+
+  .transaction-table .header-row .col-date {
+    width: var(--transaction-date-width);
+  }
+
+  .transaction-table .header-row .col-amount {
+    width: var(--transaction-amount-width);
+  }
+
+  .transaction-table .header-row .col-actions {
+    width: var(--size-touch-min);
+    padding-inline: 0;
+  }
+
+  .transaction-table .transaction-row {
+    display: table-row;
+    padding: 0;
+  }
+
+  .transaction-table .transaction-row td {
+    display: table-cell;
+    padding: var(--space-md);
+    vertical-align: middle;
+  }
+
+  .transaction-table .transaction-row + .transaction-row {
+    border-top: 0;
+  }
+
+  .transaction-table .transaction-row + .transaction-row td {
+    border-top: var(--border-width) solid var(--border);
+  }
+
+  .transaction-table .empty-row td {
+    display: table-cell;
+    padding: var(--space-md);
+  }
+
+  .label-cell {
+    display: table-cell;
+  }
+
+  /* Icône et libellé sur une même rangée flex : les lignes suivantes du libellé restent à droite de l'icône. */
+  .label-body {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .label-cell .pastille {
+    flex-shrink: 0;
+  }
+
+  /* Le libellé complet est déjà visible : la cible de dépliage n'existe qu'au mobile. */
+  .row-toggle {
+    display: none;
+  }
+
+  .label-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .label-cell .label {
+    display: inline;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .chevron,
+  .row-details {
+    display: none;
+  }
+
+  .category-cell,
+  .subcategory-cell {
+    font: var(--text-body);
+    overflow-wrap: anywhere;
+    color: var(--text-muted);
+  }
+
+  .date-cell {
+    font: var(--text-caption);
+    color: var(--text-muted);
+    justify-self: auto;
+    text-align: right;
+  }
+
+  .amount-cell {
+    font: var(--num-body);
+    text-align: right;
+    white-space: normal;
+  }
+
+  .transaction-table .transaction-row td.actions-cell {
+    width: var(--size-touch-min);
+    padding-inline: 0;
+  }
 }
 
 /* Items du menu de ligne : projetés par app-row-menu, donc stylés par le parent. */
@@ -65,7 +388,7 @@ app-row-menu [role='menuitem'] {
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
-  color: var(--color-text);
+  color: var(--text-primary);
   font: var(--text-body);
   text-align: start;
   cursor: pointer;

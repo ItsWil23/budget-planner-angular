@@ -1,0 +1,128 @@
+<button
+  #trigger
+  type="button"
+  class="picker-trigger"
+  [id]="inputId()"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="open() ? panelId() : null"
+  [attr.aria-invalid]="invalid() ? 'true' : null"
+  [attr.aria-describedby]="describedBy()"
+  [disabled]="disabled()"
+  (click)="toggle()"
+>
+  <span class="picker-value" [class.is-placeholder]="!selected()">
+    {{ selected() ? displayText() : ('datePicker.placeholder' | transloco) }}
+  </span>
+  <span class="picker-icon" aria-hidden="true"></span>
+</button>
+
+@if (open()) {
+  <div
+    [id]="panelId()"
+    role="group"
+    class="picker-panel"
+    [class.is-above]="placeAbove()"
+    [style.--picker-shift.px]="panelShift()"
+    [style.--picker-scrollbar.px]="panelScrollbar()"
+    [style.max-block-size.px]="panelMaxBlock()"
+    [style.overflow-y]="panelMaxBlock() === null ? null : 'auto'"
+    [attr.aria-label]="'datePicker.dialog' | transloco"
+    (keydown)="onGridKeydown($event)"
+    (focusout)="onFocusOut($event)"
+  >
+    <div class="picker-header">
+      <button
+        type="button"
+        class="picker-nav"
+        [attr.aria-label]="
+          (view() === 'days'
+            ? 'datePicker.previousMonth'
+            : view() === 'months'
+              ? 'datePicker.previousYear'
+              : 'datePicker.previousYears') | transloco
+        "
+        (click)="shift(-1)"
+      >
+        <span class="picker-nav-icon picker-nav-icon--prev" aria-hidden="true"></span>
+      </button>
+
+      <button type="button" class="picker-title" [attr.aria-label]="'datePicker.switchView' | transloco" (click)="cycleView()">
+        {{ titleText() }}
+      </button>
+
+      <button
+        type="button"
+        class="picker-nav"
+        [attr.aria-label]="
+          (view() === 'days'
+            ? 'datePicker.nextMonth'
+            : view() === 'months'
+              ? 'datePicker.nextYear'
+              : 'datePicker.nextYears') | transloco
+        "
+        (click)="shift(1)"
+      >
+        <span class="picker-nav-icon picker-nav-icon--next" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    @switch (view()) {
+      @case ('days') {
+        <div class="picker-weekdays" aria-hidden="true">
+          @for (label of weekdayLabels(); track $index) {
+            <span>{{ label }}</span>
+          }
+        </div>
+        <div class="picker-grid picker-grid--days">
+          @for (cell of dayCells(); track cell.key) {
+            <button
+              type="button"
+              class="picker-cell"
+              [class.is-outside]="!cell.inMonth"
+              [class.is-today]="cell.today"
+              [class.is-selected]="cell.selected"
+              [attr.aria-label]="cell.label"
+              [attr.aria-pressed]="cell.selected"
+              [attr.tabindex]="cell.active ? 0 : -1"
+              (click)="chooseDay(cell)"
+            >
+              {{ cell.day }}
+            </button>
+          }
+        </div>
+      }
+      @case ('months') {
+        <div class="picker-grid picker-grid--choices">
+          @for (cell of monthCells(); track cell.key) {
+            <button
+              type="button"
+              class="picker-cell picker-cell--choice"
+              [class.is-selected]="cell.selected"
+              [attr.aria-pressed]="cell.selected"
+              [attr.tabindex]="cell.active ? 0 : -1"
+              (click)="chooseMonth(cell)"
+            >
+              {{ cell.label }}
+            </button>
+          }
+        </div>
+      }
+      @case ('years') {
+        <div class="picker-grid picker-grid--choices">
+          @for (cell of yearCells(); track cell.key) {
+            <button
+              type="button"
+              class="picker-cell picker-cell--choice"
+              [class.is-selected]="cell.selected"
+              [attr.aria-pressed]="cell.selected"
+              [attr.tabindex]="cell.active ? 0 : -1"
+              (click)="chooseYear(cell)"
+            >
+              {{ cell.label }}
+            </button>
+          }
+        </div>
+      }
+    }
+  </div>
+}
