@@ -3,7 +3,7 @@
 > Plan de livraison. Chaque lot se découpe en tâches assez petites pour un modèle local 7B (voir `AGENTS.md` § before
 > you start) : une tâche = un composant, un service, ou une correction ciblée, jamais un lot entier d'un coup.
 > Chaque tâche se termine par une Pull Request relue avant fusion.
-> Dernière mise à jour : 2026-11-18
+> Dernière mise à jour : 2026-11-23
 
 ## 1. Pourquoi cet ordre
 
@@ -19,7 +19,7 @@ application.
 |---|---|---|
 | 0 | Fondations design + données + services | Terminé (points 1 à 6 faits ; bascule de langue et menu de compte au lot 5) |
 | 1 | Budget Mensuel | Terminé (PR #50, 2026-11-06) |
-| 2 | Transactions — finalisation | Partiellement fait (v3 phase A) |
+| 2 | Transactions — finalisation | En revue (PR #71) |
 | 3 | Dashboard | À faire |
 | 4 | Catégories — reprise | Fait en phase A, à corriger |
 | 5 | Paramètres | À faire |
@@ -157,12 +157,12 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
 
 1. [x] **TASK-025 — liste et formulaire par mois** : liste filtrée sur le mois sélectionné (`MonthContextService`) ; date par défaut = date du jour en heure locale, quel que soit le mois sélectionné ; après un ajout, le mois affiché bascule sur celui de la transaction (décisions du 2026-11-18). Fait le 2026-11-18 (PR #65).
 2. [x] **TASK-026 — service de transactions** : `update` et `remove` ; dérivation du `type` déplacée de `TransactionForm` vers `TransactionService` ; précontrôle des agrégats et de la cascade du solde avant mutation (comme `assertTransactionAddable`). Testable sans interface. Fait le 2026-11-18 (PR #67).
-3. [ ] **TASK-027 — édition et suppression**, découpée le 2026-11-18 :
+3. [x] **TASK-027 — édition et suppression**, découpée le 2026-11-18 (PR #69 fusionnée) :
    - **027a** : composant partagé `row-menu`, extrait du menu de TASK-023 sans changement visuel ;
    - **027b** : édition d'une transaction (menu « ⋯ », formulaire en mode édition, `update` après précontrôle) ;
    - **027c** : suppression avec confirmation, annulation possible pendant 10 secondes (`restore`).
-4. [ ] **TASK-028 — catégorie sans sous-catégorie** : visible mais désactivée dans le formulaire, avec explication et lien vers la page Catégories (décision du 2026-11-18).
-5. [ ] **TASK-029 — styling** : SCSS selon `DESIGN_SYSTEM.md`, dont le débordement horizontal de la table à 375px (environ 531px de table dans 359px disponibles), repéré pendant TASK-017.
+4. [x] **TASK-028 — catégorie sans sous-catégorie** : visible mais désactivée dans le formulaire, avec explication et lien vers la page Catégories (PR #70 fusionnée).
+5. [x] **TASK-029 — styling Transactions** : liste responsive, formulaire harmonisé, sélecteur partagé et calendrier journalier (PR #71 ouverte pour revue humaine).
 6. [ ] **TASK-030 (optionnelle) — pagination et tri** : non bloquants pour la definition of done du produit.
 
 Écarts relevés en revue de code du 2026-10-22, état au 2026-11-18 :
