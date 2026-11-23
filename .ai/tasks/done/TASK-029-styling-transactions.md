@@ -1,11 +1,11 @@
 ## Tâche : harmoniser le styling de Transactions
 Lot : 2 (`roadmap.md` § 5, TASK-029, après TASK-028)
-Statut : implémentée et validée le 2026-11-23 ; PR #71 ouverte pour revue humaine
+Statut : implémentée, validée et fusionnée le 2026-11-23 (PR #71)
 Branche : `feat/lot2-transactions-styling`
 
 ### Suivi de livraison — 2026-11-23
 - Commit applicatif : `affc58b` (`feat: improve responsive transactions and form controls`).
-- PR #71 vers `main` ouverte pour revue ; aucune fusion effectuée.
+- PR #71 fusionnée dans `main` le 2026-11-23 (`4d9b15b`).
 - Validations : 707 tests sur 40 fichiers ; build réussi ; `tsc` app et spec sans erreur ; `git diff --check` propre. Aucune dépendance ajoutée.
 - Revue navigateur en français/thème sombre : 375, 767, 768, 800, 1024 et 1280 px ; pas de débordement horizontal de page. La disposition suit la largeur réelle du conteneur. Le calendrier tient à 375 px ; Échap le ferme sans fermer la modale ; le dépliage mobile expose catégorie et sous-catégorie.
 - Avertissements de build : bundle initial à 548.16 kB pour un budget de 500 kB et cinq avertissements de budgets SCSS.
