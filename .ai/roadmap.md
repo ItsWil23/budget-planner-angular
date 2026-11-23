@@ -19,7 +19,7 @@ application.
 |---|---|---|
 | 0 | Fondations design + données + services | Terminé (points 1 à 6 faits ; bascule de langue et menu de compte au lot 5) |
 | 1 | Budget Mensuel | Terminé (PR #50, 2026-11-06) |
-| 2 | Transactions — finalisation | En revue (PR #71) |
+| 2 | Transactions — finalisation | Terminé pour TASK-025 à TASK-029 (PR #71 fusionnée le 2026-11-23) |
 | 3 | Dashboard | À faire |
 | 4 | Catégories — reprise | Fait en phase A, à corriger |
 | 5 | Paramètres | À faire |
@@ -162,7 +162,7 @@ Une branche et une PR par tâche, une seule en revue à la fois (`workflow.md` �
    - **027b** : édition d'une transaction (menu « ⋯ », formulaire en mode édition, `update` après précontrôle) ;
    - **027c** : suppression avec confirmation, annulation possible pendant 10 secondes (`restore`).
 4. [x] **TASK-028 — catégorie sans sous-catégorie** : visible mais désactivée dans le formulaire, avec explication et lien vers la page Catégories (PR #70 fusionnée).
-5. [x] **TASK-029 — styling Transactions** : liste responsive, formulaire harmonisé, sélecteur partagé et calendrier journalier (PR #71 ouverte pour revue humaine).
+5. [x] **TASK-029 — styling Transactions** : liste responsive, formulaire harmonisé, sélecteur partagé et calendrier journalier (PR #71 fusionnée le 2026-11-23).
 6. [ ] **TASK-030 (optionnelle) — pagination et tri** : non bloquants pour la definition of done du produit.
 
 Écarts relevés en revue de code du 2026-10-22, état au 2026-11-18 :
