@@ -6,6 +6,7 @@ import type { Transaction, TransactionInput } from '../../../models/transactions
 import { vi } from 'vitest';
 
 import { TransactionForm } from './transaction-form';
+import type { SelectFieldOption } from '../select-field/select-field';
 
 describe('TransactionForm', () => {
   let component: TransactionForm;
@@ -44,6 +45,14 @@ describe('TransactionForm', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('marque seul le groupe Libellé comme pleine largeur', () => {
+    const groups: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('form > .form-group'));
+    const wide = groups.filter((group) => group.classList.contains('form-group--wide'));
+
+    expect(wide).toHaveLength(1);
+    expect(wide[0].querySelector('#transactionLabel')).not.toBeNull();
   });
 
   afterEach(() => {
@@ -150,21 +159,17 @@ describe('TransactionForm', () => {
       fixture.detectChanges();
     }
 
-    function categoryOption(id: string): HTMLOptionElement {
-      return fixture.nativeElement.querySelector(`#transactionCategory option[value="${id}"]`);
+    function categoryOptions(): SelectFieldOption[] {
+      return fixture.componentInstance['categoryOptions'];
     }
 
     it('conserve toutes les catégories dans l’ordre et désactive celles sans sous-catégorie', () => {
       render(categories);
 
-      const options: HTMLOptionElement[] = Array.from(
-        fixture.nativeElement.querySelectorAll('#transactionCategory option:not([value=""])'),
-      );
-      expect(options.map((option: HTMLOptionElement) => option.value)).toEqual(['cat-1', 'cat-2', 'cat-3']);
-      expect(categoryOption('cat-1').disabled).toBe(false);
-      expect(categoryOption('cat-2').disabled).toBe(true);
-      expect(categoryOption('cat-3').disabled).toBe(true);
-      expect(categoryOption('cat-2').textContent?.trim()).toBe('Épargne');
+      const options = categoryOptions();
+      expect(options.map((option: SelectFieldOption) => option.value)).toEqual(['cat-1', 'cat-2', 'cat-3']);
+      expect(options.map((option: SelectFieldOption) => !!option.disabled)).toEqual([false, true, true]);
+      expect(options[1].label).toBe('Épargne');
     });
 
     it('affiche les noms exacts des catégories sans sous-catégorie et un lien vers Catégories', () => {
@@ -172,12 +177,12 @@ describe('TransactionForm', () => {
 
       const hint: HTMLElement = fixture.nativeElement.querySelector('#transactionCategoryHint');
       const link: HTMLAnchorElement | null = hint.querySelector('a');
-      const select: HTMLSelectElement = fixture.nativeElement.querySelector('#transactionCategory');
+      const trigger: HTMLElement = fixture.nativeElement.querySelector('#transactionCategory');
 
       expect(hint.textContent).toContain('HINT Épargne, Loisirs & sorties');
       expect(link?.textContent?.trim()).toBe('CREATE SUBCATEGORY');
       expect(link?.getAttribute('href')).toBe('/categories');
-      expect(select.getAttribute('aria-describedby')).toBe('transactionCategoryHint');
+      expect(trigger.getAttribute('aria-describedby')).toBe('transactionCategoryHint');
     });
 
     it('masque l’aide quand toutes les catégories sont sélectionnables', () => {
@@ -205,6 +210,25 @@ describe('TransactionForm', () => {
       expect(emitted).toEqual([
         expect.objectContaining({ categoryId: 'cat-1', subcategoryId: 'sub-1', amountCents: 1250 }),
       ]);
+    });
+    it('marque la catégorie et la sous-catégorie invalides après une soumission refusée', () => {
+      render(categories);
+      const trigger = (id: string): HTMLElement => fixture.nativeElement.querySelector(`#${id}`);
+      expect(trigger('transactionCategory').hasAttribute('aria-invalid')).toBe(false);
+
+      fixture.nativeElement.querySelector('form').dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true }),
+      );
+      fixture.detectChanges();
+
+      expect(trigger('transactionCategory').getAttribute('aria-invalid')).toBe('true');
+      expect(trigger('transactionSubCategory').getAttribute('aria-invalid')).toBe('true');
+
+      component.newTransactionForm.controls.categoryId.setValue('cat-1');
+      fixture.detectChanges();
+
+      expect(trigger('transactionCategory').hasAttribute('aria-invalid')).toBe(false);
+      expect(trigger('transactionSubCategory').getAttribute('aria-invalid')).toBe('true');
     });
   });
 

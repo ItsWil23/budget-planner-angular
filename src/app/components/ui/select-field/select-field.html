@@ -1,0 +1,46 @@
+<button
+  #trigger
+  type="button"
+  class="select-trigger"
+  [id]="inputId()"
+  aria-haspopup="listbox"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="panelId()"
+  [attr.aria-invalid]="invalid() ? 'true' : null"
+  [attr.aria-describedby]="describedBy()"
+  [disabled]="disabled()"
+  (click)="toggle()"
+  (keydown)="onTriggerKeydown($event)"
+  (focusout)="onFocusOut($event)"
+>
+  <span class="select-value" [class.is-placeholder]="!selectedLabel()">{{ selectedLabel() || placeholder() }}</span>
+  <span class="select-chevron" aria-hidden="true"></span>
+</button>
+
+@if (open()) {
+  <ul
+    [id]="panelId()"
+    role="listbox"
+    tabindex="-1"
+    class="select-panel"
+    [class.is-above]="placeAbove()"
+    [attr.aria-labelledby]="inputId()"
+    (keydown)="onPanelKeydown($event)"
+    (focusout)="onFocusOut($event)"
+  >
+    @for (option of options(); track option.value; let index = $index) {
+      <li
+        role="option"
+        tabindex="-1"
+        class="select-option"
+        [class.is-selected]="option.value === selectedValue()"
+        [class.is-active]="index === activeIndex()"
+        [attr.aria-selected]="option.value === selectedValue()"
+        [attr.aria-disabled]="option.disabled ? 'true' : null"
+        (click)="choose(index)"
+      >
+        {{ option.label }}
+      </li>
+    }
+  </ul>
+}

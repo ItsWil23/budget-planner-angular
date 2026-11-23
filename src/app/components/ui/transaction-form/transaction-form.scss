@@ -1,7 +1,120 @@
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
+/* Deux colonnes seulement si chaque champ garde une largeur utile ; sinon pile unique (ex. modale à 375 px). */
+@container (min-width: 480px) {
+  form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-md);
+    align-items: start;
+  }
+
+  .form-group--wide,
+  .form-summary-error,
+  .form-action-buttons {
+    grid-column: 1 / -1;
+  }
+
+  /* Le résumé d'erreur et les actions passent après la ligne Montant / Date. */
+  .form-summary-error {
+    order: 1;
+  }
+
+  .form-action-buttons {
+    order: 2;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-block-end: var(--space-md);
+
+  label {
+    font: var(--text-caption);
+    color: var(--text-muted);
+  }
+}
+
+input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--size-touch-min);
+  margin: 0;
+  padding: 0 var(--space-md);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-app);
+  color: var(--text-primary);
+  font: var(--text-body);
+}
+
+#transactionAmount {
+  font: var(--num-body);
+  font-variant-numeric: tabular-nums;
+}
+
+[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+[role='alert'] {
+  margin: 0;
+  font: var(--text-caption);
+  color: var(--color-danger);
+}
+
+:is(button, input, a):focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-accent);
+  outline-offset: var(--size-focus-offset);
+}
+
+.form-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-block-start: var(--space-lg);
+
+  button {
+    box-sizing: border-box;
+    min-height: var(--size-touch-min);
+    padding: 0 var(--space-lg);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    color: var(--text-primary);
+    font: var(--text-emphasis);
+    cursor: pointer;
+  }
+
+  button[type='submit'] {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: var(--surface-card);
+  }
+
+  button:hover:not(:disabled) {
+    background-color: var(--color-accent-soft);
+  }
+
+  button[type='submit']:hover:not(:disabled) {
+    background-color: var(--color-accent-hover);
+  }
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
 .category-hint {
   margin: var(--space-xs) 0 0;
   font: var(--text-caption);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 
   a {
     display: inline-flex;

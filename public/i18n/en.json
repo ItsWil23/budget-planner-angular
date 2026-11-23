@@ -145,6 +145,17 @@
     "showYears": "Choose a year, currently {{year}}",
     "showMonths": "Back to the month grid"
   },
+  "datePicker": {
+    "placeholder": "Choose a date",
+    "dialog": "Choose a date",
+    "switchView": "Switch view (days, months, years)",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
+    "previousYears": "Previous years",
+    "nextYears": "Next years"
+  },
   "monthSelector": {
     "previous": "Previous month",
     "next": "Next month",

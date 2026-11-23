@@ -1,16 +1,14 @@
 <form [formGroup]="newTransactionForm" (ngSubmit)="onSubmitTransactionForm()">
   <div class="form-group">
     <label for="transactionCategory">{{ 'transactionForm.category' | transloco }}</label>
-    <select
-      id="transactionCategory"
+    <app-select-field
+      inputId="transactionCategory"
       formControlName="categoryId"
-      [attr.aria-describedby]="unselectableCategoryNames() ? categoryHintId : null"
-    >
-      <option value="" disabled>{{ 'transactionForm.categoryPlaceholder' | transloco }}</option>
-      @for(category of formCategories; track category.id){
-        <option [value]="category.id" [disabled]="!hasSubcategory(category.id)">{{ category.name }}</option>
-      }
-    </select>
+      [options]="categoryOptions"
+      [placeholder]="'transactionForm.categoryPlaceholder' | transloco"
+      [describedBy]="unselectableCategoryNames() ? categoryHintId : null"
+      [invalid]="submitAttempted() && newTransactionForm.controls.categoryId.invalid"
+    />
     @if (unselectableCategoryNames(); as categoryNames) {
       <p [id]="categoryHintId" class="category-hint">
         {{ 'transactionForm.categoryHint' | transloco: { categoryNames } }}
@@ -21,15 +19,16 @@
 
   <div class="form-group">
     <label for="transactionSubCategory">{{ 'transactionForm.subcategory' | transloco }}</label>
-    <select id="transactionSubCategory" formControlName="subcategoryId">
-      <option value="" disabled>{{ 'transactionForm.subcategoryPlaceholder' | transloco }}</option>
-      @for(subcategory of filteredSubcategories; track subcategory.id){
-        <option [value]="subcategory.id">{{ subcategory.name }}</option>
-      }
-    </select>
+    <app-select-field
+      inputId="transactionSubCategory"
+      formControlName="subcategoryId"
+      [options]="subcategoryOptions"
+      [placeholder]="'transactionForm.subcategoryPlaceholder' | transloco"
+      [invalid]="submitAttempted() && newTransactionForm.controls.subcategoryId.invalid"
+    />
   </div>
 
-  <div class="form-group">
+  <div class="form-group form-group--wide">
     <label for="transactionLabel">{{ 'transactionForm.label' | transloco }}</label>
     <input id="transactionLabel" formControlName="label" type="text"/>
   </div>
@@ -51,12 +50,12 @@
   </div>
 
   @if (aggregateOverflow) {
-    <p [id]="aggregateErrorId" role="alert">{{ 'transactionForm.aggregateOverflow' | transloco }}</p>
+    <p [id]="aggregateErrorId" role="alert" class="form-summary-error">{{ 'transactionForm.aggregateOverflow' | transloco }}</p>
   }
 
   <div class="form-group">
     <label for="transactionDate">{{ 'transactionForm.date' | transloco }}</label>
-    <input id="transactionDate" formControlName="date" type="date"/>
+    <app-date-picker inputId="transactionDate" formControlName="date" />
   </div>
 
   <div class="form-action-buttons">

@@ -6,6 +6,7 @@ import { MonthContextService } from '../../../services/month-context';
 import { RecurringRuleService } from '../../../services/recurring-rule';
 import { SettingsService } from '../../../services/settings';
 import { RecurringRuleManager } from './recurring-rule-manager';
+import type { SelectFieldOption } from '../select-field/select-field';
 
 const TRANSLATIONS = {
   fr: {
@@ -157,10 +158,15 @@ describe('RecurringRuleManager', () => {
     click(`[data-key="${monthKey}"]`);
   }
 
+  function setFormValue(control: 'categoryId' | 'subcategoryId', value: string): void {
+    fixture.componentInstance['form'].controls[control].setValue(value);
+    fixture.detectChanges();
+  }
+
   function fillNewRule(amount = '125.00', day = '', endMonth = ''): void {
     setValue('#recurring-rule-label', 'Assurance');
-    setValue('#recurring-rule-category', 'cat-3');
-    setValue('#recurring-rule-subcategory', 'sub-5');
+    setFormValue('categoryId', 'cat-3');
+    setFormValue('subcategoryId', 'sub-5');
     setValue('#recurring-rule-amount', amount);
     setValue('#recurring-rule-day', day);
     if (endMonth) pickEndMonth(endMonth);
@@ -235,12 +241,10 @@ describe('RecurringRuleManager', () => {
   it('filters subcategories by category and clears an obsolete selection', async () => {
     await createFixture();
     click('[data-action="open-manager"]');
-    setValue('#recurring-rule-category', 'cat-1');
+    setFormValue('categoryId', 'cat-1');
 
-    const options = Array.from(element<HTMLSelectElement>('#recurring-rule-subcategory').options)
-      .map(option => option.value)
-      .filter(Boolean);
-    expect(options).toEqual(['sub-1']);
+    const options: SelectFieldOption[] = fixture.componentInstance['subcategoryOptions']();
+    expect(options.map(option => option.value)).toEqual(['sub-1']);
   });
 
   it('gives each row action disclosure an accessible rule-specific name', async () => {
@@ -263,6 +267,30 @@ describe('RecurringRuleManager', () => {
     expect(fixture.nativeElement.querySelectorAll('.rule-summary[aria-expanded="true"]')).toHaveLength(1);
     expect(element<HTMLElement>('[data-action="history-series-2"]').getAttribute('aria-expanded')).toBe('false');
     expect(element<HTMLElement>('[data-action="history-series-4"]').getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('marks the category and subcategory invalid when a rule is refused without them, then clears them', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+    setValue('#recurring-rule-label', 'Assurance');
+    setValue('#recurring-rule-amount', '125.00');
+    click('[data-action="save-rule"]');
+
+    expect(element('#recurring-rule-category').getAttribute('aria-invalid')).toBe('true');
+    expect(element('#recurring-rule-subcategory').getAttribute('aria-invalid')).toBe('true');
+
+    setFormValue('categoryId', 'cat-3');
+    setFormValue('subcategoryId', 'sub-5');
+
+    expect(element('#recurring-rule-category').hasAttribute('aria-invalid')).toBe(false);
+    expect(element('#recurring-rule-subcategory').hasAttribute('aria-invalid')).toBe(false);
+  });
+
+  it('does not mark the category invalid before a save is attempted', async () => {
+    await createFixture();
+    click('[data-action="open-manager"]');
+
+    expect(element('#recurring-rule-category').hasAttribute('aria-invalid')).toBe(false);
   });
 
   it('starts closed and emits a close event when the dialog is dismissed', async () => {

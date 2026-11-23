@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   AbstractControl,
   ReactiveFormsModule,
@@ -14,14 +23,20 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { MoneyService } from '../../../services/money';
 import { SettingsService } from '../../../services/settings';
 import { todayLocalIsoDate } from '../../../services/transaction';
+import { DatePicker } from '../date-picker/date-picker';
+import { SelectField, SelectFieldOption } from '../select-field/select-field';
+
+function toOption(item: { id: string; name: string }): SelectFieldOption {
+  return { value: item.id, label: item.name };
+}
 
 @Component({
   selector: 'app-transaction-form',
-  imports: [ReactiveFormsModule, RouterLink, TranslocoPipe],
+  imports: [ReactiveFormsModule, RouterLink, TranslocoPipe, SelectField, DatePicker],
   templateUrl: './transaction-form.html',
   styleUrl: './transaction-form.scss',
 })
-export class TransactionForm implements OnInit {
+export class TransactionForm implements OnInit, OnChanges {
   @Input() formCategories: Category[] = [];
   @Input() formSubcategories: Subcategory[] = [];
   @Input() aggregateOverflow = false;
@@ -34,10 +49,12 @@ export class TransactionForm implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly moneyService = inject(MoneyService);
   private readonly settings = inject(SettingsService).settings;
-  protected filteredSubcategories: Subcategory[] = [];
+  protected categoryOptions: SelectFieldOption[] = [];
+  protected subcategoryOptions: SelectFieldOption[] = [];
   protected readonly amountErrorId = 'transactionAmountError';
   protected readonly aggregateErrorId = 'transactionAggregateError';
   protected readonly categoryHintId = 'transactionCategoryHint';
+  protected readonly submitAttempted = signal(false);
 
   newTransactionForm = this.formBuilder.nonNullable.group({
     categoryId: ['', Validators.required],
@@ -51,15 +68,24 @@ export class TransactionForm implements OnInit {
     this.newTransactionForm.controls.categoryId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((categoryId: string) => {
-        this.filteredSubcategories = this.formSubcategories.filter(
+        const subcategories = this.formSubcategories.filter(
           (subcategory: Subcategory) => subcategory.categoryId === categoryId,
         );
+        this.subcategoryOptions = subcategories.map(toOption);
         this.newTransactionForm.controls.subcategoryId.setValue('');
       });
 
     this.newTransactionForm.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.draftChange.emit());
+  }
+
+  ngOnChanges(): void {
+    this.categoryOptions = this.formCategories.map((category: Category) => ({
+      value: category.id,
+      label: category.name,
+      disabled: !this.hasSubcategory(category.id),
+    }));
   }
 
   ngOnInit(): void {
@@ -101,9 +127,11 @@ export class TransactionForm implements OnInit {
   protected onSubmitTransactionForm(): void {
     const amountCents = this.parsePositiveCents(this.newTransactionForm.controls.amountText.value);
     if (!this.newTransactionForm.valid || amountCents === null) {
+      this.submitAttempted.set(true);
       this.newTransactionForm.markAllAsTouched();
       return;
     }
+    this.submitAttempted.set(false);
 
     const validForm = this.newTransactionForm.getRawValue();
     const newTransaction: TransactionInput = {

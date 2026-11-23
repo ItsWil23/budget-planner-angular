@@ -145,6 +145,17 @@
     "showYears": "Choisir une année, actuellement {{year}}",
     "showMonths": "Revenir à la grille des mois"
   },
+  "datePicker": {
+    "placeholder": "Choisir une date",
+    "dialog": "Choisir une date",
+    "switchView": "Changer de vue (jours, mois, années)",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "previousYear": "Année précédente",
+    "nextYear": "Année suivante",
+    "previousYears": "Années précédentes",
+    "nextYears": "Années suivantes"
+  },
   "monthSelector": {
     "previous": "Mois précédent",
     "next": "Mois suivant",
